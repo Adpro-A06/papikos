@@ -1,6 +1,7 @@
 plugins {
     java
     jacoco
+    id("org.sonarqube") version "6.0.1.5171"
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -27,6 +28,14 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "Adpro-A06_papikos")
+        property("sonar.organization", "adpro-a06")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
 }
 
 dependencies {
