@@ -1,12 +1,17 @@
 package id.ac.ui.cs.advprog.papikos.authentication.model;
 
+import lombok.Getter;
+
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class User {
+    @Getter
     private UUID id;
+    @Getter
     private String email;
     private String password;
+    @Getter
     private String role;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -42,17 +47,5 @@ public class User {
             }
         }
         return false;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getRole() {
-        return role;
     }
 }
