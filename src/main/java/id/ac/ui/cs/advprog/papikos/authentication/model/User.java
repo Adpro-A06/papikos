@@ -12,7 +12,7 @@ public class User {
     private String email;
     private String password;
     @Getter
-    private String role;
+    private Role role;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
@@ -24,7 +24,7 @@ public class User {
 
     private static final String[] VALID_ROLES = {"PENYEWA", "PEMILIK_KOS", "ADMIN"};
 
-    public User(String email, String password, String role) {
+    public User(String email, String password, Role role) {
         if (email == null || email.isEmpty() || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new IllegalArgumentException("Email tidak valid!");
         }
@@ -40,9 +40,9 @@ public class User {
         this.role = role;
     }
 
-    private boolean isValidRole(String role) {
+    private boolean isValidRole(Role role) {
         for (String validRole : VALID_ROLES) {
-            if (validRole.equals(role)) {
+            if (validRole.equals(role.name())) {
                 return true;
             }
         }

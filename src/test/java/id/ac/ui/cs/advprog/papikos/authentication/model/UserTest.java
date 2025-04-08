@@ -12,9 +12,9 @@ public class UserTest {
 
     @BeforeEach
     public void setUp() {
-        penyewaUser = new User("penyewa@example.com", "p@ssword123", "PENYEWA");
-        pemilikUser = new User("pemilik@example.com", "p@ssword456", "PEMILIK_KOS");
-        adminUser = new User("admin@example.com", "p@ssword789", "ADMIN");
+        penyewaUser = new User("penyewa@example.com", "p@ssword123", Role.PENYEWA);
+        pemilikUser = new User("pemilik@example.com", "p@ssword456", Role.PEMILIK_KOS);
+        adminUser = new User("admin@example.com", "p@ssword789", Role.ADMIN);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class UserTest {
     @Test
     public void testCreateUserWithInvalidEmail() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new User("invalid-email", "P@ssword123", "PENYEWA");
+            new User("invalid-email", "P@ssword123", Role.PENYEWA);
         });
         String expectedMessage = "Email tidak valid!";
         assertTrue(exception.getMessage().contains(expectedMessage));
@@ -38,18 +38,19 @@ public class UserTest {
     @Test
     public void testCreateUserWithWeakPassword() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new User("user@example.com", "password", "PENYEWA");
+            new User("user@example.com", "password", Role.PENYEWA);
         });
         String expectedMessage = "Password harus mengandung kombinasi huruf, angka, dan karakter khusus!";
         assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     @Test
-    public void testCreateUsernWithInvalidRole() {
+    public void testCreateUserWithInvalidRole() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            new User("invalid@example.com", "P@ssword456", "INVALID_ROLE");
+            Role invalidRole = Role.valueOf("INVALID_ROLE");
+            new User("invalid@example.com", "P@ssword456", invalidRole);
         });
-        String expectedMessage = "Role tidak valid!";
+        String expectedMessage = "Role harus antara PENYEWA, PEMILIK_KOS, dan ADMIN!";
         assertFalse(exception.getMessage().contains(expectedMessage));
     }
 
@@ -57,20 +58,20 @@ public class UserTest {
     public void testCreateUserPenyewa() {
         assertNotNull(penyewaUser.getId());
         assertEquals("penyewa@example.com", penyewaUser.getEmail());
-        assertEquals("PENYEWA", penyewaUser.getRole());
+        assertEquals(Role.PENYEWA, penyewaUser.getRole());
     }
 
     @Test
     public void testCreateUserPemilikKos() {
         assertNotNull(pemilikUser.getId());
         assertEquals("pemilik@example.com", pemilikUser.getEmail());
-        assertEquals("PEMILIK_KOS", pemilikUser.getRole());
+        assertEquals(Role.PEMILIK_KOS, pemilikUser.getRole());
     }
 
     @Test
     public void testCreateUserAdmin() {
         assertNotNull(adminUser.getId());
         assertEquals("admin@example.com", adminUser.getEmail());
-        assertEquals("ADMIN", adminUser.getRole());
+        assertEquals(Role.ADMIN, adminUser.getRole());
     }
 }
