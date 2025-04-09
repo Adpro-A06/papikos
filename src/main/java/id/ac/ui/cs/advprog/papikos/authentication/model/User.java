@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.authentication.model;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -13,7 +14,7 @@ public class User {
     private String password;
     @Getter
     private Role role;
-    @Getter
+    @Getter @Setter
     private boolean approved;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
