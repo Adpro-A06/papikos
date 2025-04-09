@@ -11,6 +11,7 @@ public class User {
     private UUID id;
     @Getter
     private String email;
+    @Getter
     private String password;
     @Getter
     private Role role;

@@ -113,6 +113,6 @@ public class AuthServiceImplTest {
         User user = authService.registerUser("decode@example.com", "P@ssword123", Role.PENYEWA);
         String token = authService.login("decode@example.com", "P@ssword123");
         String decodedId = ((AuthServiceImpl) authService).decodeToken(token);
-        assertEquals(user.getId().toString(), decodedId, "Decoded token harus menghasilkan UUID user yang sama");
+        assertEquals(user.getId().toString(), decodedId, "Token yang di-decode harus menghasilkan UUID user yang sama!");
     }
 }
