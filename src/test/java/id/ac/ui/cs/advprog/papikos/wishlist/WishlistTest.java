@@ -2,6 +2,9 @@ package id.ac.ui.cs.advprog.papikos.wishlist;
 
 import id.ac.ui.cs.advprog.papikos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.model.KosType;
+import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
+import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistNotifier;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,11 +21,12 @@ public class WishlistTest {
 
     @BeforeEach
     void setUp() {
-        wishlistService = new wishlistService();
-        wishlist = new Wishlist();
+        wishlistService = new wishlistService(new WishlistNotifier());
+        wishlist = new Wishlist("Test Wishlist");
         kosA = new Kos("K001", "Kos GojoMyLove", KosType.PUTRA);
         kosB = new Kos("K002", "Kos SatoruMyShayla", KosType.PUTRI);
     }
+
 
     @Test
     void testCreateEmptyWishlist() {

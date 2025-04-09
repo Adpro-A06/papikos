@@ -1,17 +1,16 @@
 package id.ac.ui.cs.advprog.papikos.notification;
-
+import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.model.KosType;
 import id.ac.ui.cs.advprog.papikos.model.NotificationType;
 import id.ac.ui.cs.advprog.papikos.model.User;
-import id.ac.ui.cs.advprog.papikos.wishlist.Wishlist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-class NotificationServiceTest {
+class NotificationServiceTest<wishlist> {
 
     private NotificationService notificationService;
     private Wishlist wishlist;
@@ -22,7 +21,7 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         notificationService = new NotificationService();
-        wishlist = new Wishlist();
+        wishlist = new Wishlist(null, null);
         kos = new Kos("K001", "Kos SatoruMyBaby", KosType.CAMPUR);
         wishlist.addKos(kos);
         tenant1 = new User("u01", "tenant1@example.com", false);

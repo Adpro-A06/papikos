@@ -4,7 +4,8 @@ import id.ac.ui.cs.advprog.papikos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.model.Notification;
 import id.ac.ui.cs.advprog.papikos.model.NotificationType;
 import id.ac.ui.cs.advprog.papikos.model.User;
-import id.ac.ui.cs.advprog.papikos.wishlist.Wishlist;
+import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
