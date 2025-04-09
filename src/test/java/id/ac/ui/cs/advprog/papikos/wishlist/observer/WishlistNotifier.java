@@ -6,7 +6,7 @@ import java.util.List;
 
 public class WishlistNotifier implements WishlistSubject {
 
-    private List<WishlistObserver> observers = new ArrayList<>();
+    private final List<WishlistObserver> observers = new ArrayList<>();
 
     @Override
     public void addObserver(WishlistObserver observer) {
