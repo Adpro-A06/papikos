@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.papikos.notification;
 
 import id.ac.ui.cs.advprog.papikos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.model.KosType;
+import id.ac.ui.cs.advprog.papikos.model.NotificationType;
 import id.ac.ui.cs.advprog.papikos.model.User;
 import id.ac.ui.cs.advprog.papikos.wishlist.Wishlist;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,29 +23,28 @@ class NotificationServiceTest {
     void setUp() {
         notificationService = new NotificationService();
         wishlist = new Wishlist();
-        kos = new Kos("K001", "Kos A");
-
-        
+        kos = new Kos("K001", "Kos SatoruMyBaby", KosType.CAMPUR);
         wishlist.addKos(kos);
-
-        
         tenant1 = new User("u01", "tenant1@example.com", false);
         tenant2 = new User("u02", "tenant2@example.com", false);
     }
 
     @Test
     void testNotifyTenantsWhenRoomAvailable_Happy_NotificationSentToInterestedUsers() {
+        List<User> interestedUsers = new ArrayList<>();
+        interestedUsers.add(tenant1);
+        wishlist.setInterestedUsers(interestedUsers);
         
-        int sentCount = notificationService.notifyTenantsForAvailableRoom(wishlist, kos);
-        assertEquals(1, sentCount, "Notifikasi seharusnya dikirim ke satu pengguna yang me-wishlist kos tersebut.");
+        int sentCount = notificationService.notifyTenantsForAvailableRoom(wishlist, kos, NotificationType.KOS_AVAILABLE);
+        assertEquals(1, sentCount);
     }
+
 
     @Test
     void testNotifyTenantsWhenRoomAvailable_Unhappy_NoNotificationSent() {
-        
-        Kos kosLain = new Kos("K999", "Kos Tidak Ada");
-        int sentCount = notificationService.notifyTenantsForAvailableRoom(wishlist, kosLain);
-        assertEquals(0, sentCount, "Tidak boleh ada notifikasi jika kos tidak ada dalam wishlist.");
+        Kos kosLain = new Kos("K999", "Kos Tidak Ada", KosType.PUTRA);
+        int sentCount = notificationService.notifyTenantsForAvailableRoom(wishlist, kosLain, NotificationType.KOS_AVAILABLE);
+        assertEquals(0, sentCount);
     }
 
     @Test
@@ -52,9 +53,7 @@ class NotificationServiceTest {
         allUsers.add(new User("admin1", "admin@example.com", true));
         allUsers.add(new User("u01", "tenant1@example.com", false));
         allUsers.add(new User("u02", "tenant2@example.com", false));
-
-        int sentCount = notificationService.sendNotificationToAllUsers(allUsers, "Selamat datang di PapiKos!");
-        
-        assertEquals(3, sentCount, "Admin harus bisa mengirimkan notifikasi ke semua pengguna.");
+        int sentCount = notificationService.sendNotificationToAllUsers(allUsers, "Selamat datang di PapiKos!", NotificationType.ADMIN_BROADCAST);
+        assertEquals(3, sentCount);
     }
 }
