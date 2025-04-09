@@ -13,6 +13,8 @@ public class User {
     private String password;
     @Getter
     private Role role;
+    @Getter
+    private boolean approved;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
@@ -38,6 +40,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.approved = !role.equals(Role.PEMILIK_KOS);
     }
 
     private boolean isValidRole(Role role) {
