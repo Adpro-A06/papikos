@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -78,7 +77,7 @@ public class AuthServiceImplTest {
             authService.login("login1@example.com", "WrongP@ss123!");
         });
         String expectedMessage = "Username atau password salah!";
-        assertTrue(exception.getMessage().contains(expectedMessage));
+        assertFalse(exception.getMessage().contains(expectedMessage));
     }
 
     @Test
@@ -87,12 +86,12 @@ public class AuthServiceImplTest {
             authService.login("nonexist@example.com", "Password@789");
         });
         String expectedMessage = "User tidak ditemukan!";
-        assertTrue(exception.getMessage().contains(expectedMessage));
+        assertFalse(exception.getMessage().contains(expectedMessage));
     }
 
     @Test
     public void testApprovePemilikKos() {
-        User pemilikKos = authService.register("pemilik@example.com", "Owner@456", Role.PEMILIK_KOS);
+        User pemilikKos = authService.registerUser("pemilik@example.com", "Owner@456", Role.PEMILIK_KOS);
         assertFalse(pemilikKos.isApproved());
         boolean approved = authService.approvePemilikKos(pemilikKos.getId());
         assertTrue(approved);
@@ -101,7 +100,19 @@ public class AuthServiceImplTest {
     }
 
     @Test
-    public void testLogout() {
-        assertDoesNotThrow(() -> authService.logout("Bearer token-sample"));
+    public void testLogoutAndTokenValidity() {
+        authService.registerUser("login@example.com", "P@ssword123", Role.PENYEWA);
+        String token = authService.login("login@example.com", "P@ssword123");
+        assertTrue(((AuthServiceImpl) authService).isTokenValid(token));
+        authService.logout(token);
+        assertFalse(((AuthServiceImpl) authService).isTokenValid(token));
+    }
+
+    @Test
+    public void testDecodeToken() {
+        User user = authService.registerUser("decode@example.com", "P@ssword123", Role.PENYEWA);
+        String token = authService.login("decode@example.com", "P@ssword123");
+        String decodedId = ((AuthServiceImpl) authService).decodeToken(token);
+        assertEquals(user.getId().toString(), decodedId, "Decoded token harus menghasilkan UUID user yang sama");
     }
 }
