@@ -31,7 +31,7 @@ public class PaymentServiceImplTest {
         userId = UUID.randomUUID();
     }
 
-    // ✅ topUp - Happy Path
+    // topUp - Happy Path
 
     @Test
     void topUp_fromZero() {
@@ -49,7 +49,7 @@ public class PaymentServiceImplTest {
         assertEquals(TransactionType.TOPUP, saved.getType());
     }
 
-    // ❌ topUp - Unhappy Path
+    // topUp - Unhappy Path
 
     @Test
     void topUp_zeroAmount() {
@@ -63,7 +63,7 @@ public class PaymentServiceImplTest {
         verify(paymentRepository, never()).save(any());
     }
 
-    // ✅ pay - Happy Path
+    // pay - Happy Path
 
     @Test
     void pay_valid() {
@@ -83,7 +83,7 @@ public class PaymentServiceImplTest {
         assertEquals(TransactionType.PAYMENT, saved.getType());
     }
 
-    // ❌ pay - Unhappy Path
+    // pay - Unhappy Path
 
     @Test
     void pay_zeroAmount() {
