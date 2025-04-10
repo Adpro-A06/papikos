@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,9 +12,9 @@ public class PaymentTest {
 
     @Test
     void createPayment_setsAllFields() {
-        String id = "trx-001";
-        String fromUserId = "user001";
-        String toUserId = "user002";
+        UUID id = UUID.randomUUID();
+        UUID fromUserId = UUID.randomUUID();
+        UUID toUserId = UUID.randomUUID();
         BigDecimal amount = new BigDecimal("50000");
         TransactionType type = TransactionType.PAYMENT;
         LocalDateTime timestamp = LocalDateTime.now();

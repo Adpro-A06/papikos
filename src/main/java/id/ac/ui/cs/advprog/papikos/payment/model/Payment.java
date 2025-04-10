@@ -4,18 +4,18 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 public class Payment {
-
-    private final String id;
-    private final String fromUserId;
-    private final String toUserId;
+    private final UUID id;
+    private final UUID fromUserId;
+    private final UUID toUserId;
     private final BigDecimal amount;
     private final TransactionType type;
     private final LocalDateTime timestamp;
 
-    public Payment(String id, String fromUserId, String toUserId,
+    public Payment(UUID id, UUID fromUserId, UUID toUserId,
                    BigDecimal amount, TransactionType type, LocalDateTime timestamp) {
         this.id = id;
         this.fromUserId = fromUserId;
