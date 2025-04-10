@@ -28,6 +28,8 @@ public class User {
 
     private static final String[] VALID_ROLES = {"PENYEWA", "PEMILIK_KOS", "ADMIN"};
 
+    public User() {}
+
     public User(String email, String password, Role role) {
         if (email == null || email.isEmpty() || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new IllegalArgumentException("Email tidak valid!");
