@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
-
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,8 +64,6 @@ public class AuthControllerTest {
         String email = "penyewa@example.com";
         String password = "P@ssword123";
         Role role = Role.PENYEWA;
-        User user = new User(email, password, role);
-        when(authService.registerUser(eq(email), eq(password), eq(role))).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,8 +78,6 @@ public class AuthControllerTest {
         String email = "pemilik@example.com";
         String password = "Owner@456!";
         Role role = Role.PEMILIK_KOS;
-        User user = new User(email, password, role);
-        when(authService.registerUser(eq(email), eq(password), eq(role))).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,8 +92,12 @@ public class AuthControllerTest {
     public void testLoginSuccess() throws Exception {
         String email = "login@example.com";
         String password = "P@ssword123";
-        String token = "jwt-0099e054-be40-4f09-a763-569b295d2e2b";
-        when(authService.login(eq(email), eq(password))).thenReturn(token);
+        Role role = Role.PENYEWA;
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterRequest(email, password, role.name()))))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +109,13 @@ public class AuthControllerTest {
     @Test
     public void testLoginWrongInput() throws Exception {
         String email = "login2@example.com";
-        when(authService.login(eq(email), eq("WrongP@ss!"))).thenThrow(new RuntimeException("Username atau password salah!"));
+        String password = "P@ssword123";
+        Role role = Role.PENYEWA;
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterRequest(email, password, role.name()))))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -124,11 +129,11 @@ public class AuthControllerTest {
         String email = "logout@example.com";
         String password = "P@ssword123";
         Role role = Role.PENYEWA;
-        User user = new User(email, password, role);
-        String token = "jwt-0099e054-be40-4f09-a763-569b295d2e2b";
-        when(authService.registerUser(eq(email), eq(password), eq(role))).thenReturn(user);
-        when(authService.login(eq(email), eq(password))).thenReturn(token);
-        doNothing().when(authService).logout(eq(token));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterRequest(email, password, role.name()))))
+                .andExpect(status().isCreated());
 
         String loginResponse = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,8 +142,9 @@ public class AuthControllerTest {
                 .andReturn().getResponse().getContentAsString();
         assertNotNull(loginResponse);
 
+        doNothing().when(authService).logout(eq(loginResponse));
         mockMvc.perform(post("/api/auth/logout")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + loginResponse))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Logout berhasil!")));
     }
@@ -148,11 +154,18 @@ public class AuthControllerTest {
         String email = "pemilikapprove@example.com";
         String password = "Owner@123";
         Role role = Role.PEMILIK_KOS;
-        User owner = new User(email, password, role);
-        UUID userId = owner.getId();
-        when(authService.registerUser(eq(email), eq(password), eq(role))).thenReturn(owner);
-        when(authService.approvePemilikKos(eq(userId))).thenReturn(true);
 
+        String register = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RegisterRequest(email, password, role.name()))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        User registeredPemilikKos = objectMapper.readValue(register, User.class);
+        UUID userId = registeredPemilikKos.getId();
+
+        when(authService.approvePemilikKos(eq(userId))).thenReturn(true);
         mockMvc.perform(post("/api/auth/approve/" + userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
