@@ -21,7 +21,8 @@ public class WishlistTest {
 
     @BeforeEach
     void setUp() {
-        wishlistService = new wishlistService(new WishlistNotifier());
+        wishlistService = new wishlistService(WishlistNotifier.getInstance());
+
         wishlist = new Wishlist("Test Wishlist");
         kosA = new Kos("K001", "Kos GojoMyLove", KosType.PUTRA);
         kosB = new Kos("K002", "Kos SatoruMyShayla", KosType.PUTRI);

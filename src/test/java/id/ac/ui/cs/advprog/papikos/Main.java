@@ -10,7 +10,8 @@ import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistNotifier;
 public class Main {
 
     public static void main(String[] args) {
-        WishlistNotifier notifier = new WishlistNotifier();
+        WishlistNotifier notifier = WishlistNotifier.getInstance();
+
         notifier.addObserver(new ConsoleNotificationObserver());
 
         wishlistService wishlistService = new wishlistService(notifier);

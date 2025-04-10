@@ -6,7 +6,17 @@ import java.util.List;
 
 public class WishlistNotifier implements WishlistSubject {
 
+    private static WishlistNotifier instance;
     private final List<WishlistObserver> observers = new ArrayList<>();
+
+    private WishlistNotifier() {}
+
+    public static synchronized WishlistNotifier getInstance() {
+        if (instance == null) {
+            instance = new WishlistNotifier();
+        }
+        return instance;
+    }
 
     @Override
     public void addObserver(WishlistObserver observer) {
@@ -24,4 +34,9 @@ public class WishlistNotifier implements WishlistSubject {
             observer.update(wishlist, event);
         }
     }
+
+    public void clearObservers() {
+        observers.clear();
+    }
+    
 }

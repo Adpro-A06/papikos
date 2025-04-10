@@ -31,24 +31,18 @@ public class WishlistNotifierTest {
 
     @BeforeEach
     public void setUp() {
-        
-        notifier = new WishlistNotifier();
+        notifier = WishlistNotifier.getInstance();
+        notifier.clearObservers();
         dummyObserver = new DummyWishlistObserver();
         notifier.addObserver(dummyObserver);
-        
-       
         wishlistService = new wishlistService(notifier);
     }
 
     @Test
     public void testObserverNotificationOnCreateWishlist() {
         Wishlist wishlist = new Wishlist("Observer Test Wishlist");
-        
         wishlist.addKos(new Kos("K001", "Kos Example", KosType.PUTRA));
-
         wishlistService.createWishlist(wishlist);
-
-        
         List<String> events = dummyObserver.getNotifications();
         assertEquals(1, events.size(), "Observer should be notified once");
         assertEquals("created", events.get(0), "Event should be 'created'");
@@ -56,17 +50,12 @@ public class WishlistNotifierTest {
 
     @Test
     public void testNoNotificationWhenObserverNotRegistered() {
-        
-        WishlistNotifier emptyNotifier = new WishlistNotifier();
+        WishlistNotifier emptyNotifier = WishlistNotifier.getInstance();
+        emptyNotifier.clearObservers();
         wishlistService serviceWithoutObserver = new wishlistService(emptyNotifier);
-
         Wishlist wishlist = new Wishlist("No Observer Wishlist");
         wishlist.addKos(new Kos("K002", "Kos Example 2", KosType.PUTRI));
-
-       
         serviceWithoutObserver.createWishlist(wishlist);
-
-        
         assertTrue(true);
     }
 }
