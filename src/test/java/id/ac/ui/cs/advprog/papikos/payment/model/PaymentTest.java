@@ -1,22 +1,30 @@
 package id.ac.ui.cs.advprog.papikos.payment.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-public class Payment {
+import static org.junit.jupiter.api.Assertions.*;
 
-    String id;
-    String fromUserId;
-    String toUserId;
-    BigDecimal amount;
-    TransactionType type;
-    LocalDateTime timestamp;
+public class PaymentTest {
 
-    public Payment(String id, String fromUserId, String toUserId,
-                   BigDecimal amount, TransactionType type, LocalDateTime timestamp) {
+    @Test
+    void createPayment_setsAllFields() {
+        String id = "trx-001";
+        String fromUserId = "user001";
+        String toUserId = "user002";
+        BigDecimal amount = new BigDecimal("50000");
+        TransactionType type = TransactionType.PAYMENT;
+        LocalDateTime timestamp = LocalDateTime.now();
+
+        Payment payment = new Payment(id, fromUserId, toUserId, amount, type, timestamp);
+
+        assertEquals(id, payment.getId());
+        assertEquals(fromUserId, payment.getFromUserId());
+        assertEquals(toUserId, payment.getToUserId());
+        assertEquals(amount, payment.getAmount());
+        assertEquals(type, payment.getType());
+        assertEquals(timestamp, payment.getTimestamp());
     }
 }
