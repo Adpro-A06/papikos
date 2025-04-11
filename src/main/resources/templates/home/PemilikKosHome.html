@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>PapiKos</title>
+    <title>Home</title>
 </head>
 <body>
-
+    <h1>Selamat Datang, Pemilik Kos!</h1>
+    <p>Halaman ini untuk mengelola kos yang Anda daftarkan.</p>
+    <div th:if="${!approved}">
+        <p style="color: red;">Akun Anda belum disetujui oleh admin, Anda tidak dapat menambahkan kos.</p>
+    </div>
+    <br/>
+    <a th:href="@{/api/auth/logout}">Logout</a>
 </body>
 </html>
