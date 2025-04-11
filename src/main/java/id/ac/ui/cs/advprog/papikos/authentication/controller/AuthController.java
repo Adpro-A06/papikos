@@ -6,11 +6,12 @@ import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@RestController
+@Controller
 @RequestMapping("/api/auth")
 public class AuthController {
 
@@ -50,6 +51,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @ResponseBody
     public ResponseEntity<String> loginAuth(@RequestBody LoginRequest request) {
         try {
             String token = authService.login(request.email, request.password);
@@ -60,6 +62,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @ResponseBody
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         try {
@@ -71,6 +74,7 @@ public class AuthController {
     }
 
     @PostMapping("/approve/{userId}")
+    @ResponseBody
     public ResponseEntity<String> approvePemilikKos(@PathVariable UUID userId) {
         try {
             boolean approved = authService.approvePemilikKos(userId);
@@ -82,5 +86,15 @@ public class AuthController {
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
+    }
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "authentication/LoginPage";
+    }
+
+    @GetMapping("/register")
+    public String registerPage() {
+        return "authentication/RegisterPage";
     }
 }
