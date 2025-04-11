@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Edit Kos</title>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto mt-8">
+    <h1 class="text-3xl font-bold mb-4">Edit Kos</h1>
+
+    <form th:action="@{/pemilik/edit}" method="post" th:object="${kos}" class="max-w-md bg-white p-6 rounded-md shadow-md">
+        <input type="hidden" th:field="*{id}" />
+        <div class="mb-4">
+            <label for="kosName" class="block text-sm font-medium text-gray-600">Nama</label>
+            <input type="text" id="kosName" th:field="*{nama}" name="kosNama" th:value="${kos.nama}" class="mt-1 p-2 w-full border rounded-md">
+        </div>
+        <div class="mb-4">
+            <label for="kosJumlah" class="block text-sm font-medium text-gray-600">Jumlah Kamar</label>
+            <input th:field="*{jumlah}" type="number" id="kosJumlah" name="kosJumlah" th:value="${kos.jumlah}" class="mt-1 p-2 w-full border rounded-md">
+        </div>
+        <div class="mb-4">
+            <label for="kosHarga" class="block text-sm font-medium text-gray-600">Harga</label>
+            <input th:field="*{harga}" type="number" id="kosHarga" name="kosHarga" th:value="${kos.harga}" class="mt-1 p-2 w-full border rounded-md">
+        </div>
+        <div class="mb-4">
+            <label for="kosAlamat" class="block text-sm font-medium text-gray-600">Alamat</label>
+            <input th:field="*{alamat}" type="text" id="kosAlamat" name="kosAlamat" th:value="${kos.alamat}" class="mt-1 p-2 w-full border rounded-md">
+        </div>
+        <div class="mb-4">
+            <label for="kosDeskripsi" class="block text-sm font-medium text-gray-600">Deskripsi</label>
+            <input th:field="*{deskripsi}" type="text" id="kosDeskripsi" name="kosDeskripsi" th:value="${kos.deskripsi}" class="mt-1 p-2 w-full border rounded-md">
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md">Save Changes</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>
