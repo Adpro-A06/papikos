@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Chatroom {
     private Long id;
-    private Long renterId;g
+    private Long renterId;
     private Long ownerId;
     private Long propertyId;
     private LocalDateTime createdAt;
