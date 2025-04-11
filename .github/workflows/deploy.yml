@@ -44,8 +44,8 @@ jobs:
         run: |
           TASK_ARN=$(aws ecs list-tasks --cluster ${{ secrets.CLUSTER_NAME }} --service-name ${{ secrets.SERVICE_NAME }} --query 'taskArns[0]' --output text)
           TASK_DETAILS=$(aws ecs describe-tasks --cluster ${{ secrets.CLUSTER_NAME }} --tasks $TASK_ARN)
-
-          PUBLIC_IP=$(echo $TASK_DETAILS | jq -r '.tasks[0].containers[0].networkInterfaces[0].privateIpv4Address')
+ 
+          PUBLIC_IP=$(echo $TASK_DETAILS | jq -r '.tasks[0].attachments[0].details[] | select(.name=="publicIp").value')
 
           DUCKDNS_TOKEN=${{ secrets.DUCKDNS_TOKEN }}
           DUCKDNS_RESPONSE=$(curl -s "https://www.duckdns.org/update?domains=papikos-a06&token=$DUCKDNS_TOKEN&ip=$PUBLIC_IP&verbose=true")
