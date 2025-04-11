@@ -14,14 +14,17 @@ public class Payment {
     private final BigDecimal amount;
     private final TransactionType type;
     private final LocalDateTime timestamp;
+    private final PaymentStatus status;
 
     public Payment(UUID id, UUID fromUserId, UUID toUserId,
-                   BigDecimal amount, TransactionType type, LocalDateTime timestamp) {
+                   BigDecimal amount, TransactionType type,
+                   LocalDateTime timestamp, PaymentStatus status) {
         this.id = id;
         this.fromUserId = fromUserId;
         this.toUserId = toUserId;
         this.amount = amount;
         this.type = type;
         this.timestamp = timestamp;
+        this.status = status;
     }
 }
