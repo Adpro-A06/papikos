@@ -11,9 +11,9 @@ public class HomeController {
 
     @GetMapping("/")
     public String index() {
-        return "redirect:/api/auth/login-page";
+        return "redirect:/api/auth/login";
     }
-    
+
     @GetMapping("/admin/home")
     public String adminHome() {
         return "home/AdminHome";

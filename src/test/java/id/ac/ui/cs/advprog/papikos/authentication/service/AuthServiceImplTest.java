@@ -2,6 +2,8 @@ package id.ac.ui.cs.advprog.papikos.authentication.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.UUID;
+
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
@@ -90,13 +92,33 @@ public class AuthServiceImplTest {
     }
 
     @Test
-    public void testApprovePemilikKos() {
+    public void testApprovePemilikKosSuccess() {
         User pemilikKos = authService.registerUser("pemilik@example.com", "Owner@456", Role.PEMILIK_KOS);
         assertFalse(pemilikKos.isApproved());
         boolean approved = authService.approvePemilikKos(pemilikKos.getId());
         assertTrue(approved);
         User updated = userRepository.findById(pemilikKos.getId());
         assertTrue(updated.isApproved());
+    }
+
+    @Test
+    public void testApprovePemilikKosUserNotFound() {
+        UUID nonExisting = UUID.randomUUID();
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            authService.approvePemilikKos(nonExisting);
+        });
+        String expectedMessage = "User tidak ditemukan";
+        assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    public void testApprovePemilikKosWrongRole() {
+        User penyewa = authService.registerUser("penyewa@example.com", "P@ssword123", Role.PENYEWA);
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            authService.approvePemilikKos(penyewa.getId());
+        });
+        String expectedMessage = "Hanya akun pemilik kos yang dapat disetujui!";
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     @Test
@@ -109,10 +131,24 @@ public class AuthServiceImplTest {
     }
 
     @Test
+    public void testFailedLogout() {
+        authService.registerUser("failed@example.com", "P@ssword123", Role.PENYEWA);
+        String token = authService.login("failed@example.com", "P@ssword123");
+        String modifiedToken = token.substring(0, token.length() - 1)
+                + (token.charAt(token.length() - 1) != 'a' ? 'a' : 'b');
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            authService.logout(modifiedToken);
+        });
+        String expectedMessage = "Token tidak valid atau sudah logout!";
+        assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
     public void testDecodeToken() {
         User user = authService.registerUser("decode@example.com", "P@ssword123", Role.PENYEWA);
         String token = authService.login("decode@example.com", "P@ssword123");
         String decodedId = ((AuthServiceImpl) authService).decodeToken(token);
-        assertEquals(user.getId().toString(), decodedId, "Token yang di-decode harus menghasilkan UUID user yang sama!");
+        assertEquals(user.getId().toString(), decodedId,
+                "Token yang di-decode harus menghasilkan UUID user yang sama!");
     }
 }
