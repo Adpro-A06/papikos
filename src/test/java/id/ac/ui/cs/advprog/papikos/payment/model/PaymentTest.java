@@ -18,8 +18,9 @@ public class PaymentTest {
         BigDecimal amount = new BigDecimal("50000");
         TransactionType type = TransactionType.PAYMENT;
         LocalDateTime timestamp = LocalDateTime.now();
+        PaymentStatus status = PaymentStatus.SUCCESS;
 
-        Payment payment = new Payment(id, fromUserId, toUserId, amount, type, timestamp);
+        Payment payment = new Payment(id, fromUserId, toUserId, amount, type, timestamp, status);
 
         assertEquals(id, payment.getId());
         assertEquals(fromUserId, payment.getFromUserId());
@@ -27,5 +28,6 @@ public class PaymentTest {
         assertEquals(amount, payment.getAmount());
         assertEquals(type, payment.getType());
         assertEquals(timestamp, payment.getTimestamp());
+        assertEquals(status, payment.getStatus());
     }
 }
