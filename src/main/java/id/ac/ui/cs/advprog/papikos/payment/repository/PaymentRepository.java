@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.payment.repository;
 
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
+import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,13 @@ public class PaymentRepository implements IPaymentRepository {
     public List<Payment> findByUserId(UUID userId) {
         return payments.stream()
                 .filter(p -> userId.equals(p.getFromUserId()) || userId.equals(p.getToUserId()))
+                .collect(Collectors.toList());
+    }
+
+    public List<Payment> findByUserIdAndStatus(UUID userId, PaymentStatus status) {
+        return payments.stream()
+                .filter(p -> status.equals(p.getStatus()) &&
+                        (userId.equals(p.getFromUserId()) || userId.equals(p.getToUserId())))
                 .collect(Collectors.toList());
     }
 }
