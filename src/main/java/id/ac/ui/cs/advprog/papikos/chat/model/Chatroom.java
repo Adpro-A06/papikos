@@ -4,45 +4,48 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChatRoom {
+public class Chatroom {
     private Long id;
-    private Long buyerId;
-    private Long sellerId;
-    private Long unitId;
-
+    private Long renterId;g
+    private Long ownerId;
+    private Long propertyId;
     private LocalDateTime createdAt;
+    private List<Message> messages;
 
-    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
-    private List<Message> messages = new ArrayList<>();
-
-    // Getters & Setters
+    public Chatroom() {
+        this.messages = new ArrayList<>();
+    }
 
     public Long getId() {
         return id;
     }
 
-    public Long getBuyerId() {
-        return buyerId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setBuyerId(Long buyerId) {
-        this.buyerId = buyerId;
+    public Long getRenterId() {
+        return renterId;
     }
 
-    public Long getSellerId() {
-        return sellerId;
+    public void setRenterId(Long renterId) {
+        this.renterId = renterId;
     }
 
-    public void setSellerId(Long sellerId) {
-        this.sellerId = sellerId;
+    public Long getOwnerId() {
+        return ownerId;
     }
 
-    public Long getUnitId() {
-        return unitId;
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
     }
 
-    public void setUnitId(Long unitId) {
-        this.unitId = unitId;
+    public Long getPropertyId() {
+        return propertyId;
+    }
+
+    public void setPropertyId(Long propertyId) {
+        this.propertyId = propertyId;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -59,5 +62,9 @@ public class ChatRoom {
 
     public void setMessages(List<Message> messages) {
         this.messages = messages;
+    }
+
+    public void addMessage(Message message) {
+        this.messages.add(message);
     }
 }
