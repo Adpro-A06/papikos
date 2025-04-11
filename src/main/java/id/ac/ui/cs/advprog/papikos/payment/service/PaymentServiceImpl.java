@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.payment.service;
 
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
+import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,8 @@ public class PaymentServiceImpl implements PaymentService {
                 userId,
                 amount,
                 TransactionType.TOPUP,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                PaymentStatus.SUCCESS
         );
 
         paymentRepository.save(payment);
@@ -40,7 +42,8 @@ public class PaymentServiceImpl implements PaymentService {
                 toUserId,
                 amount,
                 TransactionType.PAYMENT,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                PaymentStatus.SUCCESS
         );
 
         paymentRepository.save(payment);

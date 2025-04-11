@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.payment.service;
 
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
+import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,6 @@ public class PaymentServiceImplTest {
     }
 
     // topUp - Happy Path
-
     @Test
     void topUp_fromZero() {
         BigDecimal amount = new BigDecimal("50000");
@@ -47,10 +47,10 @@ public class PaymentServiceImplTest {
         assertNull(saved.getFromUserId());
         assertEquals(amount, saved.getAmount());
         assertEquals(TransactionType.TOPUP, saved.getType());
+        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
     }
 
     // topUp - Unhappy Path
-
     @Test
     void topUp_zeroAmount() {
         assertThrows(IllegalArgumentException.class, () -> paymentService.topUp(userId, BigDecimal.ZERO));
@@ -64,7 +64,6 @@ public class PaymentServiceImplTest {
     }
 
     // pay - Happy Path
-
     @Test
     void pay_valid() {
         UUID from = UUID.randomUUID();
@@ -81,10 +80,10 @@ public class PaymentServiceImplTest {
         assertEquals(to, saved.getToUserId());
         assertEquals(amount, saved.getAmount());
         assertEquals(TransactionType.PAYMENT, saved.getType());
+        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
     }
 
     // pay - Unhappy Path
-
     @Test
     void pay_zeroAmount() {
         assertThrows(IllegalArgumentException.class, () -> {
