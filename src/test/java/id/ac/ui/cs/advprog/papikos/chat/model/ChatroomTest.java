@@ -1,41 +1,73 @@
+package id.ac.ui.cs.advprog.papikos.chat.model;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-public class ChatRoomTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    private ChatRoom chatRoom;
+public class ChatroomTest {
+
+    private Chatroom chatroom;
+    private LocalDateTime createdAt;
 
     @BeforeEach
-    void setUp() {
-        chatRoom = new ChatRoom();
-        chatRoom.setBuyerId(1L);
-        chatRoom.setSellerId(2L);
-        chatRoom.setUnitId(100L);
-        chatRoom.setCreatedAt(LocalDateTime.now());
+    void setup() {
+        createdAt = LocalDateTime.now();
+        chatroom = new Chatroom();
+        chatroom.setId(1L);
+        chatroom.setRenterId(101L);
+        chatroom.setOwnerId(202L);
+        chatroom.setPropertyId(303L);
+        chatroom.setCreatedAt(createdAt);
+        chatroom.setMessages(new ArrayList<>());
     }
 
     @Test
-    void testChatRoomFields() {
-        assertEquals(1L, chatRoom.getBuyerId());
-        assertEquals(2L, chatRoom.getSellerId());
-        assertEquals(100L, chatRoom.getUnitId());
-        assertNotNull(chatRoom.getCreatedAt());
+    void testGetId() {
+        assertEquals(1L, chatroom.getId());
     }
 
     @Test
-    void testMessagesCanBeAddedToChatRoom() {
-        Message msg = new Message();
-        msg.setContent("Hai! Unitnya masih tersedia?");
-        msg.setSenderId(1L);
-        msg.setReceiverId(2L);
+    void testGetRenterId() {
+        assertEquals(101L, chatroom.getRenterId());
+    }
 
-        chatRoom.setMessages(List.of(msg));
+    @Test
+    void testGetOwnerId() {
+        assertEquals(202L, chatroom.getOwnerId());
+    }
 
-        assertEquals(1, chatRoom.getMessages().size());
-        assertEquals("Hai! Unitnya masih tersedia?", chatRoom.getMessages().get(0).getContent());
+    @Test
+    void testGetPropertyId() {
+        assertEquals(303L, chatroom.getPropertyId());
+    }
+
+    @Test
+    void testGetCreatedAt() {
+        assertEquals(createdAt, chatroom.getCreatedAt());
+    }
+
+    @Test
+    void testGetMessages() {
+        assertTrue(chatroom.getMessages().isEmpty());
+    }
+
+    @Test
+    void testAddMessage() {
+        Message message = new Message();
+        message.setId(1L);
+        message.setSenderId(101L);
+        message.setChatroomId(1L);
+        message.setContent("Test message");
+        message.setTimestamp(LocalDateTime.now());
+
+        chatroom.addMessage(message);
+
+        assertEquals(1, chatroom.getMessages().size());
+        assertEquals(message, chatroom.getMessages().get(0));
     }
 }
