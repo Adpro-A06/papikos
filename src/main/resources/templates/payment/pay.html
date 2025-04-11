@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Bayar Kos</title>
+</head>
+<body>
+<h1>Form Pembayaran Kos</h1>
+
+<form action="#" th:action="@{/payment/pay}" method="post">
+  <label for="fromUserId">ID Penyewa:</label><br>
+  <input type="text" id="fromUserId" name="fromUserId" required><br><br>
+
+  <label for="toUserId">ID Pemilik Kos:</label><br>
+  <input type="text" id="toUserId" name="toUserId" required><br><br>
+
+  <label for="amount">Jumlah Pembayaran (Rp):</label><br>
+  <input type="number" id="amount" name="amount" required><br><br>
+
+  <button type="submit">Bayar Sekarang</button>
+</form>
+
+<br>
+<form action="/payment" method="get">
+  <button type="submit">⬅ Kembali ke Menu</button>
+</form>
+</body>
+</html>
