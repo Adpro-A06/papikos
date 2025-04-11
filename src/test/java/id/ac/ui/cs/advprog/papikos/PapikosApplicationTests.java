@@ -15,6 +15,6 @@ public class PapikosApplicationTests {
     
     @Test
     void contextLoads() {
-        // Test ini hanya memeriksa apakah konteks aplikasi dapat termuat tanpa error
+        PapikosApplication.main(new String[]{});
     }
 }

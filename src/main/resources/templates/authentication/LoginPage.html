@@ -1,10 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
-    <title>PapiKos: Login</title>
+    <title>Login - PapiKos</title>
+    <style>
+        .error {
+            color: red;
+        }
+    </style>
 </head>
-<body>
 
+<body>
+    <h1>Login PapiKos</h1>
+    <p>Silakan masukkan email dan password Anda untuk login.</p>
+    <div th:if="${param.error}" class="error">
+        <p th:text="${param.error}">Error message here</p>
+    </div>
+
+    <form th:action="@{/api/auth/login}" method="post">
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Masukkan email" required="required" />
+        </div>
+        <br />
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Masukkan password" required="required" />
+        </div>
+        <br />
+        <div>
+            <button type="submit">Login</button>
+        </div>
+    </form>
+    <p>Belum punya akun? <a th:href="@{/api/auth/register}">Register</a></p>
 </body>
+
 </html>
