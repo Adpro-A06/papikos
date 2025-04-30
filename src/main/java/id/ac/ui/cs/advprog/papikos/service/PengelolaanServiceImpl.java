@@ -27,10 +27,8 @@ public class PengelolaanServiceImpl implements PengelolaanService {
     public List<Kos> findAll() {
         Iterator<Kos> kosIterator = pengelolaanRepository.findAll();
         List<Kos> allKos = new ArrayList<>();
-        if (kosIterator != null) {
-            while (kosIterator.hasNext()) {
-                allKos.add(kosIterator.next());
-            }
+        while (kosIterator.hasNext()) {
+            allKos.add(kosIterator.next());
         }
         return allKos;
     }

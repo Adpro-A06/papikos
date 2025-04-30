@@ -3,7 +3,6 @@ package id.ac.ui.cs.advprog.papikos.model;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
 public class Kos {
     private String id;
     private String nama;
