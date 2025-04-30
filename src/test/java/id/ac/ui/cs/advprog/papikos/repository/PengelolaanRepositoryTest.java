@@ -3,18 +3,32 @@ package id.ac.ui.cs.advprog.papikos.repository;
 import id.ac.ui.cs.advprog.papikos.model.Kos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 public class PengelolaanRepositoryTest {
+
+    @Autowired
     private PengelolaanRepository pengelolaanRepository;
+
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public PengelolaanRepository pengelolaanRepository() {
+            return new PengelolaanRepository();
+        }
+    }
 
     @BeforeEach
     void setUp() {
-        pengelolaanRepository = PengelolaanRepository.getInstance();
-        // Kosongkan data untuk memastikan tes bersih
+        // Clear the repository data before each test
         Iterator<Kos> iterator = pengelolaanRepository.findAll();
         while (iterator.hasNext()) {
             iterator.next();
@@ -113,7 +127,7 @@ public class PengelolaanRepositoryTest {
     }
 
     @Test
-    void testFindByKosId_NotFound() {
+    void testFindByKosIdNotFound() {
         String errorMessage = "Kos dengan ID notexist-id tidak ditemukan.";
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
@@ -125,7 +139,7 @@ public class PengelolaanRepositoryTest {
     }
 
     @Test
-    void testUpdate_NotFound() {
+    void testUpdateNotFound() {
         Kos kos = new Kos();
         kos.setId("notexist-id");
         String errorMessage = "Kos dengan ID notexist-id tidak ditemukan.";
@@ -139,7 +153,7 @@ public class PengelolaanRepositoryTest {
     }
 
     @Test
-    void testDelete_NotFound() {
+    void testDeleteNotFound() {
         Kos kos = new Kos();
         kos.setId("notexist-id");
         String errorMessage = "Kos dengan ID notexist-id tidak ditemukan.";

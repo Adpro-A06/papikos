@@ -19,8 +19,7 @@
             <th scope="col">Harga</th>
             <th scope="col">Alamat</th>
             <th scope="col">Deskripsi</th>
-            <th scope="col">Edit</th>
-            <th scope="col">Hapus</th>
+            <th scope="col">Action</th>
         </tr>
         </thead>
         <tbody>
@@ -31,13 +30,8 @@
             <td th:text="${kos.alamat}"></td>
             <td th:text="${kos.deskripsi}"></td>
             <td>
-                <a th:href="@{/pemilik/edit/{id}(id=${kos.id})}" class="btn btn-info btn-sm">Edit</a>
-            </td>
-            <td>
-                <form th:action="@{/pemilik/delete/{id}(id=${kos.id})}" method="post" >
-                    <input type="hidden" th:name="id" th:value="${kos.id}" />
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
+                <a th:href="@{'/pemilik/edit/' + ${kos.id}}" class="btn btn-info btn-sm">Edit</a>
+                <a th:href="@{'/pemilik/delete/' + ${kos.id}}" class="btn btn-danger btn-sm">Delete</a>
             </td>
         </tr>
         </tbody>

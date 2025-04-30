@@ -3,13 +3,14 @@ package id.ac.ui.cs.advprog.papikos.controller;
 import id.ac.ui.cs.advprog.papikos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.service.PengelolaanService;
+import id.ac.ui.cs.advprog.papikos.service.PengelolaanServiceImpl;
 import jakarta.servlet.http.HttpServlet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
 @Controller
 @RequestMapping("/pemilik")
 public class PengelolaanController {
@@ -35,7 +36,10 @@ public class PengelolaanController {
     @GetMapping("/daftarkos")
     public String kosListPage(Model model) {
         List<Kos> allKos = service.findAll();
-        model.addAttribute("kos", allKos);
+        for (Kos kos : allKos) {
+            System.out.println("DEBUG: ID Kos = " + kos.getId());  // Debug ID di controller
+        }
+        model.addAttribute("allKos", allKos);
         return "pengelolaan/ListKos";
     }
 
@@ -50,12 +54,12 @@ public class PengelolaanController {
         try {
             Kos kos = service.findById(id);
             model.addAttribute("kos", kos);
+            return "pengelolaan/EditKos";
         }
         catch (PengelolaanRepository.KosNotFoundException e) {
             System.out.println("kos not found");
             return "error/KosNotFound";
         }
-        return "pengelolaan/EditKos";
     }
 
     @PostMapping("/edit/{id}")
@@ -63,12 +67,11 @@ public class PengelolaanController {
         try {
             kos.setId(id);
             service.update(kos);
+            return "redirect:/pemilik/daftarkos";
         }
         catch (PengelolaanRepository.KosNotFoundException e) {
-            System.out.println("kos not found");
             return "pengelolaan/error/KosNotFound";
         }
-        return "redirect:daftarkos";
     }
 
     @GetMapping("/delete/{id}")
@@ -78,7 +81,6 @@ public class PengelolaanController {
             service.delete(kos);
             return "redirect:daftarkos";
         } catch (PengelolaanRepository.KosNotFoundException e) {
-            System.out.println("kos not found");
             return "error/KosNotFound";
         }
     }
