@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.papikos.model;
+package id.ac.ui.cs.advprog.papikos.kos.model;
 
 public class Kos {
     private String id;
@@ -39,7 +39,7 @@ public class Kos {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        Kos other = (Kos) obj;
+        id.ac.ui.cs.advprog.papikos.kos.model.Kos other = (id.ac.ui.cs.advprog.papikos.kos.model.Kos) obj;
         return id != null ? id.equals(other.id) : other.id == null;
     }
 

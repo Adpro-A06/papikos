@@ -1,6 +1,7 @@
-package id.ac.ui.cs.advprog.papikos.repository;
+package id.ac.ui.cs.advprog.papikos.kos.repository;
 
-import id.ac.ui.cs.advprog.papikos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

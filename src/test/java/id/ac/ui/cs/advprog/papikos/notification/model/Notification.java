@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.papikos.model;
+package id.ac.ui.cs.advprog.papikos.notification.model;
 
 public class Notification {
     private String id;

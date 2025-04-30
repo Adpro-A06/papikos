@@ -3,8 +3,8 @@ package id.ac.ui.cs.advprog.papikos.wishlist.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import id.ac.ui.cs.advprog.papikos.model.Kos;
-import id.ac.ui.cs.advprog.papikos.model.User;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.notification.model.User;
 
 public class Wishlist {
     private Integer id;
