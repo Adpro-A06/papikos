@@ -1,10 +1,8 @@
-package id.ac.ui.cs.advprog.papikos.controller;
+package id.ac.ui.cs.advprog.papikos.kos.controller;
 
-import id.ac.ui.cs.advprog.papikos.model.Kos;
-import id.ac.ui.cs.advprog.papikos.repository.PengelolaanRepository;
-import id.ac.ui.cs.advprog.papikos.service.PengelolaanService;
-import id.ac.ui.cs.advprog.papikos.service.PengelolaanServiceImpl;
-import jakarta.servlet.http.HttpServlet;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
+import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

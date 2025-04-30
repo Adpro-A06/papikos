@@ -2,8 +2,8 @@ package id.ac.ui.cs.advprog.papikos.wishlist.observer;
 
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.wishlistService;
-import id.ac.ui.cs.advprog.papikos.model.Kos;
-import id.ac.ui.cs.advprog.papikos.model.KosType;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.KosType;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

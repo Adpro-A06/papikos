@@ -1,12 +1,13 @@
-package id.ac.ui.cs.advprog.papikos.model;
+package id.ac.ui.cs.advprog.papikos.kos.model;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class KosTest {
-    private Kos kos;
+    private id.ac.ui.cs.advprog.papikos.kos.model.Kos kos;
 
     @BeforeEach
     void setUp() {
@@ -25,21 +26,21 @@ public class KosTest {
 
     @Test
     void testGetNamaKos() {
-        assertEquals("Tulip", this.kos.getNama());
+        Assertions.assertEquals("Tulip", this.kos.getNama());
     }
 
     @Test
     void testGetJumlahKos() {
-        assertEquals(20, this.kos.getJumlah());
+        Assertions.assertEquals(20, this.kos.getJumlah());
     }
 
     @Test
     void testGetAlamatKos() {
-        assertEquals("Jl.Mangga", this.kos.getAlamat());
+        Assertions.assertEquals("Jl.Mangga", this.kos.getAlamat());
     }
 
     @Test
     void testGetDeskripsiKos() {
-        assertEquals("Full furnish. Dilengkapi dengan AC", this.kos.getDeskripsi());
+        Assertions.assertEquals("Full furnish. Dilengkapi dengan AC", this.kos.getDeskripsi());
     }
 }

@@ -1,6 +1,6 @@
-package id.ac.ui.cs.advprog.papikos.repository;
+package id.ac.ui.cs.advprog.papikos.kos.repository;
 
-import id.ac.ui.cs.advprog.papikos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;

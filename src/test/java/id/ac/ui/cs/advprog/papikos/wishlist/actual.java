@@ -2,7 +2,7 @@ package id.ac.ui.cs.advprog.papikos.wishlist;
 
 import java.util.List;
 
-import id.ac.ui.cs.advprog.papikos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 
 public class actual {
 
