@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '20 10 * * 0'
   push:
-    branches: [ "main" ]
+    branches: [ "main","staging" ]
 
 permissions: read-all
 

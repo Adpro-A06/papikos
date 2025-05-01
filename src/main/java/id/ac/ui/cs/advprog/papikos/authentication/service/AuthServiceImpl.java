@@ -68,6 +68,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public User findById(UUID userId) {
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("User tidak ditemukan!");
+        }
+        return user;
+    }
+
+    @Override
     public boolean approvePemilikKos(UUID userId) {
         User user = userRepository.findById(userId);
         if (user == null) {
