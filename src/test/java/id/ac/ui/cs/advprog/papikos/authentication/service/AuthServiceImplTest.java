@@ -18,10 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceImplTest {
-    
+
     @Mock
     private UserRepository userRepository;
-    
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -55,7 +55,7 @@ public class AuthServiceImplTest {
             User u = i.getArgument(0);
             return u;
         });
- 
+
         User user = authService.registerUser(email, password, Role.PEMILIK_KOS);
 
         assertNotNull(user.getId());
@@ -108,7 +108,7 @@ public class AuthServiceImplTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         String token = authService.login(email, password);
- 
+
         assertNotNull(token, "Token login tidak boleh null!");
         assertTrue(token.startsWith("jwt-"));
         verify(userRepository).findByEmail(email);
@@ -193,18 +193,18 @@ public class AuthServiceImplTest {
         String password = "P@ssword123";
         User user = new User(email, password, Role.PENYEWA);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
- 
+
         String token = authService.login(email, password);
         assertTrue(authService.isTokenValid(token));
         authService.logout(token);
-   
+
         assertFalse(authService.isTokenValid(token));
     }
 
     @Test
     public void testFailedLogout() {
         String invalidToken = "jwt-invalidtoken";
-  
+
         Exception exception = assertThrows(RuntimeException.class, () -> {
             authService.logout(invalidToken);
         });
@@ -236,5 +236,51 @@ public class AuthServiceImplTest {
         String expectedMessage = "User tidak ditemukan!";
         assertTrue(exception.getMessage().contains(expectedMessage));
         verify(userRepository).findById(nonExistingId);
+    }
+
+    @Test
+    public void testDecodeValidToken() {
+        UUID originalId = UUID.randomUUID();
+        User user = new User("test@example.com", "P@ssword123", Role.PENYEWA);
+        try {
+            java.lang.reflect.Field idField = User.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(user, originalId);
+        } catch (Exception e) {
+            fail("Failed to set user ID: " + e.getMessage());
+        }
+
+        String token = null;
+        try {
+            java.lang.reflect.Method generateTokenMethod = AuthServiceImpl.class.getDeclaredMethod("generateToken",
+                    User.class);
+            generateTokenMethod.setAccessible(true);
+            token = (String) generateTokenMethod.invoke(authService, user);
+        } catch (Exception e) {
+            fail("Failed to invoke generateToken: " + e.getMessage());
+        }
+
+        String decodedId = authService.decodeToken(token);
+        assertEquals(originalId.toString(), decodedId, "Decoded token should match original UUID");
+    }
+
+    @Test
+    public void testDecodeInvalidTokenFormat() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            authService.decodeToken("invalid-token-format");
+        });
+
+        String expectedMessage = "Token tidak valid!";
+        assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    public void testDecodeEmptyToken() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            authService.decodeToken("");
+        });
+
+        String expectedMessage = "Token tidak valid!";
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 }
