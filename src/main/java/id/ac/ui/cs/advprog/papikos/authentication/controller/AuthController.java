@@ -3,98 +3,91 @@ package id.ac.ui.cs.advprog.papikos.authentication.controller;
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
-import id.ac.ui.cs.advprog.papikos.authentication.service.AuthServiceImpl;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService = AuthServiceImpl.getInstance();
-
-    public static class RegisterRequest {
-        public String email;
-        public String password;
-        public String role;
-
-        public RegisterRequest() {}
-
-        public RegisterRequest(String email, String password, String role) {
-            this.email = email;
-            this.password = password;
-            this.role = role;
-        }
+    private final AuthService authService;
+    
+    @Autowired
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
-    public static class LoginRequest {
-        public String email;
-        public String password;
-
-        public LoginRequest() {}
-
-        public LoginRequest(String email, String password) {
-            this.email = email;
-            this.password = password;
-        }
+    @GetMapping("/register")
+    public String showRegisterForm() {
+        return "authentication/RegisterPage";
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
-        Role role = Role.valueOf(request.role);
-        User user = authService.registerUser(request.email, request.password, role);
-        return new ResponseEntity<>(user, HttpStatus.CREATED);
-    }
-
-    @PostMapping("/login")
-    @ResponseBody
-    public ResponseEntity<String> loginAuth(@RequestBody LoginRequest request) {
+    public String doRegister(
+            @RequestParam String email,
+            @RequestParam String password,
+            @RequestParam String role,
+            RedirectAttributes ra
+    ) {
         try {
-            String token = authService.login(request.email, request.password);
-            return ResponseEntity.ok(token);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
-    }
-
-    @PostMapping("/logout")
-    @ResponseBody
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
-        try {
-            authService.logout(token);
-            return ResponseEntity.ok("Logout berhasil!");
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
-    }
-
-    @PostMapping("/approve/{userId}")
-    @ResponseBody
-    public ResponseEntity<String> approvePemilikKos(@PathVariable UUID userId) {
-        try {
-            boolean approved = authService.approvePemilikKos(userId);
-            if (approved) {
-                return ResponseEntity.ok("Akun pemilik kos telah disetujui!");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Approval gagal!");
-            }
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            Role r = Role.valueOf(role);
+            authService.registerUser(email, password, r);
+            ra.addFlashAttribute("success", "Registrasi berhasil! Silakan login.");
+            return "redirect:/api/auth/login";
+        } catch (IllegalArgumentException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/api/auth/register";
         }
     }
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String showLoginForm(Model m) {
         return "authentication/LoginPage";
     }
 
-    @GetMapping("/register")
-    public String registerPage() {
-        return "authentication/RegisterPage";
+    @PostMapping("/login")
+    public String doLogin(
+            @RequestParam String email,
+            @RequestParam String password,
+            HttpSession session,
+            RedirectAttributes ra
+    ) {
+        try {
+            String token = authService.login(email, password);
+            session.setAttribute("JWT_TOKEN", token);
+
+            String idStr = authService.decodeToken(token);
+            User user = authService.findById(java.util.UUID.fromString(idStr));
+
+            if (user.getRole() == Role.PENYEWA) {
+                return "redirect:/penyewa/home";
+            } else if (user.getRole() == Role.PEMILIK_KOS) {
+                return "redirect:/pemilik/home";
+            } else {
+                return "redirect:/admin/home";
+            }
+        } catch (RuntimeException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/api/auth/login";
+        }
+    }
+
+    @PostMapping("/logout")
+    public String doLogout(HttpSession session, RedirectAttributes ra) {
+        String token = (String) session.getAttribute("JWT_TOKEN");
+        if (token != null) {
+            try {
+                authService.logout(token);
+            } catch (RuntimeException ignored) {
+                // Logout errors are ignored for now
+            }
+            session.removeAttribute("JWT_TOKEN");
+        }
+        ra.addFlashAttribute("success", "Anda telah logout.");
+        return "redirect:/api/auth/login";
     }
 }
