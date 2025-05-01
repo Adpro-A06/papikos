@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.notification.model;
 
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
+
 public class Notification {
     private String id;
     private String message;

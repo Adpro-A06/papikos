@@ -1,14 +1,15 @@
 package id.ac.ui.cs.advprog.papikos.wishlist.observer;
 
-import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
-import id.ac.ui.cs.advprog.papikos.wishlist.wishlistService;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
-import id.ac.ui.cs.advprog.papikos.kos.model.KosType;
-import static org.junit.jupiter.api.Assertions.*;
+import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
+import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class DummyWishlistObserver implements WishlistObserver {
     private final List<String> notifications = new ArrayList<>();
@@ -25,7 +26,7 @@ class DummyWishlistObserver implements WishlistObserver {
 
 public class WishlistNotifierTest {
 
-    private wishlistService wishlistService;
+    private WishlistService wishlistService;
     private WishlistNotifier notifier;
     private DummyWishlistObserver dummyObserver;
 
@@ -33,16 +34,23 @@ public class WishlistNotifierTest {
     public void setUp() {
         notifier = WishlistNotifier.getInstance();
         notifier.clearObservers();
+
         dummyObserver = new DummyWishlistObserver();
         notifier.addObserver(dummyObserver);
-        wishlistService = new wishlistService(notifier);
+
+        wishlistService = new WishlistService(notifier);
     }
 
     @Test
     public void testObserverNotificationOnCreateWishlist() {
         Wishlist wishlist = new Wishlist("Observer Test Wishlist");
-        wishlist.addKos(new Kos("K001", "Kos Example", KosType.PUTRA));
+        Kos kos = new Kos();
+        kos.setId("K001");
+        kos.setNama("Kos Example");
+        wishlist.addKos(kos);
+
         wishlistService.createWishlist(wishlist);
+
         List<String> events = dummyObserver.getNotifications();
         assertEquals(1, events.size(), "Observer should be notified once");
         assertEquals("created", events.get(0), "Event should be 'created'");
@@ -50,11 +58,18 @@ public class WishlistNotifierTest {
 
     @Test
     public void testNoNotificationWhenObserverNotRegistered() {
+        // Clear semua observer
         WishlistNotifier emptyNotifier = WishlistNotifier.getInstance();
         emptyNotifier.clearObservers();
-        wishlistService serviceWithoutObserver = new wishlistService(emptyNotifier);
+
+        WishlistService serviceWithoutObserver = new WishlistService(emptyNotifier);
+
         Wishlist wishlist = new Wishlist("No Observer Wishlist");
-        wishlist.addKos(new Kos("K002", "Kos Example 2", KosType.PUTRI));
+        Kos kos = new Kos();
+        kos.setId("K002");
+        kos.setNama("Kos Example 2");
+        wishlist.addKos(kos);
+
         serviceWithoutObserver.createWishlist(wishlist);
         assertTrue(true);
     }

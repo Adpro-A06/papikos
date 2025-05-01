@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.papikos.kos.controller;
 
-import id.ac.ui.cs.advprog.papikos.kos.controller.PengelolaanController;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
