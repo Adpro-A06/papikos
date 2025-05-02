@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.papikos.chat.repository.ChatroomRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,5 +32,13 @@ public class ChatroomService {
         chatroom.setCreatedAt(LocalDateTime.now());
 
         return chatroomRepository.save(chatroom);
+    }
+
+    public List<Chatroom> getChatroomsByRenterId(Long renterId) {
+        return chatroomRepository.findByRenterId(renterId);
+    }
+
+    public List<Chatroom> getChatroomsByOwnerId(Long ownerId) {
+        return chatroomRepository.findByOwnerId(ownerId);
     }
 }
