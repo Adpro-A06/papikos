@@ -6,8 +6,9 @@ public class Message {
     private Long senderId;
     private Long chatroomId;
     private String content;
-
     private LocalDateTime timestamp;
+    private boolean isRead = false;
+    private LocalDateTime readAt;
 
     public Message() {
     }
@@ -50,5 +51,22 @@ public class Message {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    // Read receipt
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        isRead = read;
+    }
+
+    public LocalDateTime getReadAt() {
+        return readAt;
+    }
+
+    public void setReadAt(LocalDateTime readAt) {
+        this.readAt = readAt;
     }
 }
