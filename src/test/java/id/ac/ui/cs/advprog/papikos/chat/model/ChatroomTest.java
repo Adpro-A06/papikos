@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,7 +67,7 @@ public class ChatroomTest {
         chatroom.addMessage(message);
 
         assertEquals(1, chatroom.getMessages().size());
-        assertEquals(message, chatroom.getMessages().get(0));
+        assertEquals(message, chatroom.getMessages().getFirst());
     }
 
     @Test
