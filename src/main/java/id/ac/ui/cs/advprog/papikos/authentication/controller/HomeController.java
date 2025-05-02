@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class HomeController {
     }
 
     @GetMapping("/pemilik/home")
-    public String pemilikKosHome(HttpSession session, RedirectAttributes ra) {
+    public String pemilikKosHome(HttpSession session, RedirectAttributes ra, Model model) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -52,6 +53,8 @@ public class HomeController {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
             return "redirect:/api/auth/login";
         }
+
+        model.addAttribute("approved", user.isApproved());
         
         return "home/PemilikKosHome";
     }
