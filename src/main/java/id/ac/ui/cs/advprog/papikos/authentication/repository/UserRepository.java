@@ -5,8 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.UUID;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    BigDecimal getBalance(UUID userId);
+    BigDecimal updateBalance(UUID userId, BigDecimal amount);
 }

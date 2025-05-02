@@ -9,12 +9,14 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @Getter
     private UUID id;
@@ -33,6 +35,9 @@ public class User {
 
     @Getter @Setter
     private boolean approved;
+
+    @Getter @Setter
+    private BigDecimal balance = BigDecimal.ZERO;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",

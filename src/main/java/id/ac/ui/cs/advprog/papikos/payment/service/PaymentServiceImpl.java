@@ -4,6 +4,8 @@ import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
+import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
+import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class PaymentServiceImpl implements PaymentService {
 
     private final IPaymentRepository paymentRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void topUp(UUID userId, BigDecimal amount) {
@@ -32,11 +35,17 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         paymentRepository.save(payment);
+        userRepository.updateBalance(userId, amount);  // Update user balance after top-up
     }
 
     @Override
     public void pay(UUID fromUserId, UUID toUserId, BigDecimal amount) {
         validateAmount(amount);
+
+        BigDecimal currentBalance = userRepository.getBalance(fromUserId);
+        if (currentBalance.compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient balance");
+        }
 
         Payment payment = new Payment(
                 UUID.randomUUID(),
@@ -49,6 +58,8 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         paymentRepository.save(payment);
+        userRepository.updateBalance(fromUserId, amount.negate());  // Deduct balance from Penyewa
+        userRepository.updateBalance(toUserId, amount);  // Add balance to Pemilik Kos
     }
 
     private void validateAmount(BigDecimal amount) {
