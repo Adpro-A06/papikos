@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class WishlistService {
@@ -23,18 +24,35 @@ public class WishlistService {
             return null;
         }
 
-        
         wishlist.setId(wishlistStorage.size() + 1);
-
-        
         List<Kos> filteredKos = filterDuplicateKos(wishlist.getKosList());
         wishlist.setKosList(filteredKos);
-
         wishlistStorage.add(wishlist);
 
         notifier.notifyObservers(wishlist, "created");
 
         return wishlist;
+    }
+
+    public List<Wishlist> getAllWishlists() {
+        return new ArrayList<>(wishlistStorage);
+    }
+
+    public Wishlist getWishlistById(int id) {
+        return wishlistStorage.stream()
+            .filter(w -> Objects.equals(w.getId(), id))
+            .findFirst()
+            .orElse(null);
+    }
+
+    public boolean deleteWishlistById(int id) {
+        return wishlistStorage.removeIf(w -> Objects.equals(w.getId(), id));
+    }
+
+    public boolean wishlistExists(String userId, String kosId) {
+        return wishlistStorage.stream()
+            .anyMatch(w -> Objects.equals(w.getUserId(), userId)
+                        && Objects.equals(w.getKosId(), kosId));
     }
 
     private boolean isValidWishlist(Wishlist wishlist) {
