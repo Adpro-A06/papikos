@@ -1,0 +1,61 @@
+package id.ac.ui.cs.advprog.papikos.wishlist;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
+
+import java.util.List;
+
+public class WishlistTest {
+
+    private Wishlist wishlist;
+
+    @BeforeEach
+    public void setUp() {
+        wishlist = new Wishlist("Kos Favorit", "user123");
+    }
+
+    @Test
+    public void testWishlistConstructorSetsNameAndUserId() {
+        assertEquals("Kos Favorit", wishlist.getName());
+        assertEquals("user123", wishlist.getUserId());
+    }
+
+    @Test
+    public void testAddKosToWishlist() {
+        Kos kos = new Kos();
+        wishlist.addKos(kos);
+
+        List<Kos> kosList = wishlist.getKosList();
+        assertEquals(1, kosList.size());
+        assertTrue(kosList.contains(kos));
+    }
+
+    @Test
+    public void testAddDuplicateKosDoesNotAddAgain() {
+        Kos kos = new Kos();
+        wishlist.addKos(kos);
+        wishlist.addKos(kos); // Duplicate add
+
+        assertEquals(1, wishlist.getKosList().size());
+    }
+
+    @Test
+    public void testRemoveKosFromWishlist() {
+        Kos kos = new Kos();
+        wishlist.addKos(kos);
+        wishlist.removeKos(kos);
+
+        assertFalse(wishlist.getKosList().contains(kos));
+    }
+
+    @Test
+    public void testEmptyInterestedUsersInitially() {
+        assertNotNull(wishlist.getInterestedUsers());
+        assertEquals(0, wishlist.getInterestedUsers().size());
+    }
+}
