@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kos List</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container my-2">
+    <h2>Kos' List</h2>
+    <a th:href="@{/pemilik/create}" class="btn btn-primary btn-sm mb-3">Create Kos</a>
+
+    <table border="1" class="table table-striped table-responsive-md">
+        <thead>
+        <tr>
+            <th scope="col">Nama</th>
+            <th scope="col">Jumlah</th>
+            <th scope="col">Harga</th>
+            <th scope="col">Alamat</th>
+            <th scope="col">Deskripsi</th>
+            <th scope="col">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="kos: ${allKos}">
+            <td th:text="${kos.nama}"></td>
+            <td th:text="${kos.jumlah}"></td>
+            <td th:text="${kos.harga}"></td>
+            <td th:text="${kos.alamat}"></td>
+            <td th:text="${kos.deskripsi}"></td>
+            <td>
+                <a th:href="@{'/pemilik/edit/' + ${kos.id}}" class="btn btn-info btn-sm">Edit</a>
+                <a th:href="@{'/pemilik/delete/' + ${kos.id}}" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</body>
+</html>
