@@ -47,4 +47,12 @@ public class MessageTest {
     void testGetTimestamp() {
         assertEquals(timestamp, message.getTimestamp());
     }
+
+    @Test
+    void testMessageReadStatus() {
+        message.setRead(true);
+        message.setReadAt(LocalDateTime.now());
+        assertTrue(message.isRead());
+        assertNotNull(message.getReadAt());
+    }
 }
