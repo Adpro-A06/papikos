@@ -16,10 +16,9 @@ public class WishlistRepository {
         wishlists.put(wishlist.getId(), wishlist);
         return wishlist;
     }
-    
 
-    public Optional<Wishlist> findById(int id) {
-        return Optional.ofNullable(wishlists.get(id));
+    public Wishlist findById(int id) {
+        return wishlists.get(id);
     }
 
     public List<Wishlist> findAll() {
@@ -31,7 +30,7 @@ public class WishlistRepository {
     }
 
     public void delete(Wishlist wishlist) {
-        wishlists.values().removeIf(w -> 
+        wishlists.values().removeIf(w ->
             Objects.equals(w.getId(), wishlist.getId())
         );
     }
@@ -47,6 +46,13 @@ public class WishlistRepository {
             .filter(w -> Objects.equals(w.getUserId(), userId) &&
                          Objects.equals(w.getKosId(), kosId))
             .findFirst();
+    }
+
+  
+    public boolean existsByUserIdAndKosId(String userId, String kosId) {
+        return wishlists.values().stream()
+            .anyMatch(w -> Objects.equals(w.getUserId(), userId) &&
+                           Objects.equals(w.getKosId(), kosId));
     }
 
     public void clear() {
