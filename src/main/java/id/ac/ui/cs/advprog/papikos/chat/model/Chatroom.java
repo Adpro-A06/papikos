@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.papikos.chat.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Chatroom {
@@ -66,5 +67,14 @@ public class Chatroom {
 
     public void addMessage(Message message) {
         this.messages.add(message);
+    }
+
+    public Message getLastMessage() {
+        if (messages.isEmpty()) {
+            return null;
+        }
+        return messages.stream()
+                .max(Comparator.comparing(Message::getTimestamp))
+                .orElse(null);
     }
 }
