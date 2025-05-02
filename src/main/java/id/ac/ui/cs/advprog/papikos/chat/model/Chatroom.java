@@ -77,4 +77,10 @@ public class Chatroom {
                 .max(Comparator.comparing(Message::getTimestamp))
                 .orElse(null);
     }
+
+    public int getUnreadMessageCount(Long userId) {
+        return (int) messages.stream()
+                .filter(m -> !m.getSenderId().equals(userId) && !m.isRead())
+                .count();
+    }
 }
