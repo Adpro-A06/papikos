@@ -5,7 +5,6 @@ import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
-import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +34,12 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         paymentRepository.save(payment);
-        userRepository.updateBalance(userId, amount);  // Update user balance after top-up
+        userRepository.updateBalance(userId, amount);
+    }
+
+    @Override
+    public BigDecimal getBalance(UUID userId) {
+        return userRepository.getBalance(userId);
     }
 
     @Override
@@ -58,8 +62,8 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         paymentRepository.save(payment);
-        userRepository.updateBalance(fromUserId, amount.negate());  // Deduct balance from Penyewa
-        userRepository.updateBalance(toUserId, amount);  // Add balance to Pemilik Kos
+        userRepository.updateBalance(fromUserId, amount.negate());
+        userRepository.updateBalance(toUserId, amount);
     }
 
     private void validateAmount(BigDecimal amount) {

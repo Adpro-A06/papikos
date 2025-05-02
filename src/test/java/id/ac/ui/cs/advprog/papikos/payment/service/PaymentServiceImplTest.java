@@ -4,99 +4,110 @@ import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
+import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class PaymentServiceImplTest {
+class PaymentServiceImplTest {
 
     @Mock
     private IPaymentRepository paymentRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
-    private UUID userId;
+    private UUID fromUserId;
+    private UUID toUserId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
-    }
-
-    // topUp - Happy Path
-    @Test
-    void topUp_fromZero() {
-        BigDecimal amount = new BigDecimal("50000");
-
-        paymentService.topUp(userId, amount);
-
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
-
-        Payment saved = captor.getValue();
-        assertEquals(userId, saved.getToUserId());
-        assertNull(saved.getFromUserId());
-        assertEquals(amount, saved.getAmount());
-        assertEquals(TransactionType.TOPUP, saved.getType());
-        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
-    }
-
-    // topUp - Unhappy Path
-    @Test
-    void topUp_zeroAmount() {
-        assertThrows(IllegalArgumentException.class, () -> paymentService.topUp(userId, BigDecimal.ZERO));
-        verify(paymentRepository, never()).save(any());
+        MockitoAnnotations.openMocks(this);
+        fromUserId = UUID.randomUUID();
+        toUserId = UUID.randomUUID();
     }
 
     @Test
-    void topUp_negativeAmount() {
-        assertThrows(IllegalArgumentException.class, () -> paymentService.topUp(userId, new BigDecimal("-10000")));
-        verify(paymentRepository, never()).save(any());
+    void testTopUpHappyPath() {
+        BigDecimal amount = new BigDecimal("100");
+
+        paymentService.topUp(fromUserId, amount);
+
+        Mockito.verify(paymentRepository, Mockito.times(1)).save(Mockito.any(Payment.class));
+        Mockito.verify(userRepository, Mockito.times(1)).updateBalance(fromUserId, amount);
     }
 
-    // pay - Happy Path
     @Test
-    void pay_valid() {
-        UUID from = UUID.randomUUID();
-        UUID to = UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("150000");
+    void testTopUpUnhappyPathAmountZero() {
+        BigDecimal amount = BigDecimal.ZERO;
 
-        paymentService.pay(from, to, amount);
-
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
-
-        Payment saved = captor.getValue();
-        assertEquals(from, saved.getFromUserId());
-        assertEquals(to, saved.getToUserId());
-        assertEquals(amount, saved.getAmount());
-        assertEquals(TransactionType.PAYMENT, saved.getType());
-        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
-    }
-
-    // pay - Unhappy Path
-    @Test
-    void pay_zeroAmount() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            paymentService.pay(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.ZERO);
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            paymentService.topUp(fromUserId, amount);
         });
-        verify(paymentRepository, never()).save(any());
+        assertEquals("Amount must be greater than zero", thrown.getMessage());
     }
 
     @Test
-    void pay_negativeAmount() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            paymentService.pay(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("-50000"));
+    void testTopUpUnhappyPathAmountNegative() {
+        BigDecimal amount = new BigDecimal("-50");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            paymentService.topUp(fromUserId, amount);
         });
-        verify(paymentRepository, never()).save(any());
+        assertEquals("Amount must be greater than zero", thrown.getMessage());
+    }
+
+    @Test
+    void testPayHappyPath() {
+        BigDecimal amount = new BigDecimal("50");
+        Mockito.when(userRepository.getBalance(fromUserId)).thenReturn(new BigDecimal("100"));
+
+        paymentService.pay(fromUserId, toUserId, amount);
+
+        Mockito.verify(paymentRepository, Mockito.times(1)).save(Mockito.any(Payment.class));
+        Mockito.verify(userRepository, Mockito.times(1)).updateBalance(fromUserId, amount.negate());
+        Mockito.verify(userRepository, Mockito.times(1)).updateBalance(toUserId, amount);
+    }
+
+    @Test
+    void testPayUnhappyPathInsufficientBalance() {
+        BigDecimal amount = new BigDecimal("150");
+        Mockito.when(userRepository.getBalance(fromUserId)).thenReturn(new BigDecimal("100"));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            paymentService.pay(fromUserId, toUserId, amount);
+        });
+        assertEquals("Insufficient balance", thrown.getMessage());
+    }
+
+    @Test
+    void testPayUnhappyPathAmountZero() {
+        BigDecimal amount = BigDecimal.ZERO;
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            paymentService.pay(fromUserId, toUserId, amount);
+        });
+        assertEquals("Amount must be greater than zero", thrown.getMessage());
+    }
+
+    @Test
+    void testPayUnhappyPathAmountNegative() {
+        BigDecimal amount = new BigDecimal("-50");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            paymentService.pay(fromUserId, toUserId, amount);
+        });
+        assertEquals("Amount must be greater than zero", thrown.getMessage());
     }
 }
