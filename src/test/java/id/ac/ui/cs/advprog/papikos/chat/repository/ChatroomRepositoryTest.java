@@ -5,8 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChatroomRepositoryTest {
 
@@ -38,4 +40,22 @@ class ChatroomRepositoryTest {
         assertEquals(1, result.size());
         assertEquals(202L, result.getFirst().getOwnerId());
     }
+
+    @Test
+    void testFindByRenterIdAndOwnerIdAndPropertyId() {
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(101L, 202L, 303L);
+
+        assertTrue(result.isPresent());
+        assertEquals(101L, result.get().getRenterId());
+        assertEquals(202L, result.get().getOwnerId());
+        assertEquals(303L, result.get().getPropertyId());
+    }
+
+    @Test
+    void testFindByRenterIdAndOwnerIdAndPropertyId_NotFound() {
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(999L, 888L, 777L);
+
+        assertTrue(result.isEmpty());
+    }
+
 }
