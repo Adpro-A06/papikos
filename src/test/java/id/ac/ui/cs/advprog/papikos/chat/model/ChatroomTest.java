@@ -70,4 +70,16 @@ public class ChatroomTest {
         assertEquals(1, chatroom.getMessages().size());
         assertEquals(message, chatroom.getMessages().get(0));
     }
+
+    @Test
+    void testGetLastMessage() {
+        Message newMessage = new Message();
+        newMessage.setId(2L);
+        newMessage.setContent("Newer message");
+        newMessage.setTimestamp(LocalDateTime.now().plusMinutes(5));
+        chatroom.addMessage(newMessage);
+
+        Message lastMessage = chatroom.getLastMessage();
+        assertEquals(newMessage, lastMessage);
+    }
 }
