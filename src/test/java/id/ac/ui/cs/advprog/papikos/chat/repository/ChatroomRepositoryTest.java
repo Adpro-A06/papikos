@@ -29,13 +29,13 @@ class ChatroomRepositoryTest {
     void testFindChatroomsByRenterId() {
         List<Chatroom> result = chatroomRepository.findByRenterId(101L);
         assertEquals(1, result.size());
-        assertEquals(101L, result.get(0).getRenterId());
+        assertEquals(101L, result.getFirst().getRenterId());
     }
 
     @Test
     void testFindChatroomsByOwnerId() {
         List<Chatroom> result = chatroomRepository.findByOwnerId(202L);
         assertEquals(1, result.size());
-        assertEquals(202L, result.get(0).getOwnerId());
+        assertEquals(202L, result.getFirst().getOwnerId());
     }
 }
