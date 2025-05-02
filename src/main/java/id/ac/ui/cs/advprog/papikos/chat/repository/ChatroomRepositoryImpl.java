@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -44,5 +45,14 @@ public class ChatroomRepositoryImpl implements ChatroomRepository {
         return chatrooms.stream()
                 .filter(chatroom -> chatroom.getOwnerId().equals(ownerId))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Chatroom> findByRenterIdAndOwnerIdAndPropertyId(Long renterId, Long ownerId, Long propertyId) {
+        return chatrooms.stream()
+                .filter(c -> c.getRenterId().equals(renterId)
+                        && c.getOwnerId().equals(ownerId)
+                        && c.getPropertyId().equals(propertyId))
+                .findFirst();
     }
 }
