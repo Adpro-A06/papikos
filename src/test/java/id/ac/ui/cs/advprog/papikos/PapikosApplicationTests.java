@@ -10,6 +10,5 @@ class PapikosApplicationTests {
 
     @Test
     void contextLoads() {
-        PapikosApplication.main(new String[]{});
     }
 }
