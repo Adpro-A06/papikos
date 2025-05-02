@@ -9,6 +9,7 @@ public class Message {
     private LocalDateTime timestamp;
     private boolean isRead = false;
     private LocalDateTime readAt;
+    private boolean isEdited = false;
 
     public Message() {
     }
@@ -68,5 +69,14 @@ public class Message {
 
     public void setReadAt(LocalDateTime readAt) {
         this.readAt = readAt;
+    }
+
+    // isEdited flag
+    public boolean isEdited() {
+        return isEdited;
+    }
+
+    public void setEdited(boolean edited) {
+        isEdited = edited;
     }
 }
