@@ -50,8 +50,8 @@ public class Wishlist {
         return kosList;
     }
 
-    public void setKosList(List<Kos> kosUniq) {
-        this.kosList = kosUniq;
+    public void setKosList(List<Kos> kosList) {
+        this.kosList = kosList;
     }
 
     public List<User> getInterestedUsers() {
@@ -63,15 +63,21 @@ public class Wishlist {
     }
 
     public void addKos(Kos kos) {
-        this.kosList.add(kos);
+        if (!this.kosList.contains(kos)) {
+            this.kosList.add(kos);
+        }
+    }
+
+    public void removeKos(Kos kos) {
+        this.kosList.remove(kos);
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String kosUniq) {
-        this.userId = kosUniq;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getKosId() {
@@ -81,9 +87,4 @@ public class Wishlist {
     public void setKosId(String kosId) {
         this.kosId = kosId;
     }
-
-    
-
-   
-    
 }
