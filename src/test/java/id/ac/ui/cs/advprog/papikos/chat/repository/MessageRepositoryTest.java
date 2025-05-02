@@ -30,7 +30,7 @@ class MessageRepositoryTest {
     void testFindMessagesByChatroomId() {
         List<Message> result = messageRepository.findByChatroomIdOrderByTimestampAsc(1L);
         assertEquals(1, result.size());
-        assertEquals("Hello!", result.get(0).getContent());
-        assertEquals(101L, result.get(0).getSenderId());
+        assertEquals("Hello!", result.getFirst().getContent());
+        assertEquals(101L, result.getFirst().getSenderId());
     }
 }
