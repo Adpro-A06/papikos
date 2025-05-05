@@ -1,7 +1,6 @@
-package id.ac.ui.cs.advprog.papikos.wishlist;
+package id.ac.ui.cs.advprog.papikos.wishlist.service;
 
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
-import id.ac.ui.cs.advprog.papikos.kos.model.KosType;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistNotifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,19 +15,16 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 public class WishlistTest {
 
-   
     @Configuration
     static class TestConfig {
         @Bean
-        public wishlistService wishlistService() {
-           
-            return new wishlistService(WishlistNotifier.getInstance());
+        public WishlistService wishlistService() {
+            return new WishlistService(WishlistNotifier.getInstance());
         }
     }
 
-    
     @Autowired
-    private wishlistService wishlistService;
+    private WishlistService wishlistService;
 
     private Wishlist wishlist;
     private Kos kosA;
@@ -37,8 +33,14 @@ public class WishlistTest {
     @BeforeEach
     void setUp() {
         wishlist = new Wishlist("Test Wishlist");
-        kosA = new Kos("K001", "Kos GojoMyLove", KosType.PUTRA);
-        kosB = new Kos("K002", "Kos SatoruMyShayla", KosType.PUTRI);
+
+        kosA = new Kos();
+        kosA.setId("K001");
+        kosA.setNama("Kos GojoMyLove");
+
+        kosB = new Kos();
+        kosB.setId("K002");
+        kosB.setNama("Kos SatoruMyShayla");
     }
 
     @Test
@@ -76,7 +78,7 @@ public class WishlistTest {
         wishlist.addKos(kosA);
         wishlist.addKos(kosA);
         Wishlist actual = wishlistService.createWishlist(wishlist);
-        
+
         assertEquals(1, actual.getKosList().size());
     }
 
@@ -84,7 +86,6 @@ public class WishlistTest {
     void testCreateWishlistWithInvalidName() {
         wishlist.setName("");
         Wishlist actual = wishlistService.createWishlist(wishlist);
-        
         assertNull(actual);
     }
 }

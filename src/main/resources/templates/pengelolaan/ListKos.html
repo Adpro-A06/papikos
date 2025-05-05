@@ -2,42 +2,44 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kos List</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100">
+<div th:insert="~{navbar/navbar_pemilik :: navbar_pemilik}"></div>
 
-<div class="container my-2">
-    <h2>Kos' List</h2>
-    <a th:href="@{/pemilik/create}" class="btn btn-primary btn-sm mb-3">Create Kos</a>
+<div class="container mx-auto my-6 px-4">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Kos' List</h2>
+    <a th:href="@{/pemilik/create}" class="inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-6">Create Kos</a>
 
-    <table border="1" class="table table-striped table-responsive-md">
-        <thead>
-        <tr>
-            <th scope="col">Nama</th>
-            <th scope="col">Jumlah</th>
-            <th scope="col">Harga</th>
-            <th scope="col">Alamat</th>
-            <th scope="col">Deskripsi</th>
-            <th scope="col">Action</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="kos: ${allKos}">
-            <td th:text="${kos.nama}"></td>
-            <td th:text="${kos.jumlah}"></td>
-            <td th:text="${kos.harga}"></td>
-            <td th:text="${kos.alamat}"></td>
-            <td th:text="${kos.deskripsi}"></td>
-            <td>
-                <a th:href="@{'/pemilik/edit/' + ${kos.id}}" class="btn btn-info btn-sm">Edit</a>
-                <a th:href="@{'/pemilik/delete/' + ${kos.id}}" class="btn btn-danger btn-sm">Delete</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+            <thead class="bg-gray-200">
+            <tr>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Nama</th>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Jumlah</th>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Harga</th>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Alamat</th>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Deskripsi</th>
+                <th class="py-3 px-4 text-left text-gray-700 font-semibold">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="kos: ${allKos}" class="border-b hover:bg-gray-50">
+                <td class="py-3 px-4" th:text="${kos.nama}"></td>
+                <td class="py-3 px-4" th:text="${kos.jumlah}"></td>
+                <td class="py-3 px-4" th:text="${kos.harga}"></td>
+                <td class="py-3 px-4" th:text="${kos.alamat}"></td>
+                <td class="py-3 px-4" th:text="${kos.deskripsi}"></td>
+                <td class="py-3 px-4 flex space-x-2">
+                    <a th:href="@{'/pemilik/edit/' + ${kos.id}}" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">Edit</a>
+                    <a th:href="@{'/pemilik/delete/' + ${kos.id}}" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 </body>
 </html>

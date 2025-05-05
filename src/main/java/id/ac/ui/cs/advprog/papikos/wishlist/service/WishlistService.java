@@ -1,17 +1,20 @@
-package id.ac.ui.cs.advprog.papikos.wishlist;
+package id.ac.ui.cs.advprog.papikos.wishlist.service;
 
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistNotifier;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class wishlistService {
+@Service
+public class WishlistService {
 
     private final List<Wishlist> wishlistStorage = new ArrayList<>();
     private final WishlistNotifier notifier;
 
-    public wishlistService(WishlistNotifier notifier) {
+    public WishlistService(WishlistNotifier notifier) {
         this.notifier = notifier;
     }
 

@@ -1,9 +1,9 @@
-package id.ac.ui.cs.advprog.papikos.notification;
+package id.ac.ui.cs.advprog.papikos.notification.service;
 
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.notification.model.Notification;
 import id.ac.ui.cs.advprog.papikos.notification.model.NotificationType;
-import id.ac.ui.cs.advprog.papikos.notification.model.User;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 
 import java.util.ArrayList;
@@ -19,15 +19,16 @@ public class NotificationService {
             throw new IllegalArgumentException("Invalid notification type");
         }
         int count = 0;
+
         if (wishlist.getKosList().contains(kos)) {
             for (User user : wishlist.getInterestedUsers()) {
-                Notification notification = new Notification(
-                    UUID.randomUUID().toString(),
-                    "Kos " + kos.getName() + " sekarang tersedia",
-                    type,
-                    user
+                Notification notif = new Notification(
+                        UUID.randomUUID().toString(),
+                        "Kos " + kos.getNama() + " sekarang tersedia",
+                        type,
+                        user
                 );
-                notifications.add(notification);
+                notifications.add(notif);
                 count++;
             }
         }
@@ -39,13 +40,13 @@ public class NotificationService {
             throw new IllegalArgumentException("Invalid notification type");
         }
         for (User user : users) {
-            Notification notification = new Notification(
-                UUID.randomUUID().toString(),
-                message,
-                type,
-                user
+            Notification notif = new Notification(
+                    UUID.randomUUID().toString(),
+                    message,
+                    type,
+                    user
             );
-            notifications.add(notification);
+            notifications.add(notif);
         }
         return users.size();
     }

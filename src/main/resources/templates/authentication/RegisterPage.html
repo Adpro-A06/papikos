@@ -4,45 +4,303 @@
 <head>
     <meta charset="UTF-8">
     <title>Register - PapiKos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .error {
-            color: red;
+        :root {
+            --primary-blue: #1a73e8;
+            --secondary-blue: #4285f4;
+            --light-blue: #e8f0fe;
+            --hover-blue: #0d47a1;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: var(--text-color);
+            background-color: white;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-help {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .btn-primary {
+            display: block;
+            width: 100%;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            background-color: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #ffcdd2;
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .header {
+            background-color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .login-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .role-option {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .role-option.active {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .role-option .icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary-blue);
+        }
+
+        .role-option .role-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .role-option .role-desc {
+            font-size: 12px;
+            color: #666;
         }
     </style>
 </head>
 
 <body>
-    <h1>Register Akun PapiKos</h1>
-    <p>Silakan masukkan email, password, dan pilih Role untuk mendaftar.</p>
-    <div th:if="${param.error}" class="error">
-        <p th:text="${param.error}">Error message here</p>
+    <header class="header">
+        <div class="nav-container">
+            <a href="#" class="logo">PapiKos</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="logo-container">
+            <a href="#" class="logo">Register Form</a>
+        </div>
+
+        <h1>Daftar Akun PapiKos</h1>
+        <p class="subtitle">Silakan isi data berikut untuk membuat akun baru</p>
+
+        <div th:if="${error}" class="alert alert-danger">
+            <p th:text="${error}">Error message here</p>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success">
+            <p th:text="${success}">Success message here</p>
+        </div>
+
+        <form th:action="@{/api/auth/register}" method="post">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Masukkan email"
+                    required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control"
+                    placeholder="Masukkan password" required="required" />
+                <small class="form-help">Password harus mengandung kombinasi huruf, angka, dan karakter khusus.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Pilih Peran</label>
+                <div class="role-selector">
+                    <div class="role-option active" onclick="selectRole('PENYEWA', this)">
+                        <div class="icon">👤</div>
+                        <div class="role-title">Penyewa</div>
+                        <div class="role-desc">Mencari kamar kos</div>
+                    </div>
+                    <div class="role-option" onclick="selectRole('PEMILIK_KOS', this)">
+                        <div class="icon">🏠</div>
+                        <div class="role-title">Pemilik Kos</div>
+                        <div class="role-desc">Mengelola kamar kos</div>
+                    </div>
+                </div>
+                <select id="role" name="role" required="required" class="form-control" style="display: none;">
+                    <option value="PENYEWA" selected>Penyewa</option>
+                    <option value="PEMILIK_KOS">Pemilik Kos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn-primary">Daftar Sekarang</button>
+            </div>
+        </form>
+
+        <div class="login-link">
+            <p>Sudah punya akun? <a th:href="@{/api/auth/login}">Masuk</a></p>
+        </div>
     </div>
 
-    <form th:action="@{/api/auth/register}" method="post">
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" placeholder="Masukkan email" required="required" />
-        </div>
-        <br />
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" placeholder="Masukkan password" required="required" />
-        </div>
-        <br />
-        <div>
-            <label for="role">Pilih Peran:</label>
-            <select id="role" name="role" required="required">
-                <option value="PENYEWA">Penyewa</option>
-                <option value="PEMILIK_KOS">Pemilik Kos</option>
-                <option value="ADMIN">Admin</option>
-            </select>
-        </div>
-        <br />
-        <div>
-            <button type="submit">Register</button>
-        </div>
-    </form>
-    <p>Sudah punya akun? <a th:href="@{/api/auth/login}">Login</a></p>
+    <script>
+        function selectRole(role, element) {
+            document.querySelectorAll('.role-option').forEach(el => {
+                el.classList.remove('active');
+            });
+            element.classList.add('active');
+            document.getElementById('role').value = role;
+        }
+    </script>
 </body>
 
 </html>

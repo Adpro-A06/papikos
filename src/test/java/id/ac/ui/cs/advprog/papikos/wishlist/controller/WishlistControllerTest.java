@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.wishlist.controller;
 
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
-import id.ac.ui.cs.advprog.papikos.wishlist.wishlistService;
+import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ public class WishlistControllerTest {
 
     @SuppressWarnings("removal")
     @MockBean
-    private wishlistService wishlistService;
+    private WishlistService wishlistService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private Wishlist validWishlist;

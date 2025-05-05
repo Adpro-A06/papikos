@@ -1,16 +1,242 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemilik Kos Dashboard - PapiKos</title>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --secondary-blue: #4285f4;
+            --light-blue: #e8f0fe;
+            --hover-blue: #0d47a1;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --dark-gray: #757575;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: var(--text-color);
+            background-color: #f9fafb;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--dark-gray);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-logout:hover {
+            color: var(--primary-blue);
+        }
+
+        .logout-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .btn-icon {
+            margin-right: 8px;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
+            border-radius: 8px;
+            color: white;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .welcome-banner h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .welcome-banner p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .warning-banner {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .warning-banner strong {
+            margin-right: 10px;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Selamat Datang, Pemilik Kos!</h1>
-    <p>Halaman ini untuk mengelola kos yang Anda daftarkan.</p>
-    <div th:if="${!approved}">
-        <p style="color: red;">Akun Anda belum disetujui oleh admin, Anda tidak dapat menambahkan kos.</p>
-    </div>
-    <br/>
-    <a th:href="@{/api/auth/logout}">Logout</a>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">PapiKos</div>
+            <div class="header-title">Dashboard Pemilik Kos</div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-avatar">P</div>
+                    <span class="user-name">Pemilik</span>
+                </div>
+                <form th:action="@{/api/auth/logout}" method="post">
+                    <button type="submit" class="btn-logout">
+                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div th:if="${!approved}" class="warning-banner">
+            <strong>Perhatian!</strong> Akun Anda belum disetujui oleh admin. Anda tidak dapat menambah atau mengelola
+            kos sampai akun Anda disetujui.
+        </div>
+
+        <div class="welcome-banner">
+            <h2>Selamat Datang, Pemilik Kos!</h2>
+            <p>Halaman utama untuk mengelola kos Anda.</p>
+        </div>
+    </main>
 </body>
+
 </html>
