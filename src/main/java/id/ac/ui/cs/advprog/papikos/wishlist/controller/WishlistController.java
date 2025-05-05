@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.wishlist.controller;
 
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
-import id.ac.ui.cs.advprog.papikos.wishlist.wishlistService;
+import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/wishlists")
 public class WishlistController {
 
-    private final wishlistService wishlistService;
+    private final WishlistService wishlistService;
 
-    public WishlistController(wishlistService wishlistService) {
+    public WishlistController(WishlistService wishlistService) {
         this.wishlistService = wishlistService;
     }
 

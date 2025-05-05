@@ -18,7 +18,7 @@
         <p th:text="${param.error}">Error message here</p>
     </div>
 
-    <form th:action="@{/api/auth/login}" method="post">
+    <form th:action="@{/login}" method="post">
         <div>
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" placeholder="Masukkan email" required="required" />

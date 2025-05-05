@@ -1,9 +1,12 @@
 package id.ac.ui.cs.advprog.papikos.wishlist.observer;
 
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class WishlistNotifier implements WishlistSubject {
 
     private static WishlistNotifier instance;

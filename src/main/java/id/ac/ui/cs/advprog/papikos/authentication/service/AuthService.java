@@ -9,4 +9,6 @@ public interface AuthService {
     String login(String email, String password);
     void logout(String token);
     boolean approvePemilikKos(UUID userId);
+    String decodeToken(String token);
+    User findById(UUID uuid);
 }

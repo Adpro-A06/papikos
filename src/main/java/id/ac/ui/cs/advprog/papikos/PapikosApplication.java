@@ -9,5 +9,4 @@ public class PapikosApplication {
     public static void main(String[] args) {
         SpringApplication.run(PapikosApplication.class, args);
     }
-
 }
