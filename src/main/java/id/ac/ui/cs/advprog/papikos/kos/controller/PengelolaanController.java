@@ -19,11 +19,6 @@ public class PengelolaanController {
         this.service = service;
     }
 
-    @GetMapping("/mainpage")
-    public String mainPage(Model model) {
-        return "home/PemilikKosHome";
-    }
-
     @GetMapping("/create")
     public String createKosPage(Model model) {
         Kos kos = new Kos();
@@ -56,7 +51,7 @@ public class PengelolaanController {
         }
         catch (PengelolaanRepository.KosNotFoundException e) {
             System.out.println("kos not found");
-            return "error/KosNotFound";
+            return "pengelolaan/error/KosNotFound";
         }
     }
 
@@ -79,7 +74,7 @@ public class PengelolaanController {
             service.delete(kos);
             return "redirect:daftarkos";
         } catch (PengelolaanRepository.KosNotFoundException e) {
-            return "error/KosNotFound";
+            return "pengelolaan/error/KosNotFound";
         }
     }
 }

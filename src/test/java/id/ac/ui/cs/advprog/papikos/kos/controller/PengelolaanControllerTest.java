@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.ui.Model;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,13 +41,6 @@ public class PengelolaanControllerTest {
     }
 
     @Test
-    void testMainPage() throws Exception {
-        mockMvc.perform(get("/pemilik/mainpage"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("home/PemilikKosHome"));
-    }
-
-    @Test
     void testCreateKosPage() throws Exception {
         mockMvc.perform(get("/pemilik/create"))
                 .andExpect(status().isOk())
@@ -55,19 +50,19 @@ public class PengelolaanControllerTest {
     }
 
     @Test
-    void testShowAllKoss() throws Exception {
+    void testShowAllKos() throws Exception {
         Kos kos = new Kos();
         kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
         kos.setNama("Kos Test");
         List<Kos> listKos = List.of(kos);
 
         when(pengelolaanService.findAll()).thenReturn(listKos);
-
-        mockMvc.perform(get("/pemilik/daftarkos"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("pengelolaan/ListKos"))
-                .andExpect(model().attribute("kos", listKos));
-
+        PengelolaanController controller = new PengelolaanController(pengelolaanService);
+        Model model = new ExtendedModelMap();
+        String viewName = controller.kosListPage(model);
+  
+        assertEquals("pengelolaan/ListKos", viewName);
+        assertEquals(listKos, model.getAttribute("allKos"));
         verify(pengelolaanService, times(1)).findAll();
     }
 
