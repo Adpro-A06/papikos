@@ -181,11 +181,12 @@ public class PengelolaanControllerTest {
         when(pengelolaanService.findById(kos.getId())).thenReturn(kos);
         doNothing().when(pengelolaanService).delete(any(Kos.class));
 
-        mockMvc.perform(get("/pemilik/delete/{id}", kos.getId()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("daftarkos"));
+        mockMvc.perform(post("/pemilik/delete/{id}", kos.getId())) // Ganti GET menjadi POST
+                .andExpect(status().is3xxRedirection()) // Pastikan status adalah 3xx (Redirection)
+                .andExpect(redirectedUrl("/pemilik/daftarkos")); // Redirect ke /pemilik/daftarkos
 
         verify(pengelolaanService, times(1)).findById(kos.getId());
         verify(pengelolaanService, times(1)).delete(any(Kos.class));
     }
+
 }
