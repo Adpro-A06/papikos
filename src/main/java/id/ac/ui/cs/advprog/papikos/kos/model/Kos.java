@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.kos.model;
 
 import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.StatusPenyewaan;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -87,12 +88,17 @@ public class Kos {
     }
 
     public int getJumlahTersedia() {
-        long jumlahTersewa = penyewaan.stream()
-                .filter(p -> "APPROVED".equals(p.getStatus()))
-                .count();
-        
-        return jumlah - (int) jumlahTersewa;
-    }
+    long jumlahTersewa = penyewaan.stream()
+            .filter(p -> {
+                if (p.getStatus() instanceof StatusPenyewaan) {
+                    return StatusPenyewaan.APPROVED.equals(p.getStatus());
+                }
+                return false;
+            })
+            .count();
+    
+    return jumlah - (int) jumlahTersewa;
+}
     
     public boolean isAvailable() {
         return "AVAILABLE".equals(status) && getJumlahTersedia() > 0;
