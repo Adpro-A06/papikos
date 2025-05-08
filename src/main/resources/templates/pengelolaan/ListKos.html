@@ -323,158 +323,160 @@
 </head>
 
 <body>
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">PapiKos</div>
-            <div class="header-title">Daftar Kos</div>
-            <div class="user-menu">
-                <div class="user-info">
-                    <div class="user-avatar">P</div>
-                    <span class="user-name">Pemilik</span>
-                </div>
-                <form th:action="@{/api/auth/logout}" method="post">
-                    <button type="submit" class="btn-logout">
-                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        <span>Logout</span>
-                    </button>
-                </form>
+<header class="header">
+    <div class="header-container">
+        <div class="logo">PapiKos</div>
+        <div class="header-title">Daftar Kos</div>
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar">P</div>
+                <span class="user-name">Pemilik</span>
             </div>
-        </div>
-    </header>
-
-    <main class="main-content">
-        <a href="#" th:href="@{/pemilik/home}" class="back-link">
-            <svg class="back-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5"></path>
-                <path d="M12 19l-7-7 7-7"></path>
-            </svg>
-            Kembali ke Dashboard
-        </a>
-
-        <div class="content-card">
-            <div class="card-title">
-                <span>Daftar Properti Kos</span>
-                <a th:href="@{/pemilik/create}" class="btn">
-                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
+            <form th:action="@{/api/auth/logout}" method="post">
+                <button type="submit" class="btn-logout">
+                    <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
-                    Tambah Kos Baru
-                </a>
-            </div>
-
-            <div th:if="${#lists.isEmpty(allKos)}" class="empty-state">
-                <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                    <line x1="9" y1="21" x2="9" y2="9"></line>
-                </svg>
-                <h3 class="empty-title">Belum Ada Kos</h3>
-                <p class="empty-description">Anda belum menambahkan properti kos apapun.
-                    Mulai tambahkan kos untuk ditampilkan di sini.</p>
-                <a th:href="@{/pemilik/create}" class="btn">
-                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Tambah Kos Pertama Anda
-                </a>
-            </div>
-
-            <div th:if="${not #lists.isEmpty(allKos)}">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nama</th>
-                            <th>Jumlah</th>
-                            <th>Harga</th>
-                            <th>Alamat</th>
-                            <th>Deskripsi</th>
-                            <th>Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="kos: ${allKos}">
-                            <td th:text="${kos.nama}"></td>
-                            <td th:text="${kos.jumlah}"></td>
-                            <td th:text="${#numbers.formatCurrency(kos.harga)}"></td>
-                            <td th:text="${kos.alamat}"></td>
-                            <td class="td-truncate" th:title="${kos.deskripsi}" th:text="${kos.deskripsi}"></td>
-                            <td class="td-actions">
-                                <a th:href="@{/pemilik/edit/{id}(id=${kos.id})}" class="btn">
-                                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                    Edit
-                                </a>
-                                <button type="button" onclick="confirmDelete(this)" th:data-id="${kos.id}"
-                                    th:data-name="${kos.nama}" class="btn btn-danger">
-                                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path
-                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                        </path>
-                                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                                    </svg>
-                                    Hapus
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal Konfirmasi -->
-    <div id="deleteModal" class="modal modal-hidden">
-        <div class="modal-content">
-            <h3 class="modal-title">Konfirmasi Hapus</h3>
-            <p id="deleteMessage" class="modal-message">Apakah Anda yakin ingin menghapus kos ini?</p>
-            <div class="modal-actions">
-                <button onclick="closeModal()" class="btn">Batal</button>
-                <form id="deleteForm" method="GET" action="#">
-                    <button type="submit" class="btn btn-danger">Hapus</button>
-                </form>
-            </div>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
     </div>
+</header>
 
-    <script>
-        function confirmDelete(button) {
-            const id = button.getAttribute('data-id');
-            const name = button.getAttribute('data-name');
-            document.getElementById('deleteMessage').textContent = `Apakah Anda yakin ingin menghapus kos "${name}"?`;
-            document.getElementById('deleteForm').action = `/pemilik/delete/${id}`;
-            document.getElementById('deleteModal').classList.remove('modal-hidden');
-        }
+<main class="main-content">
+    <a href="#" th:href="@{/pemilik/home}" class="back-link">
+        <svg class="back-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        Kembali ke Dashboard
+    </a>
 
-        function closeModal() {
-            document.getElementById('deleteModal').classList.add('modal-hidden');
-        }
+    <div class="content-card">
+        <div class="card-title">
+            <span>Daftar Properti Kos</span>
+            <a th:href="@{/pemilik/create}" class="btn">
+                <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Tambah Kos Baru
+            </a>
+        </div>
 
-        window.onclick = function (event) {
-            const modal = document.getElementById('deleteModal');
-            if (event.target === modal) {
-                closeModal();
-            }
+        <div th:if="${#lists.isEmpty(allKos)}" class="empty-state">
+            <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+            <h3 class="empty-title">Belum Ada Kos</h3>
+            <p class="empty-description">Anda belum menambahkan properti kos apapun.
+                Mulai tambahkan kos untuk ditampilkan di sini.</p>
+            <a th:href="@{/pemilik/create}" class="btn">
+                <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Tambah Kos Pertama Anda
+            </a>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(allKos)}">
+            <table>
+                <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Jumlah</th>
+                    <th>Harga</th>
+                    <th>Alamat</th>
+                    <th>Deskripsi</th>
+                    <th>URL Foto</th>
+                    <th>Tindakan</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="kos: ${allKos}">
+                    <td th:text="${kos.nama}"></td>
+                    <td th:text="${kos.jumlah}"></td>
+                    <td th:text="${#numbers.formatCurrency(kos.harga)}"></td>
+                    <td th:text="${kos.alamat}"></td>
+                    <td class="td-truncate" th:title="${kos.deskripsi}" th:text="${kos.deskripsi}"></td>
+                    <td class="td-truncate" th:title="${kos.url_foto}" th:text="${kos.url_foto}"></td>
+                    <td class="td-actions">
+                        <a th:href="@{/pemilik/edit/{id}(id=${kos.id})}" class="btn">
+                            <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Edit
+                        </a>
+                        <button type="button" onclick="confirmDelete(this)" th:data-id="${kos.id}"
+                                th:data-name="${kos.nama}" class="btn btn-danger">
+                            <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            Hapus
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Konfirmasi -->
+<div id="deleteModal" class="modal modal-hidden">
+    <div class="modal-content">
+        <h3 class="modal-title">Konfirmasi Hapus</h3>
+        <p id="deleteMessage" class="modal-message">Apakah Anda yakin ingin menghapus kos ini?</p>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn">Batal</button>
+            <form id="deleteForm" method="GET" action="#">
+                <button type="submit" class="btn btn-danger">Hapus</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(button) {
+        const id = button.getAttribute('data-id');
+        const name = button.getAttribute('data-name');
+        document.getElementById('deleteMessage').textContent = `Apakah Anda yakin ingin menghapus kos "${name}"?`;
+        document.getElementById('deleteForm').action = `/pemilik/delete/${id}`;
+        document.getElementById('deleteModal').classList.remove('modal-hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('deleteModal').classList.add('modal-hidden');
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target === modal) {
+            closeModal();
         }
-    </script>
+    }
+</script>
 </body>
 
 </html>
