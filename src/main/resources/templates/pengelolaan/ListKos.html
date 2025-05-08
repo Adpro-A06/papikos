@@ -410,7 +410,13 @@
                     <td th:text="${#numbers.formatCurrency(kos.harga)}"></td>
                     <td th:text="${kos.alamat}"></td>
                     <td class="td-truncate" th:title="${kos.deskripsi}" th:text="${kos.deskripsi}"></td>
-                    <td class="td-truncate" th:title="${kos.url_foto}" th:text="${kos.url_foto}"></td>
+                    <td>
+                        <img th:if="${kos.url_foto} != null and ${kos.url_foto} != ''"
+                             th:src="${kos.url_foto}"
+                             alt="Foto Kos"
+                             style="max-width: 100px; max-height: 100px; object-fit: cover;" />
+                        <span th:if="${kos.url_foto} == null or ${kos.url_foto} == ''">Tidak ada foto</span>
+                    </td>
                     <td class="td-actions">
                         <a th:href="@{/pemilik/edit/{id}(id=${kos.id})}" class="btn">
                             <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -443,15 +449,16 @@
     </div>
 </main>
 
-<!-- Modal Konfirmasi -->
 <div id="deleteModal" class="modal modal-hidden">
     <div class="modal-content">
         <h3 class="modal-title">Konfirmasi Hapus</h3>
         <p id="deleteMessage" class="modal-message">Apakah Anda yakin ingin menghapus kos ini?</p>
         <div class="modal-actions">
             <button onclick="closeModal()" class="btn">Batal</button>
-            <form id="deleteForm" method="GET" action="#">
+            <form id="deleteForm" method="POST" action="#">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf != null}" />
                 <button type="submit" class="btn btn-danger">Hapus</button>
+
             </form>
         </div>
     </div>
@@ -461,6 +468,7 @@
     function confirmDelete(button) {
         const id = button.getAttribute('data-id');
         const name = button.getAttribute('data-name');
+        console.log('DEBUG: Deleting Kos with ID = ' + id); // Debug log
         document.getElementById('deleteMessage').textContent = `Apakah Anda yakin ingin menghapus kos "${name}"?`;
         document.getElementById('deleteForm').action = `/pemilik/delete/${id}`;
         document.getElementById('deleteModal').classList.remove('modal-hidden');

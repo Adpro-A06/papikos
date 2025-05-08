@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/pemilik")
@@ -38,6 +39,9 @@ public class PengelolaanController {
 
     @PostMapping("/create")
     public String createKosPost(@ModelAttribute Kos kos, Model model) {
+        if (kos.getId() == null || kos.getId().isEmpty()) {
+            kos.setId(UUID.randomUUID().toString());
+        }
         service.create(kos);
         return "redirect:daftarkos";
     }
@@ -58,7 +62,6 @@ public class PengelolaanController {
     @PostMapping("/edit/{id}")
     public String editKosPost(@PathVariable String id, @ModelAttribute Kos kos, Model model) {
         try {
-            kos.setId(id);
             service.update(kos);
             return "redirect:/pemilik/daftarkos";
         }
@@ -67,13 +70,14 @@ public class PengelolaanController {
         }
     }
 
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteKos(@PathVariable String id, Model model) {
         try {
             Kos kos = service.findById(id);
             service.delete(kos);
-            return "redirect:daftarkos";
+            return "redirect:/pemilik/daftarkos";
         } catch (PengelolaanRepository.KosNotFoundException e) {
+            model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");
             return "pengelolaan/error/KosNotFound";
         }
     }
