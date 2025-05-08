@@ -11,7 +11,6 @@ public class Kos {
     private int jumlah;
     private int harga;
     private String status;
-    private String url_foto;
 
     public String getId() {
         return id;
@@ -68,8 +67,4 @@ public class Kos {
     public void setStatus(String status) {
         this.status = status;
     }
-
-    public String getUrl_foto() {return url_foto;}
-
-    public void setUrl_foto(String url_foto) {this.url_foto = url_foto;}
 }
