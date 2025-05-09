@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
+    List<Kos> id(UUID id);
 
     default Kos create(Kos kos) {
         if (kos == null) {
@@ -45,7 +46,9 @@ public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
         deleteById(kos.getId());
     }
 
-    List<Kos> id(UUID id);
+    default List<Kos> findAllOrThrow() {
+        return findAll();
+    }
 
     class KosNotFoundException extends RuntimeException {
         public KosNotFoundException(String message) {

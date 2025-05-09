@@ -24,7 +24,7 @@ public class PengelolaanServiceImpl implements PengelolaanService {
 
     @Override
     public List<Kos> findAll() {
-        return pengelolaanRepository.findAll();
+        return pengelolaanRepository.findAllOrThrow();
     }
 
     @Override
