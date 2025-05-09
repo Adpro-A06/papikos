@@ -57,5 +57,4 @@ class ChatroomRepositoryTest {
 
         assertTrue(result.isEmpty());
     }
-
 }
