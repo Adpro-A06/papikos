@@ -2,16 +2,26 @@ package id.ac.ui.cs.advprog.papikos.chat.service;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
+import id.ac.ui.cs.advprog.papikos.chat.repository.MessageRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class MessageServiceImpl implements MessageService {
     private final ChatroomService  chatroomService;
     private final ChatCommandService chatCommandService;
+    private final MessageRepository messageRepository;
 
-    public MessageServiceImpl(ChatroomService chatroomService, ChatCommandService chatCommandService) {
+    public MessageServiceImpl(ChatroomService chatroomService, ChatCommandService chatCommandService, MessageRepository messageRepository) {
         this.chatroomService    = chatroomService;
         this.chatCommandService = chatCommandService;
+        this.messageRepository  = messageRepository;
+    }
+
+    @Override
+    public List<Message> getMessagesByChatroomId(Long chatroomId) {
+        return messageRepository.findByChatroomIdOrderByTimestampDesc(chatroomId);
     }
 
     @Override

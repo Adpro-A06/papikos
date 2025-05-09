@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.chat.model.Message;
 import java.util.List;
 
 public interface MessageService {
+    List<Message> getMessagesByChatroomId(Long chatroomId);
     Message sendMessage(Long chatroomId, Long senderId, String content);
     Message editMessage(Long chatroomId, Long messageId, String newContent);
     boolean deleteMessage(Long chatroomId, Long messageId);
