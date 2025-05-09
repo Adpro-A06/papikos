@@ -34,6 +34,11 @@ public class ChatroomRepositoryImpl implements ChatroomRepository {
     }
 
     @Override
+    public Optional<Chatroom> findById(Long id) {
+        return chatrooms.stream().filter(chatroom -> chatroom.getId().equals(id)).findFirst();
+    }
+
+    @Override
     public List<Chatroom> findByRenterId(Long renterId) {
         return chatrooms.stream()
                 .filter(chatroom -> chatroom.getRenterId().equals(renterId))
