@@ -36,9 +36,6 @@ public class User {
     @Getter @Setter
     private boolean approved;
 
-    @Getter @Setter
-    private BigDecimal balance = BigDecimal.ZERO;
-
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
             Pattern.CASE_INSENSITIVE);
