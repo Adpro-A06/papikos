@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MessageRepositoryTest {
 
-    private MessageRepository messageRepository;
+    private MessageRepositoryImpl messageRepository;
 
     @BeforeEach
     void setUp() {
@@ -28,7 +28,7 @@ class MessageRepositoryTest {
 
     @Test
     void testFindMessagesByChatroomId() {
-        List<Message> result = messageRepository.findByChatroomIdOrderByTimestampAsc(1L);
+        List<Message> result = messageRepository.findByChatroomIdOrderByTimestampDesc(1L);
         assertEquals(1, result.size());
         assertEquals("Hello!", result.getFirst().getContent());
         assertEquals(101L, result.getFirst().getSenderId());
