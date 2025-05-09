@@ -87,7 +87,7 @@ public class ChatCommandServiceTest {
         assertEquals(2, chatroom.getMessages().size());
 
         // Undo operasi send
-        boolean undone = chatCommandService.undoLastCommand();
+        boolean undone = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
 
         // Verifikasi message sudah diremove
         assertTrue(undone);
@@ -105,7 +105,7 @@ public class ChatCommandServiceTest {
         assertEquals("Temporary edit", message.getContent());
 
         // Undo operasi edit
-        boolean undone = chatCommandService.undoLastCommand();
+        boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
 
         // Verifikasi content message direstore
         assertTrue(undone);
@@ -119,7 +119,7 @@ public class ChatCommandServiceTest {
         assertEquals(0, chatroom.getMessages().size());
 
         // Undo operasi delete
-        boolean undone = chatCommandService.undoLastCommand();
+        boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
 
         // Verifikasi pesan sudah direstore
         assertTrue(undone);
