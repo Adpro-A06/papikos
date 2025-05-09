@@ -1,59 +1,50 @@
 package id.ac.ui.cs.advprog.papikos.kos.repository;
 
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.UUID;
 
 @Repository
-public class PengelolaanRepository {
-    private List<Kos> kosData = new ArrayList<>();
+public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
 
-    public Kos create(Kos kos) {
-        if (kos.getId() == null) {
-            String id = UUID.randomUUID().toString();
-            kos.setId(id);
+    default Kos create(Kos kos) {
+        if (kos == null) {
+            throw new IllegalArgumentException("Objek Kos tidak boleh null");
         }
-        kosData.add(kos);
-        return kos;
+        return save(kos);
     }
 
-    public Iterator<Kos> findAll() {
-        return kosData.iterator();
-    }
-
-    public Kos findById(String id) {
-        for (Kos kos : kosData) {
-            if (kos.getId().equals(id)) {
-                return kos;
-            }
+    default Kos findByIdOrThrow(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID tidak boleh null");
         }
-        throw new KosNotFoundException("Kos dengan ID " + id + " tidak ditemukan.");
+        return findById(id)
+                .orElseThrow(() -> new KosNotFoundException("Kos dengan ID " + id + " tidak ditemukan."));
     }
 
-    public Kos update(Kos kos) {
-        for (int i = 0; i < kosData.size(); i++) {
-            if (kosData.get(i).getId().equals(kos.getId())) {
-                kosData.set(i, kos);
-                return kos;
-            }
+    default Kos update(Kos kos) {
+        if (kos == null || kos.getId() == null) {
+            throw new IllegalArgumentException("Objek Kos atau ID tidak boleh null");
         }
-        throw new KosNotFoundException("Kos dengan ID " + kos.getId() + " tidak ditemukan.");
-    }
-
-    public void delete(Kos kos) {
-        Iterator<Kos> iterator = kosData.iterator();
-        while (iterator.hasNext()) {
-            Kos existingKos = iterator.next();
-            if (existingKos.getId().equals(kos.getId())) {
-                iterator.remove();
-                return;
-            }
+        if (!existsById(kos.getId())) {
+            throw new KosNotFoundException("Kos dengan ID " + kos.getId() + " tidak ditemukan.");
         }
-        throw new KosNotFoundException("Kos dengan ID " + kos.getId() + " tidak ditemukan.");
+        return save(kos);
     }
 
-    public static class KosNotFoundException extends RuntimeException {
+    default void delete(Kos kos) {
+        if (kos == null || kos.getId() == null) {
+            throw new IllegalArgumentException("Objek Kos atau ID tidak boleh null");
+        }
+        if (!existsById(kos.getId())) {
+            throw new KosNotFoundException("Kos dengan ID " + kos.getId() + " tidak ditemukan.");
+        }
+        deleteById(kos.getId());
+    }
+
+    class KosNotFoundException extends RuntimeException {
         public KosNotFoundException(String message) {
             super(message);
         }

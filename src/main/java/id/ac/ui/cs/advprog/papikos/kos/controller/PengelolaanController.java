@@ -7,13 +7,17 @@ import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Controller
@@ -58,15 +62,15 @@ public class PengelolaanController {
         }
 
         List<Kos> allKos = service.findAll();
-        for (Kos kos : allKos) {
-            System.out.println("DEBUG: ID Kos = " + kos.getId());  // Debug ID di controller
-        }
-        model.addAttribute("allKos", allKos);
+        List<Kos> filteredKos = allKos.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        model.addAttribute("allKos", filteredKos);
         return "pengelolaan/ListKos";
     }
 
     @PostMapping("/create")
-    public String createKosPost(@ModelAttribute Kos kos, Model model, HttpSession session, RedirectAttributes ra) {
+    public String createKosPost(@Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -77,11 +81,20 @@ public class PengelolaanController {
             return "redirect:/api/auth/login";
         }
 
-        if (kos.getId() == null || kos.getId().isEmpty()) {
-            kos.setId(UUID.randomUUID().toString());
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("kos", kos);
+            return "pengelolaan/CreateKos";
         }
-        service.create(kos);
-        return "redirect:daftarkos";
+
+        try {
+            kos.setPemilik(user);
+            service.create(kos);
+            ra.addFlashAttribute("success", "Kos berhasil dibuat");
+            return "redirect:daftarkos";
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Gagal membuat kos: " + e.getMessage());
+            return "redirect:/pemilik/create";
+        }
     }
 
     @GetMapping("/edit/{id}")
@@ -100,15 +113,14 @@ public class PengelolaanController {
             Kos kos = service.findById(id);
             model.addAttribute("kos", kos);
             return "pengelolaan/EditKos";
-        }
-        catch (PengelolaanRepository.KosNotFoundException e) {
+        } catch (PengelolaanRepository.KosNotFoundException e) {
             System.out.println("kos not found");
             return "pengelolaan/error/KosNotFound";
         }
     }
 
     @PostMapping("/edit/{id}")
-    public String editKosPost(@PathVariable String id, @ModelAttribute Kos kos, Model model, HttpSession session, RedirectAttributes ra) {
+    public String editKosPost(@PathVariable String id, @Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -119,12 +131,22 @@ public class PengelolaanController {
             return "redirect:/api/auth/login";
         }
 
-        try {
-            service.update(kos);
-            return "redirect:/pemilik/daftarkos";
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("kos", kos);
+            return "pengelolaan/EditKos";
         }
-        catch (PengelolaanRepository.KosNotFoundException e) {
+
+        try {
+            kos.setId(UUID.fromString(id));
+            kos.setPemilik(user);
+            service.update(kos);
+            ra.addFlashAttribute("success", "Kos berhasil diperbarui");
+            return "redirect:/pemilik/daftarkos";
+        } catch (PengelolaanRepository.KosNotFoundException e) {
             return "pengelolaan/error/KosNotFound";
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Gagal memperbarui kos: " + e.getMessage());
+            return "redirect:/pemilik/edit/" + id;
         }
     }
 
@@ -143,6 +165,7 @@ public class PengelolaanController {
         try {
             Kos kos = service.findById(id);
             service.delete(kos);
+            ra.addFlashAttribute("success", "Kos berhasil dihapus");
             return "redirect:/pemilik/daftarkos";
         } catch (PengelolaanRepository.KosNotFoundException e) {
             model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");

@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "kos")
@@ -30,8 +31,8 @@ public class Kos {
     @Id
     @GeneratedValue(generator = "uuid")
     @GenericGenerator(name = "uuid", strategy = "uuid2")
-    @Column(name = "id", updatable = false, nullable = false)
-    private String id;
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+    private UUID id;
 
     @NotBlank(message = "Nama kos tidak boleh kosong")
     @Size(max = 100, message = "Nama kos maksimal 100 karakter")
@@ -46,10 +47,11 @@ public class Kos {
     @Column(nullable = false)
     private String alamat;
 
+    @NotBlank(message = "Deskripsi tidak boleh kosong")
     @Size(max = 1000, message = "Deskripsi maksimal 1000 karakter")
     @Pattern(regexp = "^[A-Za-z0-9\\s.,\\-:()\"'/!?*@]+$",
             message = "Deskripsi mengandung karakter yang tidak diperbolehkan")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String deskripsi;
 
     @Min(value = 1, message = "Jumlah kamar minimal 1")
@@ -60,11 +62,13 @@ public class Kos {
     @Column(nullable = false)
     private int harga;
 
-    @Column(length = 20)
+    @NotBlank(message = "Status tidak boleh kosong")
+    @Column(length = 20, nullable = false)
     private String status;
 
-    @Column(nullable = false)
-    private String url_foto;
+    @NotBlank(message = "URL foto tidak boleh kosong")
+    @Column(name = "url_foto", nullable = false)
+    private String urlFoto;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pemilik_id")
@@ -83,6 +87,9 @@ public class Kos {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = "AVAILABLE";
+        }
     }
 
     @PreUpdate
