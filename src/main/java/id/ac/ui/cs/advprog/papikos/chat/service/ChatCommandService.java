@@ -33,7 +33,7 @@ public class ChatCommandService {
         return command.isSuccessful();
     }
 
-    public boolean undoLastCommand() {
+    public boolean undoLastCommand(Chatroom chatroom, Long messageId) {
         if (!commandHistory.isEmpty()) {
             Command command = commandHistory.pop();
             command.undo();
