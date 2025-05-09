@@ -46,10 +46,8 @@ public class PaymentServiceImpl implements PaymentService {
                 "Top-up balance"
         );
 
-        // Update wallet balance
         wallet.addBalance(amount);
 
-        // Save both records
         walletRepository.save(wallet);
         paymentRepository.save(payment);
     }
@@ -69,16 +67,13 @@ public class PaymentServiceImpl implements PaymentService {
         validateUserExists(fromUserId);
         validateUserExists(toUserId);
 
-        // Get wallets
         Wallet fromWallet = getOrCreateWallet(fromUserId);
         Wallet toWallet = getOrCreateWallet(toUserId);
 
-        // Check balance
         if (fromWallet.getBalance().compareTo(amount) < 0) {
             throw new IllegalArgumentException("Saldo tidak mencukupi");
         }
 
-        // Create payment record
         Payment payment = new Payment(
                 fromUserId,
                 toUserId,
@@ -89,11 +84,9 @@ public class PaymentServiceImpl implements PaymentService {
                 "Pembayaran kos"
         );
 
-        // Update wallets
         fromWallet.subtractBalance(amount);
         toWallet.addBalance(amount);
 
-        // Save all records
         walletRepository.save(fromWallet);
         walletRepository.save(toWallet);
         paymentRepository.save(payment);
@@ -109,7 +102,6 @@ public class PaymentServiceImpl implements PaymentService {
     public List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
         List<Payment> transactions = paymentRepository.findByUserId(userId);
 
-        // Apply filters
         return transactions.stream()
                 .filter(payment -> {
                     boolean dateFilter = true;
