@@ -1,41 +1,385 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <title>Create Kos</title>
-</head>
-<body class="bg-gray-100">
-<div class="container mx-auto mt-8">
-    <h1 class="text-3xl font-bold mb-4">Create Kos</h1>
+    <title>Tambah Kos Baru - PapiKos</title>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --secondary-blue: #4285f4;
+            --light-blue: #e8f0fe;
+            --hover-blue: #0d47a1;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --dark-gray: #757575;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --error-color: #d32f2f;
+        }
 
-    <form th:action="@{/pemilik/create}" method="post" th:object="${kos}" class="max-w-md bg-white p-6 rounded-md shadow-md">
-        <input type="hidden" th:field="*{id}" />
-        <div class="mb-4">
-            <label for="kosName" class="block text-sm font-medium text-gray-600">Nama</label>
-            <input type="text" id="kosName" th:field="*{nama}" name="kosNama" class="mt-1 p-2 w-full border rounded-md">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: var(--text-color);
+            background-color: #f9fafb;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--dark-gray);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-logout:hover {
+            color: var(--primary-blue);
+        }
+
+        .logout-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .btn-secondary {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-icon {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            color: var(--hover-blue);
+        }
+
+        .back-icon {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-control.error {
+            border-color: var(--error-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            background-color: #ffebee;
+            color: var(--error-color);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header class="header">
+    <div class="header-container">
+        <div class="logo">PapiKos</div>
+        <div class="header-title">Tambah Kos Baru</div>
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar">P</div>
+                <span class="user-name">Pemilik</span>
+            </div>
+            <form th:action="@{/api/auth/logout}" method="post">
+                <button type="submit" class="btn-logout">
+                    <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
         </div>
-        <div class="mb-4">
-            <label for="kosJumlah" class="block text-sm font-medium text-gray-600">Jumlah Kamar</label>
-            <input th:field="*{jumlah}" type="number" id="kosJumlah" name="kosJumlah" class="mt-1 p-2 w-full border rounded-md">
-        </div>
-        <div class="mb-4">
-            <label for="kosHarga" class="block text-sm font-medium text-gray-600">Harga</label>
-            <input th:field="*{harga}" type="number" id="kosHarga" name="kosHarga" class="mt-1 p-2 w-full border rounded-md">
-        </div>
-        <div class="mb-4">
-            <label for="kosAlamat" class="block text-sm font-medium text-gray-600">Alamat</label>
-            <input th:field="*{alamat}" type="text" id="kosAlamat" name="kosAlamat" class="mt-1 p-2 w-full border rounded-md">
-        </div>
-        <div class="mb-4">
-            <label for="kosDeskripsi" class="block text-sm font-medium text-gray-600">Deskripsi</label>
-            <input th:field="*{deskripsi}" type="text" id="kosDeskripsi" name="kosDeskripsi" class="mt-1 p-2 w-full border rounded-md">
-        </div>
-        <div class="flex justify-end">
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md">Save Changes</button>
-        </div>
-    </form>
-</div>
+    </div>
+</header>
+
+<main class="main-content">
+    <!-- Tampilkan pesan sukses atau error -->
+    <div th:if="${success}" class="message success" th:text="${success}"></div>
+    <div th:if="${error}" class="message error" th:text="${error}"></div>
+
+    <div class="content-card">
+        <h2 class="card-title">Tambah Properti Kos Baru</h2>
+
+        <form th:action="@{/pemilik/create}" method="post" th:object="${kos}">
+            <input type="hidden" th:field="*{id}" />
+
+            <div class="form-group">
+                <label for="kosName" class="form-label">Nama Kos <span style="color: red">*</span></label>
+                <input type="text" id="kosName" th:field="*{nama}" class="form-control" required
+                       placeholder="Masukkan nama kos">
+                <span th:errors="*{nama}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosJumlah" class="form-label">Jumlah Kamar <span style="color: red">*</span></label>
+                <input type="number" id="kosJumlah" th:field="*{jumlah}" class="form-control" required min="1"
+                       placeholder="Masukkan jumlah kamar">
+                <span th:errors="*{jumlah}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosHarga" class="form-label">Harga per Bulan (Rp) <span style="color: red">*</span></label>
+                <input type="number" id="kosHarga" th:field="*{harga}" class="form-control" required min="0" step="1000"
+                       placeholder="Masukkan harga sewa per bulan">
+                <span th:errors="*{harga}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosAlamat" class="form-label">Alamat <span style="color: red">*</span></label>
+                <input type="text" id="kosAlamat" th:field="*{alamat}" class="form-control" required
+                       placeholder="Masukkan alamat lengkap kos">
+                <span th:errors="*{alamat}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosDeskripsi" class="form-label">Deskripsi <span style="color: red">*</span></label>
+                <textarea id="kosDeskripsi" th:field="*{deskripsi}" class="form-control" rows="4" required
+                          placeholder="Berikan deskripsi detail tentang kos (fasilitas, peraturan, dll)"></textarea>
+                <span th:errors="*{deskripsi}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosStatus" class="form-label">Status <span style="color: red">*</span></label>
+                <select id="kosStatus" th:field="*{status}" class="form-control" required>
+                    <option value="" disabled selected>Pilih status</option>
+                    <option value="AVAILABLE">Tersedia</option>
+                    <option value="FULL">Penuh</option>
+                </select>
+                <span th:errors="*{status}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosUrlFoto" class="form-label">URL Foto <span style="color: red">*</span></label>
+                <input type="url" id="kosUrlFoto" th:field="*{urlFoto}" class="form-control" required
+                       placeholder="Masukkan URL foto kos">
+                <span th:errors="*{urlFoto}" class="error-message"></span>
+            </div>
+
+            <div class="form-actions">
+                <a th:href="@{/pemilik/daftarkos}" class="btn btn-secondary">
+                    Batal
+                </a>
+                <button type="submit" class="btn">
+                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Simpan Kos
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
 </body>
+
 </html>

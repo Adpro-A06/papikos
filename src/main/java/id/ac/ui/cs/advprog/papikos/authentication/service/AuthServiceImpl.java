@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -76,6 +77,11 @@ public class AuthServiceImpl implements AuthService {
     public User findById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User tidak ditemukan!"));
+    }
+
+    @Override
+    public List<User> findAllPendingPemilikKos() {
+        return userRepository.findByRoleAndApprovedFalse(Role.PEMILIK_KOS);
     }
 
     @Override

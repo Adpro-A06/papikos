@@ -1,5 +1,8 @@
 package id.ac.ui.cs.advprog.papikos.kos.controller;
 
+import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
+import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
@@ -11,12 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.UUID;
 
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -33,65 +38,97 @@ public class PengelolaanControllerTest {
     @MockBean
     private PengelolaanService pengelolaanService;
 
+    @MockBean
+    private AuthService authService;
+
+    private User user;
+    private MockHttpSession session;
+
     @BeforeEach
     void setUp() {
-        reset(pengelolaanService); // Reset mocks before each test
-    }
+        reset(pengelolaanService, authService);
 
-    @Test
-    void testMainPage() throws Exception {
-        mockMvc.perform(get("/pemilik/mainpage"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("home/PemilikKosHome"));
+        user = new User("test@example.com", "Password123!", Role.PEMILIK_KOS);
+        user.setApproved(true);
+
+        session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "valid-token");
+
+        when(authService.decodeToken("valid-token")).thenReturn(user.getId().toString());
+        when(authService.findById(user.getId())).thenReturn(user);
     }
 
     @Test
     void testCreateKosPage() throws Exception {
-        mockMvc.perform(get("/pemilik/create"))
+        mockMvc.perform(get("/pemilik/create")
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/CreateKos"))
                 .andExpect(model().attributeExists("kos"))
                 .andExpect(model().attribute("kos", instanceOf(Kos.class)));
+
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
-    void testShowAllKoss() throws Exception {
+    void testShowAllKos() throws Exception {
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        kos.setId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
         kos.setNama("Kos Test");
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(user);
         List<Kos> listKos = List.of(kos);
 
         when(pengelolaanService.findAll()).thenReturn(listKos);
 
-        mockMvc.perform(get("/pemilik/daftarkos"))
+        mockMvc.perform(get("/pemilik/daftarkos")
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/ListKos"))
-                .andExpect(model().attribute("kos", listKos));
+                .andExpect(model().attribute("allKos", hasSize(1)))
+                .andExpect(model().attribute("allKos", contains(hasProperty("nama", is("Kos Test")))));
 
         verify(pengelolaanService, times(1)).findAll();
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
     void testCreateKosPost() throws Exception {
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
         kos.setNama("Kos Test");
         kos.setAlamat("Jl. Test");
         kos.setDeskripsi("Deskripsi Kos");
         kos.setJumlah(10);
         kos.setHarga(1000000);
-        kos.setStatus("Tersedia");
+        kos.setStatus("AVAILABLE");
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(user);
 
-        when(pengelolaanService.create(any(Kos.class))).thenReturn(kos);
+        Kos createdKos = new Kos();
+        createdKos.setId(UUID.randomUUID());
+        createdKos.setNama(kos.getNama());
+        createdKos.setAlamat(kos.getAlamat());
+        createdKos.setDeskripsi(kos.getDeskripsi());
+        createdKos.setJumlah(kos.getJumlah());
+        createdKos.setHarga(kos.getHarga());
+        createdKos.setStatus(kos.getStatus());
+        createdKos.setUrlFoto(kos.getUrlFoto());
+        createdKos.setPemilik(kos.getPemilik());
+
+        when(pengelolaanService.create(any(Kos.class))).thenReturn(createdKos);
 
         mockMvc.perform(post("/pemilik/create")
+                        .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", kos.getNama())
                         .param("alamat", kos.getAlamat())
                         .param("deskripsi", kos.getDeskripsi())
                         .param("jumlah", String.valueOf(kos.getJumlah()))
                         .param("harga", String.valueOf(kos.getHarga()))
-                        .param("status", kos.getStatus()))
+                        .param("status", kos.getStatus())
+                        .param("urlFoto", kos.getUrlFoto()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("daftarkos"));
 
@@ -104,45 +141,59 @@ public class PengelolaanControllerTest {
         assertEquals(kos.getJumlah(), capturedKos.getJumlah());
         assertEquals(kos.getHarga(), capturedKos.getHarga(), 0.01);
         assertEquals(kos.getStatus(), capturedKos.getStatus());
+        assertEquals(kos.getUrlFoto(), capturedKos.getUrlFoto());
+        assertEquals(kos.getPemilik(), capturedKos.getPemilik());
+
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
     void testUpdateKosPage() throws Exception {
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        kos.setId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
         kos.setNama("Kos Test");
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(user);
 
         when(pengelolaanService.findById(kos.getId())).thenReturn(kos);
 
-        mockMvc.perform(get("/pemilik/edit/{id}", kos.getId()))
+        mockMvc.perform(get("/pemilik/edit/{id}", kos.getId().toString())
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/EditKos"))
                 .andExpect(model().attribute("kos", kos));
 
         verify(pengelolaanService, times(1)).findById(kos.getId());
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
     void testUpdateKosPost() throws Exception {
         Kos updatedKos = new Kos();
-        updatedKos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        updatedKos.setId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
         updatedKos.setNama("Kos Updated");
         updatedKos.setAlamat("Jl. Updated");
         updatedKos.setDeskripsi("Deskripsi Updated");
         updatedKos.setJumlah(20);
         updatedKos.setHarga(2000000);
-        updatedKos.setStatus("Penuh");
+        updatedKos.setStatus("FULL");
+        updatedKos.setUrlFoto("https://example.com/kos_updated.jpg");
+        updatedKos.setPemilik(user);
 
         when(pengelolaanService.update(any(Kos.class))).thenReturn(updatedKos);
 
-        mockMvc.perform(post("/pemilik/edit/{id}", updatedKos.getId())
+        mockMvc.perform(post("/pemilik/edit/{id}", updatedKos.getId().toString())
+                        .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", updatedKos.getNama())
                         .param("alamat", updatedKos.getAlamat())
                         .param("deskripsi", updatedKos.getDeskripsi())
                         .param("jumlah", String.valueOf(updatedKos.getJumlah()))
                         .param("harga", String.valueOf(updatedKos.getHarga()))
-                        .param("status", updatedKos.getStatus()))
+                        .param("status", updatedKos.getStatus())
+                        .param("urlFoto", updatedKos.getUrlFoto()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/pemilik/daftarkos"));
 
@@ -156,41 +207,55 @@ public class PengelolaanControllerTest {
         assertEquals(updatedKos.getJumlah(), capturedKos.getJumlah());
         assertEquals(updatedKos.getHarga(), capturedKos.getHarga(), 0.01);
         assertEquals(updatedKos.getStatus(), capturedKos.getStatus());
+        assertEquals(updatedKos.getUrlFoto(), capturedKos.getUrlFoto());
+        assertEquals(updatedKos.getPemilik(), capturedKos.getPemilik());
+
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
     void testUpdateKosPostNotFound() throws Exception {
-        String id = "notexist-id";
+        UUID id = UUID.randomUUID();
         when(pengelolaanService.update(any(Kos.class)))
                 .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos not found"));
 
-        mockMvc.perform(post("/pemilik/edit/{id}", id)
+        mockMvc.perform(post("/pemilik/edit/{id}", id.toString())
+                        .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", "Test Kos")
                         .param("alamat", "Jl. Test")
                         .param("deskripsi", "Deskripsi Kos")
                         .param("jumlah", "10")
                         .param("harga", "1000000")
-                        .param("status", "Tersedia"))
+                        .param("status", "AVAILABLE")
+                        .param("urlFoto", "https://example.com/kos.jpg"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/error/KosNotFound"));
 
         verify(pengelolaanService, times(1)).update(any(Kos.class));
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 
     @Test
     void testDeleteKos() throws Exception {
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        kos.setId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(user);
 
         when(pengelolaanService.findById(kos.getId())).thenReturn(kos);
         doNothing().when(pengelolaanService).delete(any(Kos.class));
 
-        mockMvc.perform(get("/pemilik/delete/{id}", kos.getId()))
+        mockMvc.perform(post("/pemilik/delete/{id}", kos.getId().toString())
+                        .session(session))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("daftarkos"));
+                .andExpect(redirectedUrl("/pemilik/daftarkos"));
 
         verify(pengelolaanService, times(1)).findById(kos.getId());
         verify(pengelolaanService, times(1)).delete(any(Kos.class));
+        verify(authService, times(1)).decodeToken("valid-token");
+        verify(authService, times(1)).findById(user.getId());
     }
 }

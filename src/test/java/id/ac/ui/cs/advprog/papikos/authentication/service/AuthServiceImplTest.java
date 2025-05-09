@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -282,5 +283,40 @@ public class AuthServiceImplTest {
 
         String expectedMessage = "Token tidak valid!";
         assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    public void testFindAllPendingPemilikKos() {
+        User approvedPemilik = new User("approved@example.com", "P@ssword123", Role.PEMILIK_KOS);
+        approvedPemilik.setApproved(true);
+        
+        User pendingPemilik1 = new User("pending1@example.com", "P@ssword123", Role.PEMILIK_KOS);
+        pendingPemilik1.setApproved(false);
+        
+        User pendingPemilik2 = new User("pending2@example.com", "P@ssword123", Role.PEMILIK_KOS);
+        pendingPemilik2.setApproved(false);
+        
+        // For example only, not happening in real action
+        User pendingPenyewa = new User("penyewa@example.com", "P@ssword123", Role.PENYEWA);
+        pendingPenyewa.setApproved(false);
+        
+        List<User> pendingPemilikKosList = List.of(pendingPemilik1, pendingPemilik2);
+        when(userRepository.findByRoleAndApprovedFalse(Role.PEMILIK_KOS)).thenReturn(pendingPemilikKosList);
+ 
+        List<User> result = authService.findAllPendingPemilikKos();
+        assertEquals(2, result.size(), "Should find exactly 2 pending pemilik kos accounts");
+        assertTrue(result.contains(pendingPemilik1), "Result should contain first pending pemilik");
+        assertTrue(result.contains(pendingPemilik2), "Result should contain second pending pemilik");
+        assertFalse(result.contains(approvedPemilik), "Result should not contain approved pemilik");
+        assertFalse(result.contains(pendingPenyewa), "Result should not contain penyewa account");
+        verify(userRepository).findByRoleAndApprovedFalse(Role.PEMILIK_KOS);
+    }
+
+    @Test
+    public void testFindAllPendingPemilikKosEmptyResult() {
+        when(userRepository.findByRoleAndApprovedFalse(Role.PEMILIK_KOS)).thenReturn(List.of());
+        List<User> result = authService.findAllPendingPemilikKos();
+        assertTrue(result.isEmpty(), "Should return empty list when no pending pemilik kos accounts");
+        verify(userRepository).findByRoleAndApprovedFalse(Role.PEMILIK_KOS);
     }
 }

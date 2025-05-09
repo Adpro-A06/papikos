@@ -236,6 +236,37 @@
             <h2>Selamat Datang, Pemilik Kos!</h2>
             <p>Halaman utama untuk mengelola kos Anda.</p>
         </div>
+
+        <div th:if="${approved}" style="background-color: white; border-radius: 8px; box-shadow: var(--shadow); padding: 24px; margin-bottom: 24px;">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px; color: var(--text-color);">Pengelolaan Kos</h3>
+            <p style="margin-bottom: 20px; color: var(--dark-gray);">Kelola properti kos Anda dengan mudah</p>
+            
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <a th:href="@{/pemilik/create}" class="btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" 
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                         class="btn-icon">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Tambah Kos Baru
+                </a>
+                
+                <a th:href="@{/pemilik/daftarkos}" class="btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" 
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                         class="btn-icon">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    Lihat Daftar Kos
+                </a>
+            </div>
+        </div>
     </main>
 </body>
 
