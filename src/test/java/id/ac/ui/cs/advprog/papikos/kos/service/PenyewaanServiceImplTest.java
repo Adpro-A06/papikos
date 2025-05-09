@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,13 +45,17 @@ class PenyewaanServiceImplTest {
     private Penyewaan penyewaanApproved;
     private Penyewaan penyewaanRejected;
 
+    private String kosId;
+
     @BeforeEach
     void setUp() {
+        kosId = UUID.randomUUID().toString();
+        
         penyewa = new User("penyewa@example.com", "p@ssword123", Role.PENYEWA);
         pemilik = new User("pemilik@example.com", "password456!", Role.PEMILIK_KOS);
 
         kos = new Kos();
-        kos.setId("kos-123");
+        kos.setId(kosId);
         kos.setNama("Kos Melati");
         kos.setAlamat("Jl. Kenanga No. 10");
         kos.setDeskripsi("Kos nyaman dekat kampus");
@@ -98,42 +103,40 @@ class PenyewaanServiceImplTest {
 
     @Test
     void testCreatePenyewaanSuccess() {
-        String kosId = "kos-123";
+        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(penyewaanRepository.save(any(Penyewaan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         Penyewaan newPenyewaan = new Penyewaan();
         newPenyewaan.setNamaLengkap("Jane Smith");
         newPenyewaan.setNomorTelepon("08987654321");
         newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
         newPenyewaan.setDurasiSewa(2);
         
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
-        when(penyewaanRepository.save(any(Penyewaan.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
         Penyewaan result = penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
         assertNotNull(result);
         assertEquals(penyewa, result.getPenyewa());
         assertEquals(kos, result.getKos());
         assertEquals(StatusPenyewaan.PENDING, result.getStatus());
-        assertEquals(3000000, result.getTotalBiaya()); // 2 * 1500000
+        assertEquals(3000000, result.getTotalBiaya());
         verify(kosRepository).findById(kosId);
         verify(penyewaanRepository).save(any(Penyewaan.class));
     }
 
     @Test
     void testCreatePenyewaanKosNotFound() {
-        String kosId = "nonexistent";
+        String nonExistentId = UUID.randomUUID().toString();
         Penyewaan newPenyewaan = new Penyewaan();
-        when(kosRepository.findById(kosId)).thenReturn(Optional.empty());
+        when(kosRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> {
-            penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
+            penyewaanService.createPenyewaan(newPenyewaan, nonExistentId, penyewa);
         });
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(nonExistentId);
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }
 
     @Test
     void testCreatePenyewaanKosNotAvailable() {
-        String kosId = "kos-123";
         Penyewaan newPenyewaan = new Penyewaan();
         kos.setStatus("FULL");
         when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
@@ -148,7 +151,6 @@ class PenyewaanServiceImplTest {
 
     @Test
     void testCreatePenyewaanNoRoomsAvailable() {
-        String kosId = "kos-123";
         Penyewaan newPenyewaan = new Penyewaan();
         kos.setJumlah(0);
         when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
@@ -163,7 +165,6 @@ class PenyewaanServiceImplTest {
 
     @Test
     void testCreatePenyewaanInvalidCheckInDate() {
-        String kosId = "kos-123";
         Penyewaan newPenyewaan = new Penyewaan();
         newPenyewaan.setTanggalCheckIn(LocalDate.now().minusDays(1));
         newPenyewaan.setDurasiSewa(2);
@@ -178,7 +179,6 @@ class PenyewaanServiceImplTest {
 
     @Test
     void testCreatePenyewaanInvalidDurasi() {
-        String kosId = "kos-123";
         Penyewaan newPenyewaan = new Penyewaan();
         newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
         newPenyewaan.setDurasiSewa(0);
