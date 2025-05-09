@@ -16,6 +16,7 @@
             --light-gray: #f5f5f5;
             --dark-gray: #757575;
             --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --error-color: #d32f2f;
         }
 
         * {
@@ -225,6 +226,34 @@
             box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
         }
 
+        .form-control.error {
+            border-color: var(--error-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            background-color: #ffebee;
+            color: var(--error-color);
+        }
+
         .form-actions {
             display: flex;
             justify-content: flex-end;
@@ -272,6 +301,10 @@
 </header>
 
 <main class="main-content">
+    <!-- Tampilkan pesan sukses atau error -->
+    <div th:if="${success}" class="message success" th:text="${success}"></div>
+    <div th:if="${error}" class="message error" th:text="${error}"></div>
+
     <div class="content-card">
         <h2 class="card-title">Tambah Properti Kos Baru</h2>
 
@@ -282,41 +315,56 @@
                 <label for="kosName" class="form-label">Nama Kos <span style="color: red">*</span></label>
                 <input type="text" id="kosName" th:field="*{nama}" class="form-control" required
                        placeholder="Masukkan nama kos">
+                <span th:errors="*{nama}" class="error-message"></span>
             </div>
 
             <div class="form-group">
                 <label for="kosJumlah" class="form-label">Jumlah Kamar <span style="color: red">*</span></label>
                 <input type="number" id="kosJumlah" th:field="*{jumlah}" class="form-control" required min="1"
                        placeholder="Masukkan jumlah kamar">
+                <span th:errors="*{jumlah}" class="error-message"></span>
             </div>
 
             <div class="form-group">
-                <label for="kosHarga" class="form-label">Harga per Bulan (Rp) <span
-                        style="color: red">*</span></label>
-                <input type="number" id="kosHarga" th:field="*{harga}" class="form-control" required min="0"
-                       step="1000" placeholder="Masukkan harga sewa per bulan">
+                <label for="kosHarga" class="form-label">Harga per Bulan (Rp) <span style="color: red">*</span></label>
+                <input type="number" id="kosHarga" th:field="*{harga}" class="form-control" required min="0" step="1000"
+                       placeholder="Masukkan harga sewa per bulan">
+                <span th:errors="*{harga}" class="error-message"></span>
             </div>
 
             <div class="form-group">
                 <label for="kosAlamat" class="form-label">Alamat <span style="color: red">*</span></label>
                 <input type="text" id="kosAlamat" th:field="*{alamat}" class="form-control" required
                        placeholder="Masukkan alamat lengkap kos">
+                <span th:errors="*{alamat}" class="error-message"></span>
             </div>
 
             <div class="form-group">
                 <label for="kosDeskripsi" class="form-label">Deskripsi <span style="color: red">*</span></label>
                 <textarea id="kosDeskripsi" th:field="*{deskripsi}" class="form-control" rows="4" required
                           placeholder="Berikan deskripsi detail tentang kos (fasilitas, peraturan, dll)"></textarea>
+                <span th:errors="*{deskripsi}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="kosStatus" class="form-label">Status <span style="color: red">*</span></label>
+                <select id="kosStatus" th:field="*{status}" class="form-control" required>
+                    <option value="" disabled selected>Pilih status</option>
+                    <option value="AVAILABLE">Tersedia</option>
+                    <option value="FULL">Penuh</option>
+                </select>
+                <span th:errors="*{status}" class="error-message"></span>
             </div>
 
             <div class="form-group">
                 <label for="kosUrlFoto" class="form-label">URL Foto <span style="color: red">*</span></label>
-                <input type="url" id="kosUrlFoto" th:field="*{url_foto}" class="form-control" required
+                <input type="url" id="kosUrlFoto" th:field="*{urlFoto}" class="form-control" required
                        placeholder="Masukkan URL foto kos">
+                <span th:errors="*{urlFoto}" class="error-message"></span>
             </div>
 
             <div class="form-actions">
-                <a th:href="@{/pemilik/home}" class="btn btn-secondary">
+                <a th:href="@{/pemilik/daftarkos}" class="btn btn-secondary">
                     Batal
                 </a>
                 <button type="submit" class="btn">

@@ -333,6 +333,7 @@
                 <span class="user-name">Pemilik</span>
             </div>
             <form th:action="@{/api/auth/logout}" method="post">
+                <input type="hidden" name="_csrf" th:value="${_csrf?.token}" />
                 <button type="submit" class="btn-logout">
                     <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -348,6 +349,10 @@
 </header>
 
 <main class="main-content">
+    <!-- Tampilkan pesan sukses atau error -->
+    <div th:if="${success}" class="message success" th:text="${success}"></div>
+    <div th:if="${error}" class="message error" th:text="${error}"></div>
+
     <a href="#" th:href="@{/pemilik/home}" class="back-link">
         <svg class="back-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -411,11 +416,11 @@
                     <td th:text="${kos.alamat}"></td>
                     <td class="td-truncate" th:title="${kos.deskripsi}" th:text="${kos.deskripsi}"></td>
                     <td>
-                        <img th:if="${kos.url_foto} != null and ${kos.url_foto} != ''"
-                             th:src="${kos.url_foto}"
+                        <img th:if="${kos.urlFoto != null and kos.urlFoto != ''}"
+                             th:src="${kos.urlFoto}"
                              alt="Foto Kos"
                              style="max-width: 100px; max-height: 100px; object-fit: cover;" />
-                        <span th:if="${kos.url_foto} == null or ${kos.url_foto} == ''">Tidak ada foto</span>
+                        <span th:if="${kos.urlFoto == null or kos.urlFoto == ''}">Tidak ada foto</span>
                     </td>
                     <td class="td-actions">
                         <a th:href="@{/pemilik/edit/{id}(id=${kos.id})}" class="btn">
@@ -456,9 +461,8 @@
         <div class="modal-actions">
             <button onclick="closeModal()" class="btn">Batal</button>
             <form id="deleteForm" method="POST" action="#">
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf != null}" />
+                <input type="hidden" name="_csrf" th:value="${_csrf?.token}" />
                 <button type="submit" class="btn btn-danger">Hapus</button>
-
             </form>
         </div>
     </div>

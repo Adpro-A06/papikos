@@ -232,6 +232,29 @@
             margin-top: 24px;
         }
 
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
         @media (max-width: 992px) {
             .main-content {
                 padding: 20px;
@@ -257,6 +280,7 @@
                 <span class="user-name">Pemilik</span>
             </div>
             <form th:action="@{/api/auth/logout}" method="post">
+                <input type="hidden" name="_csrf" th:value="${_csrf?.token}" />
                 <button type="submit" class="btn-logout">
                     <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -272,47 +296,75 @@
 </header>
 
 <main class="main-content">
+    <!-- Tampilkan pesan sukses atau error -->
+    <div th:if="${success}" class="message success" th:text="${success}"></div>
+    <div th:if="${error}" class="message error" th:text="${error}"></div>
+
+    <a th:href="@{/pemilik/daftarkos}" class="back-link">
+        <svg class="back-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        Kembali ke Daftar Kos
+    </a>
+
     <div class="content-card">
         <h2 class="card-title">Edit Properti Kos</h2>
 
         <form th:action="@{/pemilik/edit/{id}(id=${kos.id})}" method="post" th:object="${kos}">
             <input type="hidden" th:field="*{id}" />
+            <input type="hidden" name="_csrf" th:value="${_csrf?.token}" />
 
             <div class="form-group">
                 <label for="kosName" class="form-label">Nama Kos <span style="color: red">*</span></label>
                 <input type="text" id="kosName" th:field="*{nama}" class="form-control" required
                        placeholder="Masukkan nama kos">
+                <div class="error-message" th:if="${#fields.hasErrors('nama')}" th:errors="*{nama}"></div>
             </div>
 
             <div class="form-group">
                 <label for="kosJumlah" class="form-label">Jumlah Kamar <span style="color: red">*</span></label>
                 <input type="number" id="kosJumlah" th:field="*{jumlah}" class="form-control" required min="1"
                        placeholder="Masukkan jumlah kamar">
+                <div class="error-message" th:if="${#fields.hasErrors('jumlah')}" th:errors="*{jumlah}"></div>
             </div>
 
             <div class="form-group">
-                <label for="kosHarga" class="form-label">Harga per Bulan (Rp) <span
-                        style="color: red">*</span></label>
+                <label for="kosHarga" class="form-label">Harga per Bulan (Rp) <span style="color: red">*</span></label>
                 <input type="number" id="kosHarga" th:field="*{harga}" class="form-control" required min="0"
                        step="1000" placeholder="Masukkan harga sewa per bulan">
+                <div class="error-message" th:if="${#fields.hasErrors('harga')}" th:errors="*{harga}"></div>
             </div>
 
             <div class="form-group">
                 <label for="kosAlamat" class="form-label">Alamat <span style="color: red">*</span></label>
                 <input type="text" id="kosAlamat" th:field="*{alamat}" class="form-control" required
                        placeholder="Masukkan alamat lengkap kos">
+                <div class="error-message" th:if="${#fields.hasErrors('alamat')}" th:errors="*{alamat}"></div>
             </div>
 
             <div class="form-group">
                 <label for="kosDeskripsi" class="form-label">Deskripsi <span style="color: red">*</span></label>
                 <textarea id="kosDeskripsi" th:field="*{deskripsi}" class="form-control" rows="4" required
                           placeholder="Berikan deskripsi detail tentang kos (fasilitas, peraturan, dll)"></textarea>
+                <div class="error-message" th:if="${#fields.hasErrors('deskripsi')}" th:errors="*{deskripsi}"></div>
             </div>
 
             <div class="form-group">
                 <label for="kosUrlFoto" class="form-label">URL Foto <span style="color: red">*</span></label>
-                <input type="url" id="kosUrlFoto" th:field="*{url_foto}" class="form-control" required
+                <input type="url" id="kosUrlFoto" th:field="*{urlFoto}" class="form-control" required
                        placeholder="Masukkan URL foto kos">
+                <div class="error-message" th:if="${#fields.hasErrors('urlFoto')}" th:errors="*{urlFoto}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="kosStatus" class="form-label">Status <span style="color: red">*</span></label>
+                <select id="kosStatus" th:field="*{status}" class="form-control" required>
+                    <option value="AVAILABLE">Tersedia</option>
+                    <option value="FULL">Penuh</option>
+                </select>
+                <div class="error-message" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
             </div>
 
             <div class="form-actions">
