@@ -2,9 +2,11 @@ package id.ac.ui.cs.advprog.papikos.chat.service;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
+import org.springframework.stereotype.Service;
 
 import java.util.Stack;
 
+@Service
 public class ChatCommandService {
     private final Stack<Command> commandHistory;
 

@@ -40,10 +40,8 @@ public class ChatCommandServiceTest {
 
     @Test
     void testSendMessage() {
-        // Mengeksekusi SendMessageCommand
         Message newMessage = chatCommandService.sendMessage(chatroom, 202L, "Hello from owner");
 
-        // Verifikasi message sudah ditambahkan ke chatroom
         assertEquals(2, chatroom.getMessages().size());
         assertEquals(newMessage, chatroom.getMessages().get(1));
         assertEquals("Hello from owner", newMessage.getContent());
@@ -52,44 +50,34 @@ public class ChatCommandServiceTest {
 
     @Test
     void testEditMessage() {
-        // Mengeksekusi EditMessageCommand
         Message editedMessage = chatCommandService.editMessage(chatroom, message.getId(), "Edited message");
-
-        // Verifikasi message sudah diedit
         assertEquals("Edited message", message.getContent());
         assertEquals(message, editedMessage);
     }
 
     @Test
     void testDeleteMessage() {
-        // Mengeksekusi DeleteMessageCommand
         boolean deleted = chatCommandService.deleteMessage(chatroom, message.getId());
 
-        // Verifikasi message sudah dihapus
         assertTrue(deleted);
         assertEquals(0, chatroom.getMessages().size());
     }
 
     @Test
     void testDeleteNonExistentMessage() {
-        // Mencoba mendelete message yang tidak ada
         boolean deleted = chatCommandService.deleteMessage(chatroom, 999L);
 
-        // Verifikasi tidak ada message yang tidak dihapus
         assertFalse(deleted);
         assertEquals(1, chatroom.getMessages().size());
     }
 
     @Test
     void testUndoSendMessage() {
-        // Mengirim pesan
         Message newMessage = chatCommandService.sendMessage(chatroom, 202L, "Message to undo");
         assertEquals(2, chatroom.getMessages().size());
 
-        // Undo operasi send
         boolean undone = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
 
-        // Verifikasi message sudah diremove
         assertTrue(undone);
         assertEquals(1, chatroom.getMessages().size());
         assertFalse(chatroom.getMessages().contains(newMessage));
@@ -97,31 +85,24 @@ public class ChatCommandServiceTest {
 
     @Test
     void testUndoEditMessage() {
-        // Mengingat original content
         String originalContent = message.getContent();
 
-        // Edit message
         chatCommandService.editMessage(chatroom, message.getId(), "Temporary edit");
         assertEquals("Temporary edit", message.getContent());
 
-        // Undo operasi edit
         boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
 
-        // Verifikasi content message direstore
         assertTrue(undone);
         assertEquals(originalContent, message.getContent());
     }
 
     @Test
     void testUndoDeleteMessage() {
-        // Menghapus pesan
         chatCommandService.deleteMessage(chatroom, message.getId());
         assertEquals(0, chatroom.getMessages().size());
 
-        // Undo operasi delete
         boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
 
-        // Verifikasi pesan sudah direstore
         assertTrue(undone);
         assertEquals(1, chatroom.getMessages().size());
         assertEquals(message, chatroom.getMessages().get(0));
