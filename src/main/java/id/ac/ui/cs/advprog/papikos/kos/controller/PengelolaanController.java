@@ -98,7 +98,7 @@ public class PengelolaanController {
     }
 
     @GetMapping("/edit/{id}")
-    public String editKosPage(@PathVariable String id, Model model, HttpSession session, RedirectAttributes ra) {
+    public String editKosPage(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -120,7 +120,7 @@ public class PengelolaanController {
     }
 
     @PostMapping("/edit/{id}")
-    public String editKosPost(@PathVariable String id, @Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
+    public String editKosPost(@PathVariable UUID id, @Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -137,7 +137,7 @@ public class PengelolaanController {
         }
 
         try {
-            kos.setId(UUID.fromString(id));
+            kos.setId(id);
             kos.setPemilik(user);
             service.update(kos);
             ra.addFlashAttribute("success", "Kos berhasil diperbarui");
@@ -151,7 +151,7 @@ public class PengelolaanController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteKos(@PathVariable String id, Model model, HttpSession session, RedirectAttributes ra) {
+    public String deleteKos(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";

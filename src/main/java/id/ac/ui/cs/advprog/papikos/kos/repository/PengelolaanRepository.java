@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -43,6 +44,8 @@ public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
         }
         deleteById(kos.getId());
     }
+
+    List<Kos> id(UUID id);
 
     class KosNotFoundException extends RuntimeException {
         public KosNotFoundException(String message) {

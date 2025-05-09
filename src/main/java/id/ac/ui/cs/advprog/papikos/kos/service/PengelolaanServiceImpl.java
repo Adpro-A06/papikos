@@ -28,8 +28,8 @@ public class PengelolaanServiceImpl implements PengelolaanService {
     }
 
     @Override
-    public Kos findById(String id) {
-        return pengelolaanRepository.findByIdOrThrow(UUID.fromString(id));
+    public Kos findById(UUID id) {
+        return pengelolaanRepository.findByIdOrThrow(id);
     }
 
     @Override
