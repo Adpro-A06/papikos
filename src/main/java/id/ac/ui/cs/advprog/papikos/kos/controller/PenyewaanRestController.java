@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -94,16 +93,6 @@ public class PenyewaanRestController {
                         .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
             }
 
-            if (bindingResult.hasErrors()) {
-                Map<String, String> errors = new HashMap<>();
-                bindingResult.getAllErrors().forEach(error -> {
-                    String fieldName = ((FieldError) error).getField();
-                    String errorMessage = error.getDefaultMessage();
-                    errors.put(fieldName, errorMessage);
-                });
-                return ResponseEntity.badRequest().body(errors);
-            }
-
             try {
                 Penyewaan createdPenyewaan = penyewaanService.createPenyewaan(penyewaan, kosId, user);
                 return ResponseEntity.status(HttpStatus.CREATED).body(createdPenyewaan);
@@ -129,16 +118,6 @@ public class PenyewaanRestController {
             if (user == null || user.getRole() != Role.PENYEWA) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
-            }
-
-            if (bindingResult.hasErrors()) {
-                Map<String, String> errors = new HashMap<>();
-                bindingResult.getAllErrors().forEach(error -> {
-                    String fieldName = ((FieldError) error).getField();
-                    String errorMessage = error.getDefaultMessage();
-                    errors.put(fieldName, errorMessage);
-                });
-                return ResponseEntity.badRequest().body(errors);
             }
 
             try {
