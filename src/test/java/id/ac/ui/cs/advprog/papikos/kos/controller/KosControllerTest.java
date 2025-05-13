@@ -106,7 +106,7 @@ class KosControllerTest {
         when(kosService.searchByKeyword("melati")).thenReturn(availableKos);
 
         String viewName = kosController.searchKos("melati", session, model, redirectAttributes);
-        assertEquals("authentication/PenyewaHome", viewName);
+        assertEquals("home/PenyewaHome", viewName);
         verify(kosService).searchByKeyword("melati");
         verify(model).addAttribute("kosList", availableKos);
         verify(model).addAttribute("keyword", "melati");
@@ -121,7 +121,7 @@ class KosControllerTest {
         when(kosService.findAllAvailable()).thenReturn(availableKos);
 
         String viewName = kosController.searchKos("", session, model, redirectAttributes);
-        assertEquals("authentication/PenyewaHome", viewName);
+        assertEquals("home/PenyewaHome", viewName);
         verify(kosService).findAllAvailable();
         verify(model).addAttribute("kosList", availableKos);
         verify(model).addAttribute("keyword", "");
@@ -155,7 +155,7 @@ class KosControllerTest {
         when(kosService.findById(kosId)).thenReturn(Optional.of(kos));
 
         String viewName = kosController.viewKosDetail(kosId, session, model, redirectAttributes);
-        assertEquals("kos/detail", viewName);
+        assertEquals("penyewaan/DetailKos", viewName);
         verify(kosService).findById(kosId);
         verify(model).addAttribute("kos", kos);
         verify(model).addAttribute("user", penyewaUser);

@@ -53,7 +53,7 @@ public class KosController {
         model.addAttribute("kosList", searchResults);
         model.addAttribute("keyword", keyword);
         model.addAttribute("user", user);
-        return "authentication/PenyewaHome";
+        return "home/PenyewaHome";
     }
 
     @GetMapping("/kos/{id}")
@@ -77,7 +77,7 @@ public class KosController {
 
             model.addAttribute("kos", kos);
             model.addAttribute("user", user);
-            return "kos/detail";
+            return "penyewaan/DetailKos";
         } catch (EntityNotFoundException e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/penyewa/home";
