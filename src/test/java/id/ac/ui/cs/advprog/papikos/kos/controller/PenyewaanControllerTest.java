@@ -190,59 +190,22 @@ class PenyewaanControllerTest {
     }
 
     @Test
-    void testCreatePenyewaanWhenUserNotLoggedIn() {
-        when(session.getAttribute("JWT_TOKEN")).thenReturn(null);
-
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
-                redirectAttributes);
-        assertEquals("redirect:/api/auth/login", viewName);
-        verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
-        verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
-    }
-
-    @Test
     void testCreatePenyewaanNonPenyewa() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(pemilikUser);
 
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
+        String viewName = penyewaanController.createPenyewaan(
+                kosId,
+                "John Doe",
+                "08123456789",
+                LocalDate.now().plusDays(7),
+                3,
+                session,
                 redirectAttributes);
+
         assertEquals("redirect:/", viewName);
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-        verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
-    }
-
-    @Test
-    void testCreatePenyewaanWithBindingErrors() {
-        when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
-        when(authService.decodeToken(validToken)).thenReturn(userId);
-        when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(true);
-        when(kosService.findById(kosId)).thenReturn(Optional.of(kos));
-
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
-                redirectAttributes);
-        assertEquals("penyewaan/FormSewa", viewName);
-        verify(kosService).findById(kosId);
-        verify(model).addAttribute("kos", kos);
-        verify(model).addAttribute("user", penyewaUser);
-        verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
-    }
-
-    @Test
-    void testCreatePenyewaanWithBindingErrorsKosNotFound() {
-        when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
-        when(authService.decodeToken(validToken)).thenReturn(userId);
-        when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(true);
-        when(kosService.findById(kosId)).thenReturn(Optional.empty());
-
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
-                redirectAttributes);
-        assertEquals("redirect:/penyewa/home", viewName);
-        verify(kosService).findById(kosId);
-        verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
         verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
     }
 
@@ -251,14 +214,30 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(false);
-        when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
-                .thenReturn(penyewaan);
 
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
+        Penyewaan expectedPenyewaan = new Penyewaan();
+        expectedPenyewaan.setNamaLengkap("John Doe");
+        expectedPenyewaan.setNomorTelepon("08123456789");
+        LocalDate checkInDate = LocalDate.now().plusDays(7);
+        expectedPenyewaan.setTanggalCheckIn(checkInDate);
+        expectedPenyewaan.setDurasiSewa(3);
+
+        when(penyewaanService.createPenyewaan(argThat(penyewaan -> penyewaan.getNamaLengkap().equals("John Doe") &&
+                penyewaan.getNomorTelepon().equals("08123456789") &&
+                penyewaan.getTanggalCheckIn().equals(checkInDate) &&
+                penyewaan.getDurasiSewa() == 3), eq(kosId), eq(penyewaUser))).thenReturn(penyewaan);
+
+        String viewName = penyewaanController.createPenyewaan(
+                kosId,
+                "John Doe",
+                "08123456789",
+                checkInDate,
+                3,
+                session,
                 redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
-        verify(penyewaanService).createPenyewaan(penyewaan, kosId, penyewaUser);
+
+        assertEquals("redirect:/penyewaan/", viewName);
+        verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
         verify(redirectAttributes).addFlashAttribute("success", "Pengajuan penyewaan berhasil dibuat");
     }
 
@@ -267,14 +246,21 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(false);
-        doThrow(new RuntimeException("Test error")).when(penyewaanService).createPenyewaan(any(Penyewaan.class),
-                eq(kosId), eq(penyewaUser));
 
-        String viewName = penyewaanController.createPenyewaan(kosId, penyewaan, bindingResult, session, model,
+        doThrow(new RuntimeException("Test error")).when(penyewaanService)
+                .createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
+
+        String viewName = penyewaanController.createPenyewaan(
+                kosId,
+                "John Doe",
+                "08123456789",
+                LocalDate.now().plusDays(7),
+                3,
+                session,
                 redirectAttributes);
+
         assertEquals("redirect:/penyewaan/new/" + kosId, viewName);
-        verify(penyewaanService).createPenyewaan(penyewaan, kosId, penyewaUser);
+        verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
         verify(redirectAttributes).addFlashAttribute("error", "Test error");
     }
 

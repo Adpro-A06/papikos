@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -38,7 +39,7 @@ public class PenyewaanController {
         this.authService = authService;
     }
 
-    @GetMapping
+    @GetMapping("/")
     public String listPenyewaan(HttpSession session, Model model, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
@@ -90,12 +91,15 @@ public class PenyewaanController {
     }
 
     @PostMapping("/create/{kosId}")
-    public String createPenyewaan(@PathVariable String kosId,
-            @Valid @ModelAttribute Penyewaan penyewaan,
-            BindingResult bindingResult,
+    public String createPenyewaan(
+            @PathVariable String kosId,
+            @RequestParam String namaLengkap,
+            @RequestParam String nomorTelepon,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate tanggalCheckIn,
+            @RequestParam Integer durasiSewa,
             HttpSession session,
-            Model model,
             RedirectAttributes ra) {
+
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -106,23 +110,16 @@ public class PenyewaanController {
             return "redirect:/";
         }
 
-        if (bindingResult.hasErrors()) {
-            try {
-                Kos kos = kosService.findById(kosId)
-                        .orElseThrow(() -> new EntityNotFoundException("Kos tidak ditemukan"));
-                model.addAttribute("kos", kos);
-                model.addAttribute("user", user);
-                return "penyewaan/FormSewa";
-            } catch (EntityNotFoundException e) {
-                ra.addFlashAttribute("error", e.getMessage());
-                return "redirect:/penyewa/home";
-            }
-        }
-
         try {
+            Penyewaan penyewaan = new Penyewaan();
+            penyewaan.setNamaLengkap(namaLengkap);
+            penyewaan.setNomorTelepon(nomorTelepon);
+            penyewaan.setTanggalCheckIn(tanggalCheckIn);
+            penyewaan.setDurasiSewa(durasiSewa);
+
             penyewaanService.createPenyewaan(penyewaan, kosId, user);
             ra.addFlashAttribute("success", "Pengajuan penyewaan berhasil dibuat");
-            return "redirect:/penyewaan";
+            return "redirect:/penyewaan/";
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/penyewaan/new/" + kosId;
