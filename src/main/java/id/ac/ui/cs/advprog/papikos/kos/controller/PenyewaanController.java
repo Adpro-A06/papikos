@@ -9,12 +9,10 @@ import id.ac.ui.cs.advprog.papikos.kos.service.KosService;
 import id.ac.ui.cs.advprog.papikos.kos.service.PenyewaanService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -147,7 +145,7 @@ public class PenyewaanController {
 
             if (!penyewaanService.isPenyewaanEditable(penyewaan)) {
                 ra.addFlashAttribute("error", "Penyewaan tidak dapat diedit");
-                return "redirect:/penyewaan";
+                return "redirect:/penyewaan/";
             }
 
             model.addAttribute("penyewaan", penyewaan);
@@ -156,17 +154,20 @@ public class PenyewaanController {
             return "penyewaan/EditSewa";
         } catch (EntityNotFoundException e) {
             ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/penyewaan";
+            return "redirect:/penyewaan/";
         }
     }
 
     @PostMapping("/{id}/update")
-    public String updatePenyewaan(@PathVariable String id,
-            @Valid @ModelAttribute Penyewaan updatedPenyewaan,
-            BindingResult bindingResult,
+    public String updatePenyewaan(
+            @PathVariable String id,
+            @RequestParam String namaLengkap,
+            @RequestParam String nomorTelepon,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate tanggalCheckIn,
+            @RequestParam Integer durasiSewa,
             HttpSession session,
-            Model model,
             RedirectAttributes ra) {
+
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -177,16 +178,16 @@ public class PenyewaanController {
             return "redirect:/";
         }
 
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("kos", kosService.findById(updatedPenyewaan.getKos().getId()).orElse(null));
-            model.addAttribute("user", user);
-            return "penyewaan/EditSewa";
-        }
-
         try {
+            Penyewaan updatedPenyewaan = new Penyewaan();
+            updatedPenyewaan.setNamaLengkap(namaLengkap);
+            updatedPenyewaan.setNomorTelepon(nomorTelepon);
+            updatedPenyewaan.setTanggalCheckIn(tanggalCheckIn);
+            updatedPenyewaan.setDurasiSewa(durasiSewa);
+
             penyewaanService.updatePenyewaan(updatedPenyewaan, id, user);
             ra.addFlashAttribute("success", "Penyewaan berhasil diperbarui");
-            return "redirect:/penyewaan";
+            return "redirect:/penyewaan/";
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/penyewaan/" + id + "/edit";
@@ -219,7 +220,7 @@ public class PenyewaanController {
             return "penyewaan/DetailSewa";
         } catch (EntityNotFoundException e) {
             ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/penyewaan";
+            return "redirect:/penyewaan/";
         }
     }
 
@@ -240,7 +241,7 @@ public class PenyewaanController {
         try {
             penyewaanService.cancelPenyewaan(id, user);
             ra.addFlashAttribute("success", "Penyewaan berhasil dibatalkan");
-            return "redirect:/penyewaan";
+            return "redirect:/penyewaan/";
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/penyewaan/" + id;

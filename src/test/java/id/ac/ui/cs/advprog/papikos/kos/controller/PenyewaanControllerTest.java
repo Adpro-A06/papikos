@@ -293,7 +293,7 @@ class PenyewaanControllerTest {
         when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.empty());
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
+        assertEquals("redirect:/penyewaan/", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
@@ -307,7 +307,7 @@ class PenyewaanControllerTest {
         when(penyewaanService.isPenyewaanEditable(penyewaan)).thenReturn(false);
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
+        assertEquals("redirect:/penyewaan/", viewName);
         verify(redirectAttributes).addFlashAttribute("error", "Penyewaan tidak dapat diedit");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
         verify(penyewaanService).isPenyewaanEditable(penyewaan);
@@ -334,8 +334,16 @@ class PenyewaanControllerTest {
     void testUpdatePenyewaanWhenUserNotLoggedIn() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(null);
 
-        String viewName = penyewaanController.updatePenyewaan(penyewaanId, penyewaan, bindingResult, session, model,
+        LocalDate checkInDate = LocalDate.now().plusDays(7);
+        String viewName = penyewaanController.updatePenyewaan(
+                penyewaanId,
+                "John Doe",
+                "08123456789",
+                checkInDate,
+                3,
+                session,
                 redirectAttributes);
+
         assertEquals("redirect:/api/auth/login", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
         verify(penyewaanService, never()).updatePenyewaan(any(), anyString(), any());
@@ -347,27 +355,18 @@ class PenyewaanControllerTest {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(adminUser);
 
-        String viewName = penyewaanController.updatePenyewaan(penyewaanId, penyewaan, bindingResult, session, model,
+        LocalDate checkInDate = LocalDate.now().plusDays(7);
+        String viewName = penyewaanController.updatePenyewaan(
+                penyewaanId,
+                "John Doe",
+                "08123456789",
+                checkInDate,
+                3,
+                session,
                 redirectAttributes);
+
         assertEquals("redirect:/", viewName);
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-        verify(penyewaanService, never()).updatePenyewaan(any(), anyString(), any());
-    }
-
-    @Test
-    void testUpdatePenyewaanWithBindingErrors() {
-        when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
-        when(authService.decodeToken(validToken)).thenReturn(userId);
-        when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(true);
-        when(kosService.findById(anyString())).thenReturn(Optional.of(kos));
-        penyewaan.setKos(kos);
-
-        String viewName = penyewaanController.updatePenyewaan(penyewaanId, penyewaan, bindingResult, session, model,
-                redirectAttributes);
-        assertEquals("penyewaan/EditSewa", viewName);
-        verify(model).addAttribute("kos", kos);
-        verify(model).addAttribute("user", penyewaUser);
         verify(penyewaanService, never()).updatePenyewaan(any(), anyString(), any());
     }
 
@@ -376,14 +375,25 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(false);
-        when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
-                .thenReturn(penyewaan);
 
-        String viewName = penyewaanController.updatePenyewaan(penyewaanId, penyewaan, bindingResult, session, model,
+        LocalDate checkInDate = LocalDate.now().plusDays(7);
+
+        when(penyewaanService.updatePenyewaan(argThat(penyewaan -> penyewaan.getNamaLengkap().equals("John Doe") &&
+                penyewaan.getNomorTelepon().equals("08123456789") &&
+                penyewaan.getTanggalCheckIn().equals(checkInDate) &&
+                penyewaan.getDurasiSewa() == 3), eq(penyewaanId), eq(penyewaUser))).thenReturn(penyewaan);
+
+        String viewName = penyewaanController.updatePenyewaan(
+                penyewaanId,
+                "John Doe",
+                "08123456789",
+                checkInDate,
+                3,
+                session,
                 redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
-        verify(penyewaanService).updatePenyewaan(penyewaan, penyewaanId, penyewaUser);
+
+        assertEquals("redirect:/penyewaan/", viewName);
+        verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
         verify(redirectAttributes).addFlashAttribute("success", "Penyewaan berhasil diperbarui");
     }
 
@@ -392,14 +402,23 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(bindingResult.hasErrors()).thenReturn(false);
-        when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
-                .thenThrow(new RuntimeException("Test error"));
 
-        String viewName = penyewaanController.updatePenyewaan(penyewaanId, penyewaan, bindingResult, session, model,
+        LocalDate checkInDate = LocalDate.now().plusDays(7);
+
+        doThrow(new RuntimeException("Test error")).when(penyewaanService)
+                .updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
+
+        String viewName = penyewaanController.updatePenyewaan(
+                penyewaanId,
+                "John Doe",
+                "08123456789",
+                checkInDate,
+                3,
+                session,
                 redirectAttributes);
+
         assertEquals("redirect:/penyewaan/" + penyewaanId + "/edit", viewName);
-        verify(penyewaanService).updatePenyewaan(penyewaan, penyewaanId, penyewaUser);
+        verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
         verify(redirectAttributes).addFlashAttribute("error", "Test error");
     }
 
@@ -432,7 +451,7 @@ class PenyewaanControllerTest {
         when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.empty());
 
         String viewName = penyewaanController.viewPenyewaan(penyewaanId, session, model, redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
+        assertEquals("redirect:/penyewaan/", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
@@ -486,7 +505,7 @@ class PenyewaanControllerTest {
         doNothing().when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
 
         String viewName = penyewaanController.cancelPenyewaan(penyewaanId, session, redirectAttributes);
-        assertEquals("redirect:/penyewaan", viewName);
+        assertEquals("redirect:/penyewaan/", viewName);
         verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
         verify(redirectAttributes).addFlashAttribute("success", "Penyewaan berhasil dibatalkan");
     }
