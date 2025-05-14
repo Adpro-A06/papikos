@@ -21,7 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BindingResult;
@@ -31,6 +33,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -42,13 +46,13 @@ class PenyewaanRestControllerTest {
 
     private MockMvc mockMvc;
 
-    @Mock
+    @Mock(lenient = true)
     private PenyewaanService penyewaanService;
 
-    @Mock
+    @Mock(lenient = true)
     private KosService kosService;
 
-    @Mock
+    @Mock(lenient = true)
     private AuthService authService;
 
     @Mock
@@ -67,6 +71,7 @@ class PenyewaanRestControllerTest {
     private List<Penyewaan> penyewaanList;
     private String validToken;
     private String validAuthHeader;
+    private String invalidAuthHeader;
     private String userId;
     private String kosId;
     private String penyewaanId;
@@ -87,6 +92,7 @@ class PenyewaanRestControllerTest {
         userId = penyewaUser.getId().toString();
         validToken = "valid-token";
         validAuthHeader = "Bearer " + validToken;
+        invalidAuthHeader = "invalid-token";
 
         kos = new Kos();
         kos.setId(kosId);
@@ -140,6 +146,14 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testGetAllPenyewaanWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = penyewaanRestController.getAllPenyewaan(invalidAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
+    }
+
+    @Test
     void testGetAllPenyewaanNonPenyewa() throws Exception {
         when(authService.decodeToken(validToken)).thenReturn(adminUser.getId().toString());
         when(authService.findById(any(UUID.class))).thenReturn(adminUser);
@@ -184,6 +198,23 @@ class PenyewaanRestControllerTest {
                 .andExpect(jsonPath("$.status", is("error")))
                 .andExpect(jsonPath("$.message", is("Penyewaan tidak ditemukan")));
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
+    }
+
+    @Test
+    void testGetPenyewaanWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = penyewaanRestController.getPenyewaan(penyewaanId, invalidAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
+    }
+
+    @Test
+    void testGetPenyewaanNonPenyewa() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
+        ResponseEntity<?> response = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
     }
 
     @Test
@@ -235,6 +266,39 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testCreatePenyewaanAtIllegalArgumentException() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+        when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
+                .thenThrow(new IllegalArgumentException("Data tidak valid"));
+
+        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
+                kosId, penyewaan, bindingResult, validAuthHeader);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Data tidak valid");
+    }
+
+    @Test
+    void testCreatePenyewaanWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
+                kosId, penyewaan, bindingResult, invalidAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
+    }
+
+    @Test
+    void testCreatePenyewaanNonPenyewa() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
+        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
+                kosId, penyewaan, bindingResult, validAuthHeader);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+    }
+
+    @Test
     void testUpdatePenyewaanSuccess() throws Exception {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
@@ -283,6 +347,29 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testUpdatePenyewaanAtIllegalStateException() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+        when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
+                .thenThrow(new IllegalStateException("Penyewaan tidak dapat diubah"));
+
+        ResponseEntity<?> response = penyewaanRestController.updatePenyewaan(
+                penyewaanId, penyewaan, bindingResult, validAuthHeader);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Penyewaan tidak dapat diubah");
+    }
+
+    @Test
+    void testUpdatePenyewaanWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = penyewaanRestController.updatePenyewaan(
+                penyewaanId, penyewaan, bindingResult, invalidAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
+    }
+
+    @Test
     void testCancelPenyewaanSuccess() throws Exception {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
@@ -312,6 +399,36 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testCancelPenyewaanAtIllegalStateException() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+        doThrow(new IllegalStateException("Penyewaan tidak dapat dibatalkan"))
+                .when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
+
+        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, validAuthHeader);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Penyewaan tidak dapat dibatalkan");
+    }
+
+    @Test
+    void testCancelPenyewaanWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, invalidAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
+    }
+
+    @Test
+    void testCancelPenyewaanNonPenyewa() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
+        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, validAuthHeader);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+    }
+
+    @Test
     void testInvalidTokenFormat() throws Exception {
         mockMvc.perform(get("/api/penyewaan")
                 .header("Authorization", "InvalidFormat"))
@@ -319,5 +436,12 @@ class PenyewaanRestControllerTest {
                 .andExpect(jsonPath("$.status", is("error")))
                 .andExpect(jsonPath("$.message", is("Token tidak valid")));
         verify(penyewaanService, never()).findByPenyewa(any());
+    }
+
+    private void assertErrorResponse(Object responseBody, String expectedMessage) {
+        assertTrue(responseBody instanceof Map);
+        Map<String, Object> errorResponse = (Map<String, Object>) responseBody;
+        assertEquals("error", errorResponse.get("status"));
+        assertEquals(expectedMessage, errorResponse.get("message"));
     }
 }

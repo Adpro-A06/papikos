@@ -12,17 +12,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,6 +56,7 @@ class KosRestControllerTest {
     private String validAuthHeader;
     private String userId;
     private String kosId;
+    private String invalidToken;
 
     @BeforeEach
     void setUp() {
@@ -61,6 +69,7 @@ class KosRestControllerTest {
         userId = penyewaUser.getId().toString();
         validToken = "valid-token";
         validAuthHeader = "Bearer " + validToken;
+        invalidToken = "invalid-token";
   
         kos = new Kos();
         kos.setId(kosId);
@@ -116,6 +125,21 @@ class KosRestControllerTest {
     }
 
     @Test
+    void testGetAllKosNoAuthHeader() {
+        ResponseEntity<?> response = kosRestController.getAllKos(null);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+
+    @Test
+    void testGetAllKosWhenUserNotFound() {
+        when(authService.decodeToken("valid-token")).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(null);
+        ResponseEntity<?> response = kosRestController.getAllKos(validAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
     void testSearchKosSuccess() throws Exception {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(eq(UUID.fromString(userId)))).thenReturn(penyewaUser);
@@ -152,6 +176,13 @@ class KosRestControllerTest {
     }
 
     @Test
+    void testSearchKosWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = kosRestController.searchKos("keyword", "Bearer " + invalidToken);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
     void testGetKosDetailSuccess() throws Exception {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(eq(UUID.fromString(userId)))).thenReturn(penyewaUser);
@@ -180,5 +211,23 @@ class KosRestControllerTest {
         verify(authService).decodeToken(validToken);
         verify(authService).findById(eq(UUID.fromString(userId)));
         verify(kosService).findById(kosId);
+    }
+
+    @Test
+    void testGetKosDetailWhenInvalidToken() {
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));   
+        ResponseEntity<?> response = kosRestController.getKosDetail(kosId, "Bearer " + invalidToken);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void testGetKosDetailServiceException() {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+        when(kosService.findById(kosId)).thenThrow(new RuntimeException("Service error"));
+        ResponseEntity<?> response = kosRestController.getKosDetail(kosId, validAuthHeader);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        Map<String, Object> errorResponse = (Map<String, Object>) response.getBody();
+        assertEquals("Service error", errorResponse.get("message"));
     }
 }
