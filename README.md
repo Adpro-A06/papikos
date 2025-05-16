@@ -40,4 +40,3 @@ Namun, kami sadar bila mengganti sistem menjadi microservices juga membuka pelua
 #### Code Diagram
 ![](images/CodeDiagramPayment1.png)
 ![](images/CodeDiagramPayment2.png)
-
