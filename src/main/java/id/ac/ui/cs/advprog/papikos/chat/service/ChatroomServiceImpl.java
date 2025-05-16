@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.service;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
-import id.ac.ui.cs.advprog.papikos.chat.repository.ChatroomRepository;
+import id.ac.ui.cs.advprog.papikos.chat.repository.ChatroomRepositoryImpl;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.Optional;
 
 @Service
 public class ChatroomServiceImpl implements ChatroomService {
-    private final ChatroomRepository chatroomRepository;
+    private final ChatroomRepositoryImpl chatroomRepository;
 
-    public ChatroomServiceImpl(ChatroomRepository chatroomRepository) {
+    public ChatroomServiceImpl(ChatroomRepositoryImpl chatroomRepository) {
         this.chatroomRepository = chatroomRepository;
     }
 

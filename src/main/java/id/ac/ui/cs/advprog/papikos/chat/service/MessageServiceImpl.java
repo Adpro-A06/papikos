@@ -9,11 +9,11 @@ import java.util.List;
 
 @Service
 public class MessageServiceImpl implements MessageService {
-    private final ChatroomService  chatroomService;
+    private final ChatroomServiceImpl  chatroomService;
     private final ChatCommandService chatCommandService;
     private final MessageRepository messageRepository;
 
-    public MessageServiceImpl(ChatroomService chatroomService, ChatCommandService chatCommandService, MessageRepository messageRepository) {
+    public MessageServiceImpl(ChatroomServiceImpl chatroomService, ChatCommandService chatCommandService, MessageRepository messageRepository) {
         this.chatroomService    = chatroomService;
         this.chatCommandService = chatCommandService;
         this.messageRepository  = messageRepository;
