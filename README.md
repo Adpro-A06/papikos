@@ -33,3 +33,11 @@ Namun, kami sadar bila mengganti sistem menjadi microservices juga membuka pelua
 ![](images/CodeDiagramStef2.jpg)
 ![](images/CodeDiagramStef3.jpg)
 ![](images/CodeDiagramStef4.jpg)
+
+### Malvin Muhammad Raqin
+#### Component Diagram
+![](images/ComponentDiagramPayment.png)
+#### Code Diagram
+![](images/CodeDiagramPayment1.png)
+![](images/CodeDiagramPayment2.png)
+
