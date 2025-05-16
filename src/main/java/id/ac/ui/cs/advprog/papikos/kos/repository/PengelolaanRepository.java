@@ -4,10 +4,12 @@ import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
+    List<Kos> id(UUID id);
 
     default Kos create(Kos kos) {
         if (kos == null) {
@@ -42,6 +44,10 @@ public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
             throw new KosNotFoundException("Kos dengan ID " + kos.getId() + " tidak ditemukan.");
         }
         deleteById(kos.getId());
+    }
+
+    default List<Kos> findAllOrThrow() {
+        return findAll();
     }
 
     class KosNotFoundException extends RuntimeException {

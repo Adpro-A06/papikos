@@ -24,12 +24,12 @@ public class PengelolaanServiceImpl implements PengelolaanService {
 
     @Override
     public List<Kos> findAll() {
-        return pengelolaanRepository.findAll();
+        return pengelolaanRepository.findAllOrThrow();
     }
 
     @Override
-    public Kos findById(String id) {
-        return pengelolaanRepository.findByIdOrThrow(UUID.fromString(id));
+    public Kos findById(UUID id) {
+        return pengelolaanRepository.findByIdOrThrow(id);
     }
 
     @Override
