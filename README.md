@@ -48,3 +48,11 @@ Namun, kami sadar bila mengganti sistem menjadi microservices juga membuka pelua
 ![](images/CodeChat1.png)
 ![](images/CodeChat2.png)
 ![](images/CodeChat3.png)
+
+### Hishah Khalishah
+##### Component Diagram
+![Screenshot (2447)](https://github.com/user-attachments/assets/0391a130-9ddd-49de-b5f2-ded880ae8e28)
+#### Code Diagram
+![Screenshot (2448)](https://github.com/user-attachments/assets/44b009ad-e830-42c4-a9e1-5b2b5a933eb4)
+![Screenshot (2449)](https://github.com/user-attachments/assets/54dc0db7-ba0a-47e3-b944-8f47de7ded07)
+
