@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,7 +46,7 @@ public class WishlistNotifierTest {
     public void testObserverNotificationOnCreateWishlist() {
         Wishlist wishlist = new Wishlist("Observer Test Wishlist");
         Kos kos = new Kos();
-        kos.setId("K001");
+        kos.setId(UUID.randomUUID());
         kos.setNama("Kos Example");
         wishlist.addKos(kos);
 
@@ -66,7 +67,7 @@ public class WishlistNotifierTest {
 
         Wishlist wishlist = new Wishlist("No Observer Wishlist");
         Kos kos = new Kos();
-        kos.setId("K002");
+        kos.setId(UUID.randomUUID());
         kos.setNama("Kos Example 2");
         wishlist.addKos(kos);
 

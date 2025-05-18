@@ -13,6 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.service.KosService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +36,9 @@ public class HomeControllerTest {
 
     @Mock
     private AuthService authService;
+
+    @Mock
+    private KosService kosService; 
 
     @InjectMocks
     private HomeController homeController;
@@ -42,9 +51,11 @@ public class HomeControllerTest {
     private User penyewaUser;
     private String validToken = "jwt-abc123";
     private UUID userId = UUID.randomUUID();
+    private List<Kos> availableKosList;
 
     @BeforeEach
     public void setup() {
+        homeController = new HomeController(authService, kosService);
         mockMvc = MockMvcBuilders.standaloneSetup(homeController).build();
         session = new MockHttpSession();
  
@@ -54,6 +65,12 @@ public class HomeControllerTest {
         pemilikKosBelumApproveUser = new User("pemilik2@example.com", "P@ssword123", Role.PEMILIK_KOS);
         pemilikKosBelumApproveUser.setApproved(false);
         penyewaUser = new User("penyewa@example.com", "P@ssword123", Role.PENYEWA);
+
+        availableKosList = new ArrayList<>();
+        Kos mockKos = new Kos();
+        mockKos.setId(UUID.randomUUID());
+        mockKos.setNama("Kos Test");
+        availableKosList.add(mockKos);
     }
 
     @Test
@@ -138,15 +155,19 @@ public class HomeControllerTest {
                 .andExpect(flash().attribute("error", "Anda tidak memiliki akses ke halaman ini"));
     }
     
-    @Test
     public void testPenyewaHomeLoggedInAsPenyewa() throws Exception {
         session.setAttribute("JWT_TOKEN", validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(penyewaUser);
+        when(kosService.findAllAvailable()).thenReturn(availableKosList);
 
         mockMvc.perform(get("/penyewa/home").session(session))
                 .andExpect(status().isOk())
-                .andExpect(view().name("home/PenyewaHome"));
+                .andExpect(view().name("authentication/PenyewaHome"))
+                .andExpect(model().attributeExists("kosList"))
+                .andExpect(model().attributeExists("user"));
+                
+        verify(kosService).findAllAvailable();
     }
     
     @Test
