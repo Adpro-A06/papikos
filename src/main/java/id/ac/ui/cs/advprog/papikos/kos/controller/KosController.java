@@ -30,9 +30,9 @@ public class KosController {
 
     @GetMapping("/kos/search")
     public String searchKos(@RequestParam(required = false) String keyword,
-            HttpSession session,
-            Model model,
-            RedirectAttributes ra) {
+                            HttpSession session,
+                            Model model,
+                            RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -58,9 +58,9 @@ public class KosController {
 
     @GetMapping("/kos/{id}")
     public String viewKosDetail(@PathVariable String id,
-            HttpSession session,
-            Model model,
-            RedirectAttributes ra) {
+                                HttpSession session,
+                                Model model,
+                                RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return "redirect:/api/auth/login";
@@ -72,12 +72,16 @@ public class KosController {
         }
 
         try {
-            Kos kos = kosService.findById(id)
+            UUID kosId = UUID.fromString(id);
+            Kos kos = kosService.findById(kosId)
                     .orElseThrow(() -> new EntityNotFoundException("Kos tidak ditemukan"));
 
             model.addAttribute("kos", kos);
             model.addAttribute("user", user);
             return "penyewaan/DetailKos";
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "Format ID kos tidak valid");
+            return "redirect:/penyewa/home";
         } catch (EntityNotFoundException e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/penyewa/home";

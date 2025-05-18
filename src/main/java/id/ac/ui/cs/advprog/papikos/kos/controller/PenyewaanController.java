@@ -71,7 +71,14 @@ public class PenyewaanController {
         }
 
         try {
-            Kos kos = kosService.findById(kosId)
+            UUID kosUUID;
+            try {
+                kosUUID = UUID.fromString(kosId);
+            } catch (IllegalArgumentException e) {
+                throw new EntityNotFoundException("Format ID kos tidak valid");
+            }
+
+            Kos kos = kosService.findById(kosUUID)
                     .orElseThrow(() -> new EntityNotFoundException("Kos tidak ditemukan"));
 
             Penyewaan penyewaan = new Penyewaan();

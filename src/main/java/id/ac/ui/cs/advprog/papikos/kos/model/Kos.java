@@ -68,8 +68,7 @@ public class Kos {
 
     @Pattern(regexp = "^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,})(\\/[\\w\\.-]*)*\\/?$", 
             message = "Format URL foto tidak valid")
-    @NotBlank(message = "URL foto tidak boleh kosong")
-    @Column(name = "url_foto", nullable = false)
+    @Column(name = "url_foto")
     private String urlFoto;
     
     @ManyToOne(fetch = FetchType.LAZY)

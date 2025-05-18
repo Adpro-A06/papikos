@@ -95,7 +95,7 @@ class PenyewaanRestControllerTest {
         invalidAuthHeader = "invalid-token";
 
         kos = new Kos();
-        kos.setId(kosId);
+        kos.setId(UUID.fromString(kosId));
         kos.setNama("Kos Melati");
         kos.setAlamat("Jl. Kenanga No. 10");
         kos.setDeskripsi("Kos nyaman dekat kampus");

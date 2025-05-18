@@ -55,7 +55,7 @@ class PenyewaanServiceImplTest {
         pemilik = new User("pemilik@example.com", "password456!", Role.PEMILIK_KOS);
 
         kos = new Kos();
-        kos.setId(kosId);
+        kos.setId(UUID.fromString(kosId));
         kos.setNama("Kos Melati");
         kos.setAlamat("Jl. Kenanga No. 10");
         kos.setDeskripsi("Kos nyaman dekat kampus");
@@ -103,7 +103,7 @@ class PenyewaanServiceImplTest {
 
     @Test
     void testCreatePenyewaanSuccess() {
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
         when(penyewaanRepository.save(any(Penyewaan.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Penyewaan newPenyewaan = new Penyewaan();
@@ -118,7 +118,7 @@ class PenyewaanServiceImplTest {
         assertEquals(kos, result.getKos());
         assertEquals(StatusPenyewaan.PENDING, result.getStatus());
         assertEquals(3000000, result.getTotalBiaya());
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository).save(any(Penyewaan.class));
     }
 
@@ -126,12 +126,12 @@ class PenyewaanServiceImplTest {
     void testCreatePenyewaanKosNotFound() {
         String nonExistentId = UUID.randomUUID().toString();
         Penyewaan newPenyewaan = new Penyewaan();
-        when(kosRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(kosRepository.findById(UUID.fromString(nonExistentId))).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> {
             penyewaanService.createPenyewaan(newPenyewaan, nonExistentId, penyewa);
         });
-        verify(kosRepository).findById(nonExistentId);
+        verify(kosRepository).findById(UUID.fromString(nonExistentId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }
 
@@ -139,12 +139,12 @@ class PenyewaanServiceImplTest {
     void testCreatePenyewaanKosNotAvailable() {
         Penyewaan newPenyewaan = new Penyewaan();
         kos.setStatus("FULL");
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
         assertThrows(IllegalStateException.class, () -> {
             penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
         });
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
         kos.setStatus("AVAILABLE");
     }
@@ -153,12 +153,12 @@ class PenyewaanServiceImplTest {
     void testCreatePenyewaanNoRoomsAvailable() {
         Penyewaan newPenyewaan = new Penyewaan();
         kos.setJumlah(0);
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
         assertThrows(IllegalStateException.class, () -> {
             penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
         });
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
         kos.setJumlah(5);
     }
@@ -168,12 +168,12 @@ class PenyewaanServiceImplTest {
         Penyewaan newPenyewaan = new Penyewaan();
         newPenyewaan.setTanggalCheckIn(LocalDate.now().minusDays(1));
         newPenyewaan.setDurasiSewa(2);
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
         assertThrows(IllegalArgumentException.class, () -> {
             penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
         });
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }
 
@@ -182,12 +182,12 @@ class PenyewaanServiceImplTest {
         Penyewaan newPenyewaan = new Penyewaan();
         newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
         newPenyewaan.setDurasiSewa(0);
-        when(kosRepository.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
         assertThrows(IllegalArgumentException.class, () -> {
             penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
         });
-        verify(kosRepository).findById(kosId);
+        verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }
 

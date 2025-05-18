@@ -79,10 +79,16 @@ public class KosRestController {
                         .body(createErrorResponse("Anda harus login terlebih dahulu"));
             }
 
-            return kosService.findById(id)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .<Kos>body(null));
+            try {
+                UUID kosUUID = UUID.fromString(id);
+                return kosService.findById(kosUUID)
+                        .map(ResponseEntity::ok)
+                        .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .<Kos>body(null));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Format ID kos tidak valid"));
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(createErrorResponse(e.getMessage()));

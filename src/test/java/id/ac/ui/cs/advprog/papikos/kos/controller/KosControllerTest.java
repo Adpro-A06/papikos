@@ -52,7 +52,8 @@ class KosControllerTest {
     private Kos kos;
     private String validToken;
     private String userId;
-    private String kosId;
+    private UUID kosId;
+    private String kosIdString;
 
     @BeforeEach
     void setUp() {
@@ -60,8 +61,9 @@ class KosControllerTest {
         pemilikUser = new User("pemilik@example.com", "password456!", Role.PEMILIK_KOS);
         penyewaUser = new User("penyewa@example.com", "password789!", Role.PENYEWA);
 
-        kosId = UUID.randomUUID().toString();
-        
+        kosId = UUID.randomUUID();
+        kosIdString = kosId.toString();
+
         kos = new Kos();
         kos.setId(kosId);
         kos.setNama("Kos Melati");
@@ -131,7 +133,7 @@ class KosControllerTest {
     @Test
     void testViewKosDetailWhenUserNotLoggedIn() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(null);
-        String viewName = kosController.viewKosDetail(kosId, session, model, redirectAttributes);
+        String viewName = kosController.viewKosDetail(kosIdString, session, model, redirectAttributes);
         assertEquals("redirect:/api/auth/login", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
     }
@@ -142,7 +144,7 @@ class KosControllerTest {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(pemilikUser);
 
-        String viewName = kosController.viewKosDetail(kosId, session, model, redirectAttributes);
+        String viewName = kosController.viewKosDetail(kosIdString, session, model, redirectAttributes);
         assertEquals("redirect:/", viewName);
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
     }
@@ -154,7 +156,7 @@ class KosControllerTest {
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
         when(kosService.findById(kosId)).thenReturn(Optional.of(kos));
 
-        String viewName = kosController.viewKosDetail(kosId, session, model, redirectAttributes);
+        String viewName = kosController.viewKosDetail(kosIdString, session, model, redirectAttributes);
         assertEquals("penyewaan/DetailKos", viewName);
         verify(kosService).findById(kosId);
         verify(model).addAttribute("kos", kos);
@@ -163,14 +165,15 @@ class KosControllerTest {
 
     @Test
     void testViewKosDetailNotFound() {
-        String nonExistentKosId = UUID.randomUUID().toString();
-        
+        UUID nonExistentKosId = UUID.randomUUID();
+        String nonExistentKosIdString = nonExistentKosId.toString();
+
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
         when(kosService.findById(nonExistentKosId)).thenReturn(Optional.empty());
 
-        String viewName = kosController.viewKosDetail(nonExistentKosId, session, model, redirectAttributes);
+        String viewName = kosController.viewKosDetail(nonExistentKosIdString, session, model, redirectAttributes);
         assertEquals("redirect:/penyewa/home", viewName);
         verify(kosService).findById(nonExistentKosId);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());

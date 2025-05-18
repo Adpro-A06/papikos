@@ -46,7 +46,7 @@ class KosServiceImplTest {
         pemilik = new User("pemilik@example.com", "p@ssword123", Role.PEMILIK_KOS);
 
         kos1 = new Kos();
-        kos1.setId(kos1Id);
+        kos1.setId(UUID.fromString(kos1Id));
         kos1.setNama("Kos Melati");
         kos1.setAlamat("Jl. Kenanga No. 10");
         kos1.setDeskripsi("Kos nyaman dekat kampus");
@@ -56,7 +56,7 @@ class KosServiceImplTest {
         kos1.setPemilik(pemilik);
 
         kos2 = new Kos();
-        kos2.setId(kos2Id);
+        kos2.setId(UUID.fromString(kos2Id));
         kos2.setNama("Kos Anggrek");
         kos2.setAlamat("Jl. Mawar No. 5");
         kos2.setDeskripsi("Kos eksklusif dengan AC");
@@ -66,7 +66,7 @@ class KosServiceImplTest {
         kos2.setPemilik(pemilik);
 
         kos3 = new Kos();
-        kos3.setId(kos3Id);
+        kos3.setId(UUID.fromString(kos3Id));
         kos3.setNama("Kos Cendana");
         kos3.setAlamat("Jl. Dahlia No. 15");
         kos3.setDeskripsi("Kos strategis dekat stasiun");
@@ -129,23 +129,23 @@ class KosServiceImplTest {
 
     @Test
     void testFindById() {
-        when(kosRepository.findById(kos1Id)).thenReturn(Optional.of(kos1));
+        when(kosRepository.findById(UUID.fromString(kos1Id))).thenReturn(Optional.of(kos1));
 
-        Optional<Kos> result = kosService.findById(kos1Id);
+        Optional<Kos> result = kosService.findById(UUID.fromString(kos1Id));
         assertTrue(result.isPresent());
         assertEquals("Kos Melati", result.get().getNama());
-        assertEquals(kos1Id, result.get().getId());
-        verify(kosRepository, times(1)).findById(kos1Id);
+        assertEquals(UUID.fromString(kos1Id), result.get().getId());
+        verify(kosRepository, times(1)).findById(UUID.fromString(kos1Id));
     }
 
     @Test
     void testFindByIdNotFound() {
         String nonExistentId = UUID.randomUUID().toString();
-        when(kosRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(kosRepository.findById(UUID.fromString(nonExistentId))).thenReturn(Optional.empty());
 
-        Optional<Kos> result = kosService.findById(nonExistentId);
+        Optional<Kos> result = kosService.findById(UUID.fromString(nonExistentId));
         assertFalse(result.isPresent());
-        verify(kosRepository, times(1)).findById(nonExistentId);
+        verify(kosRepository, times(1)).findById(UUID.fromString(nonExistentId));
     }
 
     @Test

@@ -55,7 +55,8 @@ class KosRestControllerTest {
     private String validToken;
     private String validAuthHeader;
     private String userId;
-    private String kosId;
+    private UUID kosId;
+    private String kosIdString;
     private String invalidToken;
 
     @BeforeEach
@@ -65,12 +66,13 @@ class KosRestControllerTest {
         penyewaUser = new User("penyewa@example.com", "password123!", Role.PENYEWA);
         pemilikUser = new User("pemilik@example.com", "password456!", Role.PEMILIK_KOS);
 
-        kosId = UUID.randomUUID().toString();
+        kosId = UUID.randomUUID();
+        kosIdString = kosId.toString();
         userId = penyewaUser.getId().toString();
         validToken = "valid-token";
         validAuthHeader = "Bearer " + validToken;
         invalidToken = "invalid-token";
-  
+
         kos = new Kos();
         kos.setId(kosId);
         kos.setNama("Kos Melati");
@@ -80,12 +82,12 @@ class KosRestControllerTest {
         kos.setJumlah(5);
         kos.setStatus("AVAILABLE");
         kos.setPemilik(pemilikUser);
- 
+
         kosList = new ArrayList<>();
         kosList.add(kos);
-  
+
         Kos kos2 = new Kos();
-        kos2.setId(UUID.randomUUID().toString());
+        kos2.setId(UUID.randomUUID());
         kos2.setNama("Kos Mawar");
         kos2.setAlamat("Jl. Anggrek No. 15");
         kos2.setDeskripsi("Kos eksklusif dengan fasilitas lengkap");
@@ -103,13 +105,13 @@ class KosRestControllerTest {
         when(kosService.findAllAvailable()).thenReturn(kosList);
 
         mockMvc.perform(get("/api/kos")
-                .header("Authorization", validAuthHeader))
+                        .header("Authorization", validAuthHeader))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(kosId)))
+                .andExpect(jsonPath("$[0].id", is(kosIdString)))
                 .andExpect(jsonPath("$[0].nama", is("Kos Melati")))
-                .andExpect(jsonPath("$[1].nama", is("Kos Mawar"))); 
+                .andExpect(jsonPath("$[1].nama", is("Kos Mawar")));
         verify(authService).decodeToken(validToken);
         verify(authService).findById(eq(UUID.fromString(userId)));
         verify(kosService).findAllAvailable();
@@ -118,7 +120,7 @@ class KosRestControllerTest {
     @Test
     void testGetAllKosInvalidToken() throws Exception {
         mockMvc.perform(get("/api/kos")
-                .header("Authorization", "InvalidFormat"))
+                        .header("Authorization", "InvalidFormat"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status", is("error")));
         verify(kosService, never()).findAllAvailable();
@@ -146,12 +148,12 @@ class KosRestControllerTest {
         when(kosService.searchByKeyword("melati")).thenReturn(List.of(kos));
 
         mockMvc.perform(get("/api/kos/search")
-                .param("keyword", "melati")
-                .header("Authorization", validAuthHeader))
+                        .param("keyword", "melati")
+                        .header("Authorization", validAuthHeader))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(kosId)))
+                .andExpect(jsonPath("$[0].id", is(kosIdString)))
                 .andExpect(jsonPath("$[0].nama", is("Kos Melati")));
         verify(authService).decodeToken(validToken);
         verify(authService).findById(eq(UUID.fromString(userId)));
@@ -165,8 +167,8 @@ class KosRestControllerTest {
         when(kosService.findAllAvailable()).thenReturn(kosList);
 
         mockMvc.perform(get("/api/kos/search")
-                .param("keyword", "")
-                .header("Authorization", validAuthHeader))
+                        .param("keyword", "")
+                        .header("Authorization", validAuthHeader))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)));
@@ -188,12 +190,12 @@ class KosRestControllerTest {
         when(authService.findById(eq(UUID.fromString(userId)))).thenReturn(penyewaUser);
         when(kosService.findById(kosId)).thenReturn(Optional.of(kos));
 
-        mockMvc.perform(get("/api/kos/{id}", kosId)
-                .header("Authorization", validAuthHeader))
+        mockMvc.perform(get("/api/kos/{id}", kosIdString)
+                        .header("Authorization", validAuthHeader))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id", is(kosId)))
-                .andExpect(jsonPath("$.nama", is("Kos Melati")));      
+                .andExpect(jsonPath("$.id", is(kosIdString)))
+                .andExpect(jsonPath("$.nama", is("Kos Melati")));
         verify(authService).decodeToken(validToken);
         verify(authService).findById(eq(UUID.fromString(userId)));
         verify(kosService).findById(kosId);
@@ -205,8 +207,8 @@ class KosRestControllerTest {
         when(authService.findById(eq(UUID.fromString(userId)))).thenReturn(penyewaUser);
         when(kosService.findById(kosId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/kos/{id}", kosId)
-                .header("Authorization", validAuthHeader))
+        mockMvc.perform(get("/api/kos/{id}", kosIdString)
+                        .header("Authorization", validAuthHeader))
                 .andExpect(status().isNotFound());
         verify(authService).decodeToken(validToken);
         verify(authService).findById(eq(UUID.fromString(userId)));
@@ -215,8 +217,8 @@ class KosRestControllerTest {
 
     @Test
     void testGetKosDetailWhenInvalidToken() {
-        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));   
-        ResponseEntity<?> response = kosRestController.getKosDetail(kosId, "Bearer " + invalidToken);
+        when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
+        ResponseEntity<?> response = kosRestController.getKosDetail(kosIdString, "Bearer " + invalidToken);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
@@ -225,7 +227,7 @@ class KosRestControllerTest {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
         when(kosService.findById(kosId)).thenThrow(new RuntimeException("Service error"));
-        ResponseEntity<?> response = kosRestController.getKosDetail(kosId, validAuthHeader);
+        ResponseEntity<?> response = kosRestController.getKosDetail(kosIdString, validAuthHeader);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Map<String, Object> errorResponse = (Map<String, Object>) response.getBody();
         assertEquals("Service error", errorResponse.get("message"));

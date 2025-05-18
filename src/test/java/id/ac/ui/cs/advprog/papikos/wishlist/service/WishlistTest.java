@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -35,11 +37,11 @@ public class WishlistTest {
         wishlist = new Wishlist("Test Wishlist");
 
         kosA = new Kos();
-        kosA.setId("K001");
+        kosA.setId(UUID.randomUUID());
         kosA.setNama("Kos GojoMyLove");
 
         kosB = new Kos();
-        kosB.setId("K002");
+        kosB.setId(UUID.randomUUID());
         kosB.setNama("Kos SatoruMyShayla");
     }
 

@@ -68,7 +68,7 @@ public class HomeControllerTest {
 
         availableKosList = new ArrayList<>();
         Kos mockKos = new Kos();
-        mockKos.setId("kos-123");
+        mockKos.setId(UUID.randomUUID());
         mockKos.setNama("Kos Test");
         availableKosList.add(mockKos);
     }

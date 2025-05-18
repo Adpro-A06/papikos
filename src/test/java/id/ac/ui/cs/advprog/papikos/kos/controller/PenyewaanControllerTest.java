@@ -80,7 +80,7 @@ class PenyewaanControllerTest {
         validToken = "jwt-validToken";
 
         kos = new Kos();
-        kos.setId(kosId);
+        kos.setId(UUID.fromString(kosId));
         kos.setNama("Kos Melati");
         kos.setAlamat("Jl. Kenanga No. 10");
         kos.setDeskripsi("Kos nyaman dekat kampus");
@@ -146,7 +146,7 @@ class PenyewaanControllerTest {
         String viewName = penyewaanController.newPenyewaanForm(kosId, session, model, redirectAttributes);
         assertEquals("redirect:/api/auth/login", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
-        verify(kosService, never()).findById(anyString());
+        verify(kosService, never()).findById(any(UUID.class));
     }
 
     @Test
@@ -158,7 +158,7 @@ class PenyewaanControllerTest {
         String viewName = penyewaanController.newPenyewaanForm(kosId, session, model, redirectAttributes);
         assertEquals("redirect:/", viewName);
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-        verify(kosService, never()).findById(anyString());
+        verify(kosService, never()).findById(any(UUID.class));
     }
 
     @Test
@@ -166,12 +166,12 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(kosService.findById(kosId)).thenReturn(Optional.empty());
+        when(kosService.findById(UUID.fromString(kosId))).thenReturn(Optional.empty());
 
         String viewName = penyewaanController.newPenyewaanForm(kosId, session, model, redirectAttributes);
         assertEquals("redirect:/penyewa/home", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
-        verify(kosService).findById(kosId);
+        verify(kosService).findById(UUID.fromString(kosId));
     }
 
     @Test
@@ -179,11 +179,11 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(kosService.findById(kosId)).thenReturn(Optional.of(kos));
+        when(kosService.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
         String viewName = penyewaanController.newPenyewaanForm(kosId, session, model, redirectAttributes);
         assertEquals("penyewaan/FormSewa", viewName);
-        verify(kosService).findById(kosId);
+        verify(kosService).findById(UUID.fromString(kosId));
         verify(model).addAttribute(eq("kos"), any(Kos.class));
         verify(model).addAttribute(eq("penyewaan"), any(Penyewaan.class));
         verify(model).addAttribute("user", penyewaUser);

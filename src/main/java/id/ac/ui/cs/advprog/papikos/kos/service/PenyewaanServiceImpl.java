@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PenyewaanServiceImpl implements PenyewaanService {
@@ -31,7 +32,14 @@ public class PenyewaanServiceImpl implements PenyewaanService {
     @Override
     @Transactional
     public Penyewaan createPenyewaan(Penyewaan penyewaan, String kosId, User penyewa) {
-        Kos kos = kosRepository.findById(kosId)
+        UUID kosUUID;
+        try {
+            kosUUID = UUID.fromString(kosId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid kos ID format: " + kosId);
+        }
+
+        Kos kos = kosRepository.findById(kosUUID)
                 .orElseThrow(() -> new EntityNotFoundException("Kos tidak ditemukan dengan ID: " + kosId));
 
         if (!"AVAILABLE".equals(kos.getStatus())) {

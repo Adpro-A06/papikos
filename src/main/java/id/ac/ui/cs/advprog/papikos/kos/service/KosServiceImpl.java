@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class KosServiceImpl implements KosService {
@@ -29,7 +30,7 @@ public class KosServiceImpl implements KosService {
     }
 
     @Override
-    public Optional<Kos> findById(String id) {
+    public Optional<Kos> findById(UUID id) {
         return kosRepository.findById(id);
     }
 }

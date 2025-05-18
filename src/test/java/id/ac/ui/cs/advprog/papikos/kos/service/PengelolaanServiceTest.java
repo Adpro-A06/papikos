@@ -53,7 +53,7 @@ public class PengelolaanServiceTest {
         savedKos.setPemilik(mockUser);
 
         when(pengelolaanRepository.create(any(Kos.class))).thenReturn(savedKos);
-        when(pengelolaanRepository.findAll()).thenReturn(Arrays.asList(savedKos));
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Arrays.asList(savedKos));
 
         Kos createdKos = pengelolaanService.create(kos);
 
@@ -133,7 +133,7 @@ public class PengelolaanServiceTest {
         kos.setPemilik(mockUser);
 
         doNothing().when(pengelolaanRepository).delete(kos);
-        when(pengelolaanRepository.findAll()).thenReturn(Collections.emptyList());
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
 
         pengelolaanService.delete(kos);
         List<Kos> retrievedKosList = pengelolaanService.findAll();
@@ -144,8 +144,7 @@ public class PengelolaanServiceTest {
 
     @Test
     void testFindAllEmpty() {
-        when(pengelolaanRepository.findAll()).thenReturn(Collections.emptyList());
-
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
         List<Kos> kosList = pengelolaanService.findAll();
         assertTrue(kosList.isEmpty());
     }
