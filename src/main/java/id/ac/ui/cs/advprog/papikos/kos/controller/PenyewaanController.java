@@ -18,7 +18,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Controller
 @RequestMapping("/penyewaan")
@@ -49,10 +51,17 @@ public class PenyewaanController {
             return "redirect:/";
         }
 
-        List<Penyewaan> penyewaanList = penyewaanService.findByPenyewa(user);
-        model.addAttribute("penyewaanList", penyewaanList);
-        model.addAttribute("user", user);
-        return "penyewaan/ListSewa";
+        try {
+            List<Penyewaan> penyewaanList = penyewaanService.findByPenyewa(user).get();
+            model.addAttribute("penyewaanList", penyewaanList);
+            model.addAttribute("user", user);
+            return "penyewaan/ListSewa";
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", "Gagal memuat data penyewaan: " + errorMessage);
+            return "redirect:/penyewa/home";
+        }
     }
 
     @GetMapping("/new/{kosId}")
@@ -122,11 +131,13 @@ public class PenyewaanController {
             penyewaan.setTanggalCheckIn(tanggalCheckIn);
             penyewaan.setDurasiSewa(durasiSewa);
 
-            penyewaanService.createPenyewaan(penyewaan, kosId, user);
+            penyewaanService.createPenyewaan(penyewaan, kosId, user).get();
             ra.addFlashAttribute("success", "Pengajuan penyewaan berhasil dibuat");
             return "redirect:/penyewaan/";
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", errorMessage);
             return "redirect:/penyewaan/new/" + kosId;
         }
     }
@@ -147,9 +158,12 @@ public class PenyewaanController {
         }
 
         try {
-            Penyewaan penyewaan = penyewaanService.findByIdAndPenyewa(id, user)
-                    .orElseThrow(() -> new EntityNotFoundException("Penyewaan tidak ditemukan"));
+            Optional<Penyewaan> penyewaanOpt = penyewaanService.findByIdAndPenyewa(id, user).get();
+            if (penyewaanOpt.isEmpty()) {
+                throw new EntityNotFoundException("Penyewaan tidak ditemukan");
+            }
 
+            Penyewaan penyewaan = penyewaanOpt.get();
             if (!penyewaanService.isPenyewaanEditable(penyewaan)) {
                 ra.addFlashAttribute("error", "Penyewaan tidak dapat diedit");
                 return "redirect:/penyewaan/";
@@ -159,8 +173,10 @@ public class PenyewaanController {
             model.addAttribute("kos", penyewaan.getKos());
             model.addAttribute("user", user);
             return "penyewaan/EditSewa";
-        } catch (EntityNotFoundException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", errorMessage);
             return "redirect:/penyewaan/";
         }
     }
@@ -192,11 +208,13 @@ public class PenyewaanController {
             updatedPenyewaan.setTanggalCheckIn(tanggalCheckIn);
             updatedPenyewaan.setDurasiSewa(durasiSewa);
 
-            penyewaanService.updatePenyewaan(updatedPenyewaan, id, user);
+            penyewaanService.updatePenyewaan(updatedPenyewaan, id, user).get();
             ra.addFlashAttribute("success", "Penyewaan berhasil diperbarui");
             return "redirect:/penyewaan/";
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", errorMessage);
             return "redirect:/penyewaan/" + id + "/edit";
         }
     }
@@ -217,16 +235,21 @@ public class PenyewaanController {
         }
 
         try {
-            Penyewaan penyewaan = penyewaanService.findByIdAndPenyewa(id, user)
-                    .orElseThrow(() -> new EntityNotFoundException("Penyewaan tidak ditemukan"));
+            Optional<Penyewaan> penyewaanOpt = penyewaanService.findByIdAndPenyewa(id, user).get();
+            if (penyewaanOpt.isEmpty()) {
+                throw new EntityNotFoundException("Penyewaan tidak ditemukan");
+            }
 
+            Penyewaan penyewaan = penyewaanOpt.get();
             model.addAttribute("penyewaan", penyewaan);
             model.addAttribute("isEditable", penyewaanService.isPenyewaanEditable(penyewaan));
             model.addAttribute("isCancellable", penyewaanService.isPenyewaanCancellable(penyewaan));
             model.addAttribute("user", user);
             return "penyewaan/DetailSewa";
-        } catch (EntityNotFoundException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", errorMessage);
             return "redirect:/penyewaan/";
         }
     }
@@ -246,11 +269,13 @@ public class PenyewaanController {
         }
 
         try {
-            penyewaanService.cancelPenyewaan(id, user);
+            penyewaanService.cancelPenyewaan(id, user).get();
             ra.addFlashAttribute("success", "Penyewaan berhasil dibatalkan");
             return "redirect:/penyewaan/";
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            Throwable cause = e.getCause();
+            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+            ra.addFlashAttribute("error", errorMessage);
             return "redirect:/penyewaan/" + id;
         }
     }

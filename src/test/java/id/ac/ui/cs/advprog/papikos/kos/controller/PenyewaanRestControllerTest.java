@@ -22,37 +22,31 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class PenyewaanRestControllerTest {
 
-    private MockMvc mockMvc;
-
-    @Mock(lenient = true)
+    @Mock
     private PenyewaanService penyewaanService;
 
-    @Mock(lenient = true)
+    @Mock
     private KosService kosService;
 
-    @Mock(lenient = true)
+    @Mock
     private AuthService authService;
 
     @Mock
@@ -61,7 +55,7 @@ class PenyewaanRestControllerTest {
     @InjectMocks
     private PenyewaanRestController penyewaanRestController;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper;
 
     private User penyewaUser;
     private User pemilikUser;
@@ -78,7 +72,6 @@ class PenyewaanRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(penyewaanRestController).build();
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -92,7 +85,7 @@ class PenyewaanRestControllerTest {
         userId = penyewaUser.getId().toString();
         validToken = "valid-token";
         validAuthHeader = "Bearer " + validToken;
-        invalidAuthHeader = "invalid-token";
+        invalidAuthHeader = "Bearer invalid-token";
 
         kos = new Kos();
         kos.setId(UUID.fromString(kosId));
@@ -121,147 +114,228 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
-    void testGetAllPenyewaanSuccess() throws Exception {
+    void testGetAllPenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(penyewaanList);
+        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(CompletableFuture.completedFuture(penyewaanList));
 
-        mockMvc.perform(get("/api/penyewaan")
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(penyewaanId)));  
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan(validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody() instanceof List);
+        List<?> responseBody = (List<?>) response.getBody();
+        assertEquals(1, responseBody.size());
         verify(authService).decodeToken(validToken);
         verify(authService).findById(any(UUID.class));
         verify(penyewaanService).findByPenyewa(penyewaUser);
     }
 
     @Test
-    void testGetAllPenyewaanUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/penyewaan")
-            .header("Authorization", ""))
-            .andExpect(status().isUnauthorized());
+    void testGetAllPenyewaanUnauthorized() {
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan("");
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(penyewaanService, never()).findByPenyewa(any());
     }
 
     @Test
     void testGetAllPenyewaanWhenInvalidToken() {
         when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
-        ResponseEntity<?> response = penyewaanRestController.getAllPenyewaan(invalidAuthHeader);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan(invalidAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Token tidak valid");
-    }
-
-    @Test
-    void testGetAllPenyewaanNonPenyewa() throws Exception {
-        when(authService.decodeToken(validToken)).thenReturn(adminUser.getId().toString());
-        when(authService.findById(any(UUID.class))).thenReturn(adminUser);
-        
-        mockMvc.perform(get("/api/penyewaan")
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Anda tidak memiliki akses ke resource ini")));
+        verify(authService).decodeToken(anyString());
         verify(penyewaanService, never()).findByPenyewa(any());
     }
 
     @Test
-    void testGetPenyewaanSuccess() throws Exception {
+    void testGetAllPenyewaanNonPenyewa() {
+        when(authService.decodeToken(validToken)).thenReturn(adminUser.getId().toString());
+        when(authService.findById(any(UUID.class))).thenReturn(adminUser);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan(validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+        verify(penyewaanService, never()).findByPenyewa(any());
+    }
+
+    @Test
+    void testGetPenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.of(penyewaan));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(penyewaan)));
         when(penyewaanService.isPenyewaanEditable(penyewaan)).thenReturn(true);
         when(penyewaanService.isPenyewaanCancellable(penyewaan)).thenReturn(true);
-        
-        mockMvc.perform(get("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.penyewaan.id", is(penyewaanId)))
-                .andExpect(jsonPath("$.isEditable", is(true)))
-                .andExpect(jsonPath("$.isCancellable", is(true)));
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(true, responseBody.get("isEditable"));
+        assertEquals(true, responseBody.get("isCancellable"));
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
         verify(penyewaanService).isPenyewaanEditable(penyewaan);
         verify(penyewaanService).isPenyewaanCancellable(penyewaan);
     }
 
     @Test
-    void testGetPenyewaanNotFound() throws Exception {
+    void testGetPenyewaanNotFound() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.empty());
-        
-        mockMvc.perform(get("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Penyewaan tidak ditemukan")));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Penyewaan tidak ditemukan");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
     @Test
     void testGetPenyewaanWhenInvalidToken() {
         when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
-        ResponseEntity<?> response = penyewaanRestController.getPenyewaan(penyewaanId, invalidAuthHeader);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getPenyewaan(penyewaanId, invalidAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Token tidak valid");
+
+        verify(authService).decodeToken(anyString());
+        verify(penyewaanService, never()).findByIdAndPenyewa(anyString(), any());
     }
 
     @Test
     void testGetPenyewaanNonPenyewa() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
-        ResponseEntity<?> response = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(UUID.fromString(userId));
+        verify(penyewaanService, never()).findByIdAndPenyewa(anyString(), any());
     }
 
     @Test
-    void testCreatePenyewaanSuccess() throws Exception {
+    void testCreatePenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-
-        Penyewaan newPenyewaan = new Penyewaan();
-        newPenyewaan.setNamaLengkap("Jane Smith");
-        newPenyewaan.setNomorTelepon("08987654321");
-        newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
-        newPenyewaan.setDurasiSewa(2);
-
         when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
-                .thenReturn(penyewaan);
+                .thenReturn(CompletableFuture.completedFuture(penyewaan));
 
-        mockMvc.perform(post("/api/penyewaan/kos/{kosId}", kosId)
-                .header("Authorization", validAuthHeader)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newPenyewaan)))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id", is(penyewaanId)));
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(kosId, penyewaan,
+                bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(penyewaan, response.getBody());
         verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
     }
 
     @Test
-    void testCreatePenyewaanKosNotFound() throws Exception {
+    void testCreatePenyewaanKosNotFound() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
 
-        Penyewaan newPenyewaan = new Penyewaan();
-        newPenyewaan.setNamaLengkap("Jane Smith");
-        newPenyewaan.setNomorTelepon("08987654321");
-        newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
-        newPenyewaan.setDurasiSewa(2);
-
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(
+                new java.util.concurrent.CompletionException(new EntityNotFoundException("Kos tidak ditemukan")));
         when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
-                .thenThrow(new EntityNotFoundException("Kos tidak ditemukan"));
+                .thenReturn(errorFuture);
 
-        mockMvc.perform(post("/api/penyewaan/kos/{kosId}", kosId)
-                .header("Authorization", validAuthHeader)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newPenyewaan)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Kos tidak ditemukan")));
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(kosId, penyewaan,
+                bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Kos tidak ditemukan");
         verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
     }
 
@@ -269,12 +343,24 @@ class PenyewaanRestControllerTest {
     void testCreatePenyewaanAtIllegalArgumentException() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(
+                new java.util.concurrent.CompletionException(new IllegalArgumentException("Data tidak valid")));
         when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
-                .thenThrow(new IllegalArgumentException("Data tidak valid"));
+                .thenReturn(errorFuture);
 
-        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
-                kosId, penyewaan, bindingResult, validAuthHeader);
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(kosId, penyewaan,
+                bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Data tidak valid");
     }
@@ -282,67 +368,91 @@ class PenyewaanRestControllerTest {
     @Test
     void testCreatePenyewaanWhenInvalidToken() {
         when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
-        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(
                 kosId, penyewaan, bindingResult, invalidAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Token tidak valid");
+        verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
     }
 
     @Test
     void testCreatePenyewaanNonPenyewa() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
-        ResponseEntity<?> response = penyewaanRestController.createPenyewaan(
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(
                 kosId, penyewaan, bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+        verify(penyewaanService, never()).createPenyewaan(any(), anyString(), any());
     }
 
     @Test
-    void testUpdatePenyewaanSuccess() throws Exception {
+    void testUpdatePenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-
-        Penyewaan updatedPenyewaan = new Penyewaan();
-        updatedPenyewaan.setNamaLengkap("Updated Name");
-        updatedPenyewaan.setNomorTelepon("08567891234");
-        updatedPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(10));
-        updatedPenyewaan.setDurasiSewa(4);
-
         when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
-                .thenReturn(penyewaan);
+                .thenReturn(CompletableFuture.completedFuture(penyewaan));
 
-        mockMvc.perform(put("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updatedPenyewaan)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id", is(penyewaanId)));
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
+                penyewaanId, penyewaan, bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(penyewaan, response.getBody());
         verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
     }
 
     @Test
-    void testUpdatePenyewaanNotFound() throws Exception {
+    void testUpdatePenyewaanNotFound() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
 
-        Penyewaan updatedPenyewaan = new Penyewaan();
-        updatedPenyewaan.setNamaLengkap("Updated Name");
-        updatedPenyewaan.setNomorTelepon("08567891234");
-        updatedPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(10));
-        updatedPenyewaan.setDurasiSewa(4);
-
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(
+                new java.util.concurrent.CompletionException(new EntityNotFoundException("Penyewaan tidak ditemukan")));
         when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
-                .thenThrow(new EntityNotFoundException("Penyewaan tidak ditemukan"));
+                .thenReturn(errorFuture);
 
-        mockMvc.perform(put("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updatedPenyewaan)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Penyewaan tidak ditemukan")));
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
+                penyewaanId, penyewaan, bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Penyewaan tidak ditemukan");
         verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
     }
 
@@ -350,51 +460,100 @@ class PenyewaanRestControllerTest {
     void testUpdatePenyewaanAtIllegalStateException() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
+
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new java.util.concurrent.CompletionException(
+                new IllegalStateException("Penyewaan tidak dapat diubah")));
         when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
-                .thenThrow(new IllegalStateException("Penyewaan tidak dapat diubah"));
+                .thenReturn(errorFuture);
 
-        ResponseEntity<?> response = penyewaanRestController.updatePenyewaan(
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
                 penyewaanId, penyewaan, bindingResult, validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Penyewaan tidak dapat diubah");
+        verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
     }
 
     @Test
     void testUpdatePenyewaanWhenInvalidToken() {
         when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
-        ResponseEntity<?> response = penyewaanRestController.updatePenyewaan(
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
                 penyewaanId, penyewaan, bindingResult, invalidAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Token tidak valid");
+        verify(authService).decodeToken(anyString());
+        verify(penyewaanService, never()).updatePenyewaan(any(), anyString(), any());
     }
 
     @Test
-    void testCancelPenyewaanSuccess() throws Exception {
+    void testCancelPenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        doNothing().when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
-        
-        mockMvc.perform(delete("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status", is("success")))
-                .andExpect(jsonPath("$.message", is("Penyewaan berhasil dibatalkan")));  
+        when(penyewaanService.cancelPenyewaan(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(penyewaanId,
+                validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+        assertEquals("success", responseBody.get("status"));
+        assertEquals("Penyewaan berhasil dibatalkan", responseBody.get("message"));
         verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
     }
 
     @Test
-    void testCancelPenyewaanNotFound() throws Exception {
+    void testCancelPenyewaanNotFound() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        doThrow(new EntityNotFoundException("Penyewaan tidak ditemukan"))
-                .when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
-        
-        mockMvc.perform(delete("/api/penyewaan/{id}", penyewaanId)
-                .header("Authorization", validAuthHeader))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Penyewaan tidak ditemukan")));
+
+        CompletableFuture<Void> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(
+                new java.util.concurrent.CompletionException(new EntityNotFoundException("Penyewaan tidak ditemukan")));
+        when(penyewaanService.cancelPenyewaan(penyewaanId, penyewaUser))
+                .thenReturn(errorFuture);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(penyewaanId,
+                validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Penyewaan tidak ditemukan");
         verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
     }
 
@@ -402,45 +561,93 @@ class PenyewaanRestControllerTest {
     void testCancelPenyewaanAtIllegalStateException() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(penyewaUser);
-        doThrow(new IllegalStateException("Penyewaan tidak dapat dibatalkan"))
-                .when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
 
-        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, validAuthHeader);
+        CompletableFuture<Void> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new java.util.concurrent.CompletionException(
+                new IllegalStateException("Penyewaan tidak dapat dibatalkan")));
+        when(penyewaanService.cancelPenyewaan(penyewaanId, penyewaUser))
+                .thenReturn(errorFuture);
 
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(penyewaanId,
+                validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Penyewaan tidak dapat dibatalkan");
+        verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
     }
 
     @Test
     void testCancelPenyewaanWhenInvalidToken() {
         when(authService.decodeToken(anyString())).thenThrow(new IllegalArgumentException("Token tidak valid"));
-        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, invalidAuthHeader);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(penyewaanId,
+                invalidAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Token tidak valid");
+        verify(authService).decodeToken(anyString());
+        verify(penyewaanService, never()).cancelPenyewaan(anyString(), any());
     }
 
     @Test
     void testCancelPenyewaanNonPenyewa() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(UUID.fromString(userId))).thenReturn(pemilikUser);
-        ResponseEntity<?> response = penyewaanRestController.cancelPenyewaan(penyewaanId, validAuthHeader);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(penyewaanId,
+                validAuthHeader);
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertErrorResponse(response.getBody(), "Anda tidak memiliki akses ke resource ini");
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(UUID.fromString(userId));
+        verify(penyewaanService, never()).cancelPenyewaan(anyString(), any());
     }
 
     @Test
-    void testInvalidTokenFormat() throws Exception {
-        mockMvc.perform(get("/api/penyewaan")
-                .header("Authorization", "InvalidFormat"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status", is("error")))
-                .andExpect(jsonPath("$.message", is("Token tidak valid")));
+    void testInvalidTokenFormat() {
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan("InvalidFormat");
+        while (!result.hasResult()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertErrorResponse(response.getBody(), "Token tidak valid");
         verify(penyewaanService, never()).findByPenyewa(any());
     }
 
     private void assertErrorResponse(Object responseBody, String expectedMessage) {
         assertTrue(responseBody instanceof Map);
-        Map<String, Object> errorResponse = (Map<String, Object>) responseBody;
+        Map<?, ?> errorResponse = (Map<?, ?>) responseBody;
         assertEquals("error", errorResponse.get("status"));
         assertEquals(expectedMessage, errorResponse.get("message"));
     }
