@@ -598,23 +598,22 @@
                         </div>
                         <div class="info-group">
                             <div class="info-label">Total Biaya</div>
-                            <div class="info-value" th:if="${penyewaan.kos != null}">
+                            <div class="info-value">
                                 Rp <span
-                                    th:text="${#numbers.formatDecimal(penyewaan.kos.harga * penyewaan.durasiSewa, 0, 'POINT', 0, 'COMMA')}">1.500.000</span>
+                                    th:text="${#numbers.formatDecimal(penyewaan.totalBiaya, 0, 'POINT', 0, 'COMMA')}">1.500.000</span>
                             </div>
-                            <div class="info-value" th:if="${penyewaan.kos == null}">-</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="penyewaan-actions">
-                    <div class="actions-left" th:if="${penyewaan.status == 'PENDING'}">
+                    <div class="actions-left" th:if="${penyewaan.status.name() == 'PENDING'}">
                         Menunggu persetujuan pemilik kos.
                     </div>
-                    <div class="actions-left" th:if="${penyewaan.status == 'APPROVED'}">
+                    <div class="actions-left" th:if="${penyewaan.status.name() == 'APPROVED'}">
                         Pengajuan telah disetujui. Silakan hubungi pemilik kos.
                     </div>
-                    <div class="actions-left" th:if="${penyewaan.status == 'REJECTED'}">
+                    <div class="actions-left" th:if="${penyewaan.status.name() == 'REJECTED'}">
                         Maaf, pengajuan Anda ditolak.
                     </div>
 

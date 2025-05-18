@@ -15,9 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,133 +31,202 @@ public class PenyewaanRestController {
 
     @Autowired
     public PenyewaanRestController(PenyewaanService penyewaanService,
-            KosService kosService,
-            AuthService authService) {
+                                   KosService kosService,
+                                   AuthService authService) {
         this.penyewaanService = penyewaanService;
         this.kosService = kosService;
         this.authService = authService;
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllPenyewaan(@RequestHeader("Authorization") String token) {
+    public DeferredResult<ResponseEntity<?>> getAllPenyewaan(@RequestHeader("Authorization") String token) {
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
+
         try {
             User user = getUserFromToken(token);
             if (user == null || user.getRole() != Role.PENYEWA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini")));
+                return deferredResult;
             }
 
-            List<Penyewaan> penyewaanList = penyewaanService.findByPenyewa(user);
-            return ResponseEntity.ok(penyewaanList);
+            penyewaanService.findByPenyewa(user)
+                    .whenComplete((penyewaanList, throwable) -> {
+                        if (throwable != null) {
+                            deferredResult.setResult(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body(createErrorResponse(throwable.getMessage())));
+                        } else {
+                            deferredResult.setResult(ResponseEntity.ok(penyewaanList));
+                        }
+                    });
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse(e.getMessage())));
         }
+
+        return deferredResult;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPenyewaan(@PathVariable String id,
-            @RequestHeader("Authorization") String token) {
+    public DeferredResult<ResponseEntity<?>> getPenyewaan(@PathVariable String id,
+                                                          @RequestHeader("Authorization") String token) {
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
+
         try {
             User user = getUserFromToken(token);
             if (user == null || user.getRole() != Role.PENYEWA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini")));
+                return deferredResult;
             }
 
-            return penyewaanService.findByIdAndPenyewa(id, user)
-                    .map(penyewaan -> {
-                        Map<String, Object> response = new HashMap<>();
-                        response.put("penyewaan", penyewaan);
-                        response.put("isEditable", penyewaanService.isPenyewaanEditable(penyewaan));
-                        response.put("isCancellable", penyewaanService.isPenyewaanCancellable(penyewaan));
-                        return ResponseEntity.ok(response);
-                    })
-                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(createErrorResponse("Penyewaan tidak ditemukan")));
+            penyewaanService.findByIdAndPenyewa(id, user)
+                    .whenComplete((optionalPenyewaan, throwable) -> {
+                        if (throwable != null) {
+                            deferredResult.setResult(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body(createErrorResponse(throwable.getMessage())));
+                        } else if (optionalPenyewaan.isEmpty()) {
+                            deferredResult.setResult(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                    .body(createErrorResponse("Penyewaan tidak ditemukan")));
+                        } else {
+                            Penyewaan penyewaan = optionalPenyewaan.get();
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("penyewaan", penyewaan);
+                            response.put("isEditable", penyewaanService.isPenyewaanEditable(penyewaan));
+                            response.put("isCancellable", penyewaanService.isPenyewaanCancellable(penyewaan));
+                            deferredResult.setResult(ResponseEntity.ok(response));
+                        }
+                    });
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse(e.getMessage())));
         }
+
+        return deferredResult;
     }
 
     @PostMapping("/kos/{kosId}")
-    public ResponseEntity<?> createPenyewaan(@PathVariable String kosId,
+    public DeferredResult<ResponseEntity<?>> createPenyewaan(
+            @PathVariable String kosId,
             @Valid @RequestBody Penyewaan penyewaan,
             BindingResult bindingResult,
             @RequestHeader("Authorization") String token) {
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
+
         try {
             User user = getUserFromToken(token);
             if (user == null || user.getRole() != Role.PENYEWA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini")));
+                return deferredResult;
             }
 
-            try {
-                Penyewaan createdPenyewaan = penyewaanService.createPenyewaan(penyewaan, kosId, user);
-                return ResponseEntity.status(HttpStatus.CREATED).body(createdPenyewaan);
-            } catch (EntityNotFoundException e) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(createErrorResponse(e.getMessage()));
-            } catch (IllegalStateException | IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-            }
+            penyewaanService.createPenyewaan(penyewaan, kosId, user)
+                    .whenComplete((createdPenyewaan, throwable) -> {
+                        if (throwable != null) {
+                            Throwable cause = throwable.getCause();
+                            if (cause instanceof EntityNotFoundException) {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
+                                deferredResult.setResult(ResponseEntity.badRequest()
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .body(createErrorResponse(throwable.getMessage())));
+                            }
+                        } else {
+                            deferredResult.setResult(ResponseEntity.status(HttpStatus.CREATED).body(createdPenyewaan));
+                        }
+                    });
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse(e.getMessage())));
         }
+
+        return deferredResult;
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePenyewaan(@PathVariable String id,
+    public DeferredResult<ResponseEntity<?>> updatePenyewaan(
+            @PathVariable String id,
             @Valid @RequestBody Penyewaan updatedPenyewaan,
             BindingResult bindingResult,
             @RequestHeader("Authorization") String token) {
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
+
         try {
             User user = getUserFromToken(token);
             if (user == null || user.getRole() != Role.PENYEWA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini")));
+                return deferredResult;
             }
 
-            try {
-                Penyewaan penyewaan = penyewaanService.updatePenyewaan(updatedPenyewaan, id, user);
-                return ResponseEntity.ok(penyewaan);
-            } catch (EntityNotFoundException e) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(createErrorResponse(e.getMessage()));
-            } catch (IllegalStateException | IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-            }
+            penyewaanService.updatePenyewaan(updatedPenyewaan, id, user)
+                    .whenComplete((penyewaan, throwable) -> {
+                        if (throwable != null) {
+                            Throwable cause = throwable.getCause();
+                            if (cause instanceof EntityNotFoundException) {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
+                                deferredResult.setResult(ResponseEntity.badRequest()
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .body(createErrorResponse(throwable.getMessage())));
+                            }
+                        } else {
+                            deferredResult.setResult(ResponseEntity.ok(penyewaan));
+                        }
+                    });
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse(e.getMessage())));
         }
+
+        return deferredResult;
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> cancelPenyewaan(@PathVariable String id,
+    public DeferredResult<ResponseEntity<?>> cancelPenyewaan(
+            @PathVariable String id,
             @RequestHeader("Authorization") String token) {
+        DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(30000L);
+
         try {
             User user = getUserFromToken(token);
             if (user == null || user.getRole() != Role.PENYEWA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini"));
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Anda tidak memiliki akses ke resource ini")));
+                return deferredResult;
             }
 
-            try {
-                penyewaanService.cancelPenyewaan(id, user);
-                return ResponseEntity.ok(createSuccessResponse("Penyewaan berhasil dibatalkan"));
-            } catch (EntityNotFoundException e) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(createErrorResponse(e.getMessage()));
-            } catch (IllegalStateException e) {
-                return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
-            }
+            penyewaanService.cancelPenyewaan(id, user)
+                    .whenComplete((result, throwable) -> {
+                        if (throwable != null) {
+                            Throwable cause = throwable.getCause();
+                            if (cause instanceof EntityNotFoundException) {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else if (cause instanceof IllegalStateException) {
+                                deferredResult.setResult(ResponseEntity.badRequest()
+                                        .body(createErrorResponse(cause.getMessage())));
+                            } else {
+                                deferredResult.setResult(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .body(createErrorResponse(throwable.getMessage())));
+                            }
+                        } else {
+                            deferredResult.setResult(ResponseEntity.ok(createSuccessResponse("Penyewaan berhasil dibatalkan")));
+                        }
+                    });
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(createErrorResponse(e.getMessage()));
+            deferredResult.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse(e.getMessage())));
         }
+
+        return deferredResult;
     }
 
     private User getUserFromToken(String authHeader) {

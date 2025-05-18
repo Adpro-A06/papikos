@@ -8,6 +8,7 @@ import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
 import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.StatusPenyewaan;
 import id.ac.ui.cs.advprog.papikos.kos.service.KosService;
 import id.ac.ui.cs.advprog.papikos.kos.service.PenyewaanService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
@@ -127,17 +130,33 @@ class PenyewaanControllerTest {
     }
 
     @Test
-    void testListPenyewaanSuccess() {
+    void testListPenyewaanSuccess() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(penyewaanList);
+        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(CompletableFuture.completedFuture(penyewaanList));
 
         String viewName = penyewaanController.listPenyewaan(session, model, redirectAttributes);
         assertEquals("penyewaan/ListSewa", viewName);
         verify(penyewaanService).findByPenyewa(penyewaUser);
         verify(model).addAttribute("penyewaanList", penyewaanList);
         verify(model).addAttribute("user", penyewaUser);
+    }
+
+    @Test
+    void testListPenyewaanWithExecutionException() throws ExecutionException, InterruptedException {
+        when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
+
+        CompletableFuture<List<Penyewaan>> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new RuntimeException("Service error"));
+        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(errorFuture);
+
+        String viewName = penyewaanController.listPenyewaan(session, model, redirectAttributes);
+        assertEquals("redirect:/penyewa/home", viewName);
+        verify(penyewaanService).findByPenyewa(penyewaUser);
+        verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
     }
 
     @Test
@@ -225,7 +244,8 @@ class PenyewaanControllerTest {
         when(penyewaanService.createPenyewaan(argThat(penyewaan -> penyewaan.getNamaLengkap().equals("John Doe") &&
                 penyewaan.getNomorTelepon().equals("08123456789") &&
                 penyewaan.getTanggalCheckIn().equals(checkInDate) &&
-                penyewaan.getDurasiSewa() == 3), eq(kosId), eq(penyewaUser))).thenReturn(penyewaan);
+                penyewaan.getDurasiSewa() == 3), eq(kosId), eq(penyewaUser)))
+                .thenReturn(CompletableFuture.completedFuture(penyewaan));
 
         String viewName = penyewaanController.createPenyewaan(
                 kosId,
@@ -247,8 +267,10 @@ class PenyewaanControllerTest {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
 
-        doThrow(new RuntimeException("Test error")).when(penyewaanService)
-                .createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new RuntimeException("Test error"));
+        when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
+                .thenReturn(errorFuture);
 
         String viewName = penyewaanController.createPenyewaan(
                 kosId,
@@ -286,24 +308,29 @@ class PenyewaanControllerTest {
     }
 
     @Test
-    void testEditPenyewaanFormNotFound() {
+    void testEditPenyewaanFormNotFound() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.empty());
+
+        CompletableFuture<Optional<Penyewaan>> future = new CompletableFuture<>();
+        future.completeExceptionally(new EntityNotFoundException("Penyewaan tidak ditemukan"));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(future);
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
         assertEquals("redirect:/penyewaan/", viewName);
-        verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
+        verify(redirectAttributes).addFlashAttribute("error", "Penyewaan tidak ditemukan");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
     @Test
-    void testEditPenyewaanFormNotEditable() {
+    void testEditPenyewaanFormNotEditable() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.of(penyewaan));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(penyewaan)));
         when(penyewaanService.isPenyewaanEditable(penyewaan)).thenReturn(false);
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
@@ -314,11 +341,12 @@ class PenyewaanControllerTest {
     }
 
     @Test
-    void testEditPenyewaanFormSuccess() {
+    void testEditPenyewaanFormSuccess() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.of(penyewaan));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(penyewaan)));
         when(penyewaanService.isPenyewaanEditable(penyewaan)).thenReturn(true);
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
@@ -381,7 +409,8 @@ class PenyewaanControllerTest {
         when(penyewaanService.updatePenyewaan(argThat(penyewaan -> penyewaan.getNamaLengkap().equals("John Doe") &&
                 penyewaan.getNomorTelepon().equals("08123456789") &&
                 penyewaan.getTanggalCheckIn().equals(checkInDate) &&
-                penyewaan.getDurasiSewa() == 3), eq(penyewaanId), eq(penyewaUser))).thenReturn(penyewaan);
+                penyewaan.getDurasiSewa() == 3), eq(penyewaanId), eq(penyewaUser)))
+                .thenReturn(CompletableFuture.completedFuture(penyewaan));
 
         String viewName = penyewaanController.updatePenyewaan(
                 penyewaanId,
@@ -405,8 +434,10 @@ class PenyewaanControllerTest {
 
         LocalDate checkInDate = LocalDate.now().plusDays(7);
 
-        doThrow(new RuntimeException("Test error")).when(penyewaanService)
-                .updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
+        CompletableFuture<Penyewaan> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new RuntimeException("Test error"));
+        when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
+                .thenReturn(errorFuture);
 
         String viewName = penyewaanController.updatePenyewaan(
                 penyewaanId,
@@ -444,24 +475,29 @@ class PenyewaanControllerTest {
     }
 
     @Test
-    void testViewPenyewaanNotFound() {
+    void testViewPenyewaanNotFound() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.empty());
+
+        CompletableFuture<Optional<Penyewaan>> future = new CompletableFuture<>();
+        future.completeExceptionally(new EntityNotFoundException("Penyewaan tidak ditemukan"));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(future);
 
         String viewName = penyewaanController.viewPenyewaan(penyewaanId, session, model, redirectAttributes);
         assertEquals("redirect:/penyewaan/", viewName);
-        verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
+        verify(redirectAttributes).addFlashAttribute("error", "Penyewaan tidak ditemukan");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
     @Test
-    void testViewPenyewaanSuccess() {
+    void testViewPenyewaanSuccess() throws ExecutionException, InterruptedException {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(Optional.of(penyewaan));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(penyewaan)));
         when(penyewaanService.isPenyewaanEditable(penyewaan)).thenReturn(true);
         when(penyewaanService.isPenyewaanCancellable(penyewaan)).thenReturn(true);
 
@@ -502,7 +538,8 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        doNothing().when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
+        when(penyewaanService.cancelPenyewaan(penyewaanId, penyewaUser))
+                .thenReturn(CompletableFuture.completedFuture(null));
 
         String viewName = penyewaanController.cancelPenyewaan(penyewaanId, session, redirectAttributes);
         assertEquals("redirect:/penyewaan/", viewName);
@@ -515,7 +552,10 @@ class PenyewaanControllerTest {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(validToken);
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
-        doThrow(new RuntimeException("Test error")).when(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
+
+        CompletableFuture<Void> errorFuture = new CompletableFuture<>();
+        errorFuture.completeExceptionally(new RuntimeException("Test error"));
+        when(penyewaanService.cancelPenyewaan(penyewaanId, penyewaUser)).thenReturn(errorFuture);
 
         String viewName = penyewaanController.cancelPenyewaan(penyewaanId, session, redirectAttributes);
         assertEquals("redirect:/penyewaan/" + penyewaanId, viewName);
