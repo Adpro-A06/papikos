@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.papikos.kos.model;
 
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,24 +19,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.UUID;
 
 public class KosTest {
     private Kos kos;
-    
+
     @Mock
     private User mockPemilik;
-    
+
     @Mock
     private Penyewaan mockPenyewaan;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        
+
         this.kos = new Kos();
-        this.kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        this.kos.setId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
         this.kos.setNama("Tulip");
         this.kos.setJumlah(20);
         this.kos.setAlamat("Jl.Mangga");
@@ -49,27 +48,27 @@ public class KosTest {
 
     @Test
     void testGetIdKos() {
-        assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", this.kos.getId());
+        assertEquals(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), this.kos.getId());
     }
 
     @Test
     void testGetNamaKos() {
-        Assertions.assertEquals("Tulip", this.kos.getNama());
+        assertEquals("Tulip", this.kos.getNama());
     }
 
     @Test
     void testGetJumlahKos() {
-        Assertions.assertEquals(20, this.kos.getJumlah());
+        assertEquals(20, this.kos.getJumlah());
     }
 
     @Test
     void testGetAlamatKos() {
-        Assertions.assertEquals("Jl.Mangga", this.kos.getAlamat());
+        assertEquals("Jl.Mangga", this.kos.getAlamat());
     }
 
     @Test
     void testGetDeskripsiKos() {
-        Assertions.assertEquals("Full furnish. Dilengkapi dengan AC", this.kos.getDeskripsi());
+        assertEquals("Full furnish. Dilengkapi dengan AC", this.kos.getDeskripsi());
     }
 
     @Test
@@ -158,10 +157,10 @@ public class KosTest {
     void testWithApprovedPenyewaan() {
         Penyewaan penyewaan1 = mock(Penyewaan.class);
         Penyewaan penyewaan2 = mock(Penyewaan.class);
-        
+
         when(penyewaan1.getStatus()).thenReturn(StatusPenyewaan.APPROVED);
         when(penyewaan2.getStatus()).thenReturn(StatusPenyewaan.PENDING);
-        
+
         List<Penyewaan> penyewaanList = new ArrayList<>();
         penyewaanList.add(penyewaan1);
         penyewaanList.add(penyewaan2);
@@ -178,14 +177,14 @@ public class KosTest {
 
     @Test
     void testWhenNotAvailableStatus() {
-        kos.setStatus("NOT_AVAILABLE");
+        kos.setStatus("FULL");
         assertFalse(kos.isAvailable());
     }
 
     @Test
     void testWhenAvailableButNoRooms() {
         kos.setStatus("AVAILABLE");
- 
+
         List<Penyewaan> penyewaanList = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             Penyewaan p = mock(Penyewaan.class);
@@ -193,7 +192,7 @@ public class KosTest {
             penyewaanList.add(p);
         }
         kos.setPenyewaan(penyewaanList);
-        
+
         assertFalse(kos.isAvailable());
     }
 
