@@ -208,8 +208,8 @@
             <div class="header-title">Dashboard Pemilik Kos</div>
             <div class="user-menu">
                 <div class="user-info">
-                    <div class="user-avatar">P</div>
-                    <span class="user-name">Pemilik</span>
+                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">P</div>
+                    <span class="user-name" th:text="${user != null ? user.email : 'Pemilik'}">Pemilik</span>
                 </div>
                 <form th:action="@{/api/auth/logout}" method="post">
                     <button type="submit" class="btn-logout">

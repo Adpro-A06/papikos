@@ -66,10 +66,12 @@ public class Kos {
     @Column(length = 20, nullable = false)
     private String status;
 
+    @Pattern(regexp = "^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,})(\\/[\\w\\.-]*)*\\/?$", 
+            message = "Format URL foto tidak valid")
     @NotBlank(message = "URL foto tidak boleh kosong")
     @Column(name = "url_foto", nullable = false)
     private String urlFoto;
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pemilik_id")
     private User pemilik;

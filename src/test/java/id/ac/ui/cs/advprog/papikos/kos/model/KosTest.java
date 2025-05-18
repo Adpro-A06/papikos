@@ -1,20 +1,25 @@
 package id.ac.ui.cs.advprog.papikos.kos.model;
 
-import id.ac.ui.cs.advprog.papikos.authentication.model.User;
-import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
-import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.StatusPenyewaan;
+import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import static org.mockito.Mockito.*;
+
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.StatusPenyewaan;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class KosTest {
     private Kos kos;
@@ -64,6 +69,58 @@ public class KosTest {
     @Test
     void testGetDeskripsiKos() {
         assertEquals("Full furnish. Dilengkapi dengan AC", this.kos.getDeskripsi());
+    }
+
+    @Test
+    void testGetUrlFoto() {
+        String testUrl = "https://example.com/images/kos1.jpg";
+        kos.setUrlFoto(testUrl);
+        assertEquals(testUrl, kos.getUrlFoto());
+    }
+
+    @Test
+    void testValidUrlFoto() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+
+        String[] validUrls = {
+            "https://example.com/images/kos.jpg",
+            "http://subdomain.example.co.id/path/to/image.png",
+            "https://cdn.website.com/images/folder/image-1.jpg",
+            "http://wikipedia.com/image.jpg",
+        };
+        
+        for (String url : validUrls) {
+            kos.setUrlFoto(url);
+            Set<ConstraintViolation<Kos>> violations = validator.validate(kos);
+
+            assertTrue(violations.isEmpty(), "URL valid: " + url);
+        }
+    }
+
+    @Test
+    void testInvalidUrlFoto() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+
+        String[] invalidUrls = {
+            "<script>alert('XSS')</script>",
+            "javascript:alert('XSS')",
+            "file:///etc/passwd",
+            "not a url",
+            "http://.com",
+            "https://"
+        };
+        
+        for (String url : invalidUrls) {
+            kos.setUrlFoto(url);
+            Set<ConstraintViolation<Kos>> violations = validator.validate(kos);
+
+            assertFalse(violations.isEmpty(), "URL invalid seharusnya ditolak: " + url);
+            boolean hasUrlFotoViolation = violations.stream()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("urlFoto"));
+            assertTrue(hasUrlFotoViolation, "Violation seharusnya untuk property urlFoto");
+        }
     }
 
     @Test
