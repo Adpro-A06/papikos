@@ -56,3 +56,9 @@ Namun, kami sadar bila mengganti sistem menjadi microservices juga membuka pelua
 ![Screenshot (2448)](https://github.com/user-attachments/assets/44b009ad-e830-42c4-a9e1-5b2b5a933eb4)
 ![Screenshot (2449)](https://github.com/user-attachments/assets/54dc0db7-ba0a-47e3-b944-8f47de7ded07)
 
+### Rachel Mathilda
+#### Component Diagram
+![](images/ComponentDiagramPengelolaan.png)
+#### Code Diagram
+![](images/CodeRachel1)
+![](images/CodeRachel2)
