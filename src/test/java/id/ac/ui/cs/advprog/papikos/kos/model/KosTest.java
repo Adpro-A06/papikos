@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.papikos.kos.model;
 
-import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

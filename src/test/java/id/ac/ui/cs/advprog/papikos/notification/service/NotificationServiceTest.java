@@ -69,10 +69,8 @@ class NotificationServiceTest {
     @Test
     void testAdminCanSendNotificationToAllUsers_Happy() {
         List<User> allUsers = new ArrayList<>();
-        // Admin
         User admin = new User("admin@example.com", "Admin@123!", Role.ADMIN);
         allUsers.add(admin);
-        // Dua tenant
         allUsers.add(tenant1);
         allUsers.add(tenant2);
 
