@@ -60,5 +60,5 @@ Namun, kami sadar bila mengganti sistem menjadi microservices juga membuka pelua
 #### Component Diagram
 ![](images/ComponentDiagramPengelolaan.png)
 #### Code Diagram
-![](images/CodeRachel1)
-![](images/CodeRachel2)
+![](images/CodeRachel1.png)
+![](images/CodeRachel2.png)
