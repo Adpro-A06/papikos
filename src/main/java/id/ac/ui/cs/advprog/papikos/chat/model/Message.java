@@ -1,15 +1,17 @@
 package id.ac.ui.cs.advprog.papikos.chat.model;
+
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class Message {
-    private Long id;
-    private Long senderId;
-    private Long chatroomId;
+    private UUID id;  // Changed from Long to UUID
+    private UUID senderId;  // Changed from Long to UUID
+    private UUID chatroomId;  // Changed from Long to UUID
     private String content;
     private LocalDateTime timestamp;
     private boolean isRead = false;

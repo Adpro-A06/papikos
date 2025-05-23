@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.UUID;
 import java.time.LocalDateTime;
 
 
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.*;
 class MessageServiceTest {
 
     @Mock
-    private ChatroomService chatroomService;
+    private ChatroomServiceImpl chatroomService;
 
     @Mock
     private ChatCommandService chatCommandService;
@@ -28,17 +29,20 @@ class MessageServiceTest {
 
     private Chatroom mockChatroom;
     private Message mockMessage;
+    private UUID propertyId;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        propertyId = UUID.randomUUID();
 
         // sample Chatroom
         mockChatroom = new Chatroom();
         mockChatroom.setId(1L);
         mockChatroom.setRenterId(101L);
         mockChatroom.setOwnerId(201L);
-        mockChatroom.setPropertyId(301L);
+        mockChatroom.setPropertyId(propertyId);
         mockChatroom.setCreatedAt(LocalDateTime.now());
 
         // sample Message

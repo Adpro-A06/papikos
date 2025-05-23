@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chatrooms/{chatroomId}/messages")
@@ -21,14 +22,14 @@ public class MessageController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Message>> getMessagesByChatroomId(@PathVariable Long chatroomId) {
+    public ResponseEntity<List<Message>> getMessagesByChatroomId(@PathVariable UUID chatroomId) {
         List<Message> messages = messageService.getMessagesByChatroomId(chatroomId);
         return ResponseEntity.ok(messages);
     }
 
     @PostMapping
     public ResponseEntity<Message> sendMessage(
-            @PathVariable Long chatroomId,
+            @PathVariable UUID chatroomId,
             @RequestBody MessageRequest request) {
         Message message = messageService.sendMessage(
                 chatroomId,
@@ -40,8 +41,8 @@ public class MessageController {
 
     @PutMapping("/{messageId}")
     public ResponseEntity<Message> editMessage(
-            @PathVariable Long chatroomId,
-            @PathVariable Long messageId,
+            @PathVariable UUID chatroomId,
+            @PathVariable UUID messageId,
             @RequestBody MessageRequest request) {
         Message message = messageService.editMessage(
                 chatroomId,
@@ -53,8 +54,8 @@ public class MessageController {
 
     @DeleteMapping("/{messageId}")
     public ResponseEntity<Map<String, Boolean>> deleteMessage(
-            @PathVariable Long chatroomId,
-            @PathVariable Long messageId) {
+            @PathVariable UUID chatroomId,
+            @PathVariable UUID messageId) {
         boolean success = messageService.deleteMessage(chatroomId, messageId);
 
         Map<String, Boolean> response = new HashMap<>();
@@ -65,8 +66,8 @@ public class MessageController {
 
     @PostMapping("/{messageId}/undo")
     public ResponseEntity<Map<String, Boolean>> undoLastAction(
-            @PathVariable Long chatroomId,
-            @PathVariable Long messageId) {
+            @PathVariable UUID chatroomId,
+            @PathVariable UUID messageId) {
         boolean success = messageService.undoLastAction(chatroomId, messageId);
 
         Map<String, Boolean> response = new HashMap<>();
@@ -77,14 +78,14 @@ public class MessageController {
 
     // Helper class for request body
     static class MessageRequest {
-        private Long senderId;
+        private UUID senderId;  // Change from Long to UUID
         private String content;
 
-        public Long getSenderId() {
+        public UUID getSenderId() {
             return senderId;
         }
 
-        public void setSenderId(Long senderId) {
+        public void setSenderId(UUID senderId) {
             this.senderId = senderId;
         }
 

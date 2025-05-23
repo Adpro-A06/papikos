@@ -1,20 +1,36 @@
 package id.ac.ui.cs.advprog.papikos.authentication.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+@Entity
+@Table(name = "users")
 public class User {
+    @Id
     @Getter
     private UUID id;
+
     @Getter
+    @Column(unique = true, nullable = false)
     private String email;
+
     @Getter
+    @Column(nullable = false)
     private String password;
+
     @Getter
+    @Enumerated(EnumType.STRING)
     private Role role;
+
     @Getter @Setter
     private boolean approved;
 

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Penyewaan - PapiKos</title>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --secondary-blue: #4285f4;
+            --light-blue: #e8f0fe;
+            --hover-blue: #0d47a1;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --dark-gray: #757575;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: var(--text-color);
+            background-color: #f9fafb;
+            line-height: 1.6;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--dark-gray);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-logout:hover {
+            color: var(--primary-blue);
+        }
+
+        .logout-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--dark-gray);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .btn-submit {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 14px 28px;
+            font-size: 18px;
+            min-width: 180px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .form-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .form-section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-color);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .kos-summary {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .kos-summary-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .kos-info {
+            margin-bottom: 24px;
+        }
+
+        .kos-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .kos-address {
+            font-size: 14px;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .price-summary {
+            background-color: var(--light-blue);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .price-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .price-label {
+            color: var(--dark-gray);
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        .total-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: var(--dark-gray);
+            margin-top: 4px;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .field-error {
+            border-color: #d32f2f;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-submit {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="/penyewa/home" class="logo">PapiKos</a>
+            <div class="header-title">Edit Penyewaan</div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
+                        P</div>
+                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
+                </div>
+                <form th:action="@{/api/auth/logout}" method="post">
+                    <button type="submit" class="btn-logout">
+                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <a href="/penyewaan/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+            </svg>
+            Kembali ke Daftar Penyewaan
+        </a>
+
+        <h1 class="page-title">Edit Pengajuan Penyewaan</h1>
+
+        <div class="form-container">
+            <div class="form-section">
+                <h2 class="form-title">Data Penyewaan</h2>
+                <div th:if="${error}" class="alert alert-danger"
+                    style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                    <p th:text="${error}">Error message here</p>
+                </div>
+
+                <div th:if="${success}" class="alert alert-success"
+                    style="background-color: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                    <p th:text="${success}">Success message here</p>
+                </div>
+
+                <form th:action="@{/penyewaan/{id}/update(id=${penyewaan.id})}" method="post">
+                    <div class="form-group">
+                        <label for="namaLengkap" class="form-label">Nama Lengkap</label>
+                        <input type="text" id="namaLengkap" name="namaLengkap" class="form-input"
+                            th:value="${penyewaan.namaLengkap}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nomorTelepon" class="form-label">Nomor Telepon</label>
+                        <input type="tel" id="nomorTelepon" name="nomorTelepon" class="form-input"
+                            th:value="${penyewaan.nomorTelepon}" required>
+                        <span class="help-text">Harus angka antara 10-15 digit</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tanggalCheckIn" class="form-label">Tanggal Check-in</label>
+                        <input type="date" id="tanggalCheckIn" name="tanggalCheckIn" class="form-input"
+                            th:value="${#temporals.format(penyewaan.tanggalCheckIn, 'yyyy-MM-dd')}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="durasiSewa" class="form-label">Durasi Sewa (bulan)</label>
+                        <input type="number" id="durasiSewa" name="durasiSewa" min="1" max="12" class="form-input"
+                            th:value="${penyewaan.durasiSewa}" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Perbarui Penyewaan</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="kos-summary">
+                <h2 class="kos-summary-title">Ringkasan Kos</h2>
+                <div class="kos-info" th:if="${kos != null}">
+                    <h3 class="kos-name" th:text="${kos.nama}">Nama Kos</h3>
+                    <div class="kos-address">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                        </svg>
+                        <span th:text="${kos.alamat}">Alamat Kos</span>
+                    </div>
+                </div>
+
+                <div class="price-summary">
+                    <h3 class="price-title">Rincian Biaya</h3>
+                    <div class="price-row">
+                        <span class="price-label">Harga per bulan</span>
+                        <span class="price-value">Rp <span
+                                th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span></span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Durasi</span>
+                        <span class="price-value"><span id="durasiDisplay" th:text="${penyewaan.durasiSewa}">1</span>
+                            bulan</span>
+                    </div>
+                    <div class="total-price">
+                        <span>Total Pembayaran</span>
+                        <span>Rp <span id="totalPrice"
+                                th:text="${#numbers.formatDecimal(kos.harga * penyewaan.durasiSewa, 0, 'POINT', 0, 'COMMA')}">1,500,000</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const durasiInput = document.getElementById('durasiSewa');
+            const durasiDisplay = document.getElementById('durasiDisplay');
+            const totalPrice = document.getElementById('totalPrice');
+            const hargaPerBulan = parseInt(document.querySelector('.price-value span').textContent.replace(/[.,]/g, ''));
+
+            function updatePrice() {
+                const durasi = parseInt(durasiInput.value) || 1;
+                durasiDisplay.textContent = durasi;
+
+                const total = hargaPerBulan * durasi;
+                totalPrice.textContent = formatNumber(total);
+            }
+
+            function formatNumber(number) {
+                return new Intl.NumberFormat('id-ID').format(number);
+            }
+
+            durasiInput.addEventListener('input', updatePrice);
+
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const dd = String(tomorrow.getDate()).padStart(2, '0');
+            const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const yyyy = tomorrow.getFullYear();
+
+            const tomorrowStr = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('tanggalCheckIn').min = tomorrowStr;
+        });
+    </script>
+</body>
+
+</html>

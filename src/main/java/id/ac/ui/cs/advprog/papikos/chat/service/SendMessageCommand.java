@@ -2,19 +2,21 @@ package id.ac.ui.cs.advprog.papikos.chat.service;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
-import id.ac.ui.cs.advprog.papikos.chat.repository.MessageRepositoryImpl;
+import id.ac.ui.cs.advprog.papikos.chat.repository.MessageRepository;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class SendMessageCommand implements Command {
-//    private final MessageRepositoryImpl messageRepository
     private final Chatroom chatroom;
     @Getter
     private final Message message;
+    private final MessageRepository messageRepository;
 
-    public SendMessageCommand(Chatroom chatroom, Long senderId, String content) {
+    public SendMessageCommand(Chatroom chatroom, UUID senderId, String content, MessageRepository messageRepository) {
         this.chatroom = chatroom;
+        this.messageRepository = messageRepository;
         this.message = new Message();
         this.message.setSenderId(senderId);
         this.message.setChatroomId(chatroom.getId());
@@ -24,13 +26,21 @@ public class SendMessageCommand implements Command {
 
     @Override
     public void execute() {
-//        message.setId(generateId());
-        chatroom.addMessage(message);
+        // Persist message to repository first
+        Message savedMessage = messageRepository.save(message);
+
+        // Then add to chatroom's message list
+        chatroom.addMessage(savedMessage);
     }
 
     @Override
     public void undo() {
+        // Remove from chatroom
         chatroom.getMessages().remove(message);
-    }
 
+        // Remove from repository
+        if (message.getId() != null) {
+            messageRepository.deleteById(message.getId());
+        }
+    }
 }

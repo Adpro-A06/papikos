@@ -3,14 +3,18 @@ package id.ac.ui.cs.advprog.papikos.authentication.service;
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import java.util.UUID;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@Service
 public class AuthServiceImpl implements AuthService {
-    private static AuthServiceImpl instance;
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
@@ -22,15 +26,9 @@ public class AuthServiceImpl implements AuthService {
 
     private Set<String> validTokens = new HashSet<>();
 
-    private AuthServiceImpl() {
-        userRepository = UserRepository.getInstance();
-    }
-
-    public static synchronized AuthServiceImpl getInstance() {
-        if (instance == null) {
-            instance = new AuthServiceImpl();
-        }
-        return instance;
+    @Autowired
+    public AuthServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -41,20 +39,28 @@ public class AuthServiceImpl implements AuthService {
         if (password == null || password.isEmpty() || !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new IllegalArgumentException("Password harus mengandung kombinasi huruf, angka, dan karakter khusus!");
         }
+  
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException("Email sudah terdaftar!");
+        }
+        
         User user = new User(email, password, role);
-        userRepository.save(user);
-        return user;
+        return userRepository.save(user);
     }
 
     @Override
     public String login(String email, String password) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (!userOpt.isPresent()) {
             throw new RuntimeException("User tidak ditemukan");
         }
-        if (!user.getPassword().equals(password) || !user.getEmail().equals(email)) {
+        
+        User user = userOpt.get();
+        if (!user.getPassword().equals(password)) {
             throw new RuntimeException("Username atau password salah!");
         }
+        
         String token = generateToken(user);
         validTokens.add(token);
         return token;
@@ -69,22 +75,27 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User findById(UUID userId) {
-        User user = userRepository.findById(userId);
-        if (user == null) {
-            throw new RuntimeException("User tidak ditemukan!");
-        }
-        return user;
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan!"));
+    }
+
+    @Override
+    public List<User> findAllPendingPemilikKos() {
+        return userRepository.findByRoleAndApprovedFalse(Role.PEMILIK_KOS);
     }
 
     @Override
     public boolean approvePemilikKos(UUID userId) {
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
             throw new RuntimeException("User tidak ditemukan");
         }
+        
+        User user = userOpt.get();
         if (user.getRole() != Role.PEMILIK_KOS) {
             throw new RuntimeException("Hanya akun pemilik kos yang dapat disetujui!");
         }
+        
         user.setApproved(true);
         userRepository.save(user);
         return true;

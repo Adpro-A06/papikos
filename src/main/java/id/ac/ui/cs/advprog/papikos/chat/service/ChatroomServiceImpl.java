@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ChatroomServiceImpl implements ChatroomService {
@@ -16,7 +17,7 @@ public class ChatroomServiceImpl implements ChatroomService {
     }
 
     @Override
-    public Chatroom createChatroom(Long renterId, Long ownerId, Long propertyId) {
+    public Chatroom createChatroom(UUID renterId, UUID ownerId, UUID propertyId) {
         Optional<Chatroom> existing = chatroomRepository
                 .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId);
         if (existing.isPresent()) return existing.get();
@@ -30,19 +31,19 @@ public class ChatroomServiceImpl implements ChatroomService {
     }
 
     @Override
-    public Chatroom getChatroomById(Long id) {
+    public Chatroom getChatroomById(UUID id) {
         return chatroomRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("Chatroom not found with id: " + id));
     }
 
     @Override
-    public List<Chatroom> getChatroomsByRenterId(Long renterId) {
+    public List<Chatroom> getChatroomsByRenterId(UUID renterId) {
         return chatroomRepository.findByRenterId(renterId);
     }
 
     @Override
-    public List<Chatroom> getChatroomsByOwnerId(Long ownerId) {
+    public List<Chatroom> getChatroomsByOwnerId(UUID ownerId) {
         return chatroomRepository.findByOwnerId(ownerId);
     }
 }

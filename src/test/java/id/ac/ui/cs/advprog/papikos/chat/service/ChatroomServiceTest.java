@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.service;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
-import id.ac.ui.cs.advprog.papikos.chat.repository.ChatroomRepository;
+import id.ac.ui.cs.advprog.papikos.chat.repository.ChatroomRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,54 +18,56 @@ import static org.mockito.Mockito.*;
 class ChatroomServiceTest {
 
     @Mock
-    private ChatroomRepository chatroomRepository;
+    private ChatroomRepositoryImpl chatroomRepository;
 
     @InjectMocks
     private ChatroomServiceImpl chatroomService;
 
     private Chatroom mockChatroom;
+    private UUID propertyId;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
+        propertyId = UUID.randomUUID();
         mockChatroom = new Chatroom();
         mockChatroom.setId(1L);
         mockChatroom.setRenterId(101L);
         mockChatroom.setOwnerId(201L);
-        mockChatroom.setPropertyId(301L);
+        mockChatroom.setPropertyId(propertyId);
         mockChatroom.setCreatedAt(LocalDateTime.now());
     }
 
     @Test
     void createChatroom_WhenNewChatroom_ShouldCreateAndReturnChatroom() {
         when(chatroomRepository
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, 301L))
+                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId))
                 .thenReturn(Optional.empty());
         when(chatroomRepository.save(any(Chatroom.class)))
                 .thenReturn(mockChatroom);
 
-        Chatroom result = chatroomService.createChatroom(101L, 201L, 301L);
+        Chatroom result = chatroomService.createChatroom(101L, 201L, propertyId);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(chatroomRepository)
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, 301L);
+                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId);
         verify(chatroomRepository).save(any(Chatroom.class));
     }
 
     @Test
     void createChatroom_WhenChatroomExists_ShouldReturnExistingChatroom() {
         when(chatroomRepository
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, 301L))
+                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId))
                 .thenReturn(Optional.of(mockChatroom));
 
-        Chatroom result = chatroomService.createChatroom(101L, 201L, 301L);
+        Chatroom result = chatroomService.createChatroom(101L, 201L, propertyId);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(chatroomRepository)
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, 301L);
+                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId);
         verify(chatroomRepository, never()).save(any());
     }
 

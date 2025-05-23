@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,16 +16,18 @@ public class ChatCommandServiceTest {
     private ChatCommandService chatCommandService;
     private Chatroom chatroom;
     private Message message;
+    private UUID propertyId;
 
     @BeforeEach
     void setup() {
         chatCommandService = new ChatCommandService();
 
+        propertyId = UUID.randomUUID();
         chatroom = new Chatroom();
         chatroom.setId(1L);
         chatroom.setRenterId(101L);
         chatroom.setOwnerId(202L);
-        chatroom.setPropertyId(303L);
+        chatroom.setPropertyId(propertyId);
         chatroom.setCreatedAt(LocalDateTime.now());
         chatroom.setMessages(new ArrayList<>());
 

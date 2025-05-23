@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.papikos.kos.service;
 
+import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,6 +26,9 @@ public class PengelolaanServiceTest {
     @InjectMocks
     private PengelolaanServiceImpl pengelolaanService;
 
+    @Mock
+    private User mockUser;
+
     @Test
     void testCreateKos() {
         Kos kos = new Kos();
@@ -32,60 +37,72 @@ public class PengelolaanServiceTest {
         kos.setAlamat("Jl. Mangga");
         kos.setDeskripsi("Full furnish");
         kos.setHarga(1000000);
-        kos.setStatus("Tersedia");
+        kos.setStatus("AVAILABLE");
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(mockUser);
 
         Kos savedKos = new Kos();
-        savedKos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6"); // Mocked ID
+        savedKos.setId(UUID.randomUUID()); // Simulate JPA-generated ID
         savedKos.setNama("Tulip");
         savedKos.setJumlah(20);
         savedKos.setAlamat("Jl. Mangga");
         savedKos.setDeskripsi("Full furnish");
         savedKos.setHarga(1000000);
-        savedKos.setStatus("Tersedia");
+        savedKos.setStatus("AVAILABLE");
+        savedKos.setUrlFoto("https://example.com/kos.jpg");
+        savedKos.setPemilik(mockUser);
 
         when(pengelolaanRepository.create(any(Kos.class))).thenReturn(savedKos);
-        when(pengelolaanRepository.findAll()).thenReturn(Arrays.asList(savedKos).iterator());
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Arrays.asList(savedKos));
 
         Kos createdKos = pengelolaanService.create(kos);
 
-        assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", createdKos.getId());
+        assertNotNull(createdKos.getId());
         assertEquals("Tulip", createdKos.getNama());
         assertEquals(20, createdKos.getJumlah());
         assertEquals("Jl. Mangga", createdKos.getAlamat());
         assertEquals("Full furnish", createdKos.getDeskripsi());
         assertEquals(1000000, createdKos.getHarga());
-        assertEquals("Tersedia", createdKos.getStatus());
+        assertEquals("AVAILABLE", createdKos.getStatus());
+        assertEquals("https://example.com/kos.jpg", createdKos.getUrlFoto());
+        assertEquals(mockUser, createdKos.getPemilik());
 
         List<Kos> retrievedKosList = pengelolaanService.findAll();
-        assertFalse(retrievedKosList.isEmpty());
+        assertEquals(1, retrievedKosList.size());
         Kos retrievedKos = retrievedKosList.get(0);
-        assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", retrievedKos.getId());
+        assertEquals(createdKos.getId(), retrievedKos.getId());
 
         verify(pengelolaanRepository, times(1)).create(any(Kos.class));
     }
 
     @Test
     void testUpdateKos() {
+        UUID kosId = UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6");
+
         Kos existingKos = new Kos();
-        existingKos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        existingKos.setId(kosId);
         existingKos.setNama("Tulip");
         existingKos.setJumlah(20);
         existingKos.setAlamat("Jl. Mangga");
         existingKos.setDeskripsi("Full furnish");
         existingKos.setHarga(1000000);
-        existingKos.setStatus("Tersedia");
+        existingKos.setStatus("AVAILABLE");
+        existingKos.setUrlFoto("https://i.pinimg.com/736x/6e/df/3c/6edf3c96bcbd31aa41038c70c515daf2.jpg");
+        existingKos.setPemilik(mockUser);
 
         Kos updatedKos = new Kos();
-        updatedKos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        updatedKos.setId(kosId);
         updatedKos.setNama("Melati");
         updatedKos.setJumlah(30);
         updatedKos.setAlamat("Jl. Mawar");
         updatedKos.setDeskripsi("Minimalis");
         updatedKos.setHarga(1500000);
-        updatedKos.setStatus("Penuh");
+        updatedKos.setStatus("FULL");
+        updatedKos.setUrlFoto("https://i.pinimg.com/736x/f3/f2/a2/f3f2a2d6b0c26389bc95260364251cef.jpg");
+        updatedKos.setPemilik(mockUser);
 
         when(pengelolaanRepository.update(any(Kos.class))).thenReturn(updatedKos);
-        when(pengelolaanRepository.findById("eb558e9f-1c39-460e-8860-71af6af63bd6")).thenReturn(updatedKos);
+        when(pengelolaanRepository.findByIdOrThrow(kosId)).thenReturn(updatedKos);
 
         Kos result = pengelolaanService.update(updatedKos);
 
@@ -94,23 +111,29 @@ public class PengelolaanServiceTest {
         assertEquals("Jl. Mawar", result.getAlamat());
         assertEquals("Minimalis", result.getDeskripsi());
         assertEquals(1500000, result.getHarga());
-        assertEquals("Penuh", result.getStatus());
+        assertEquals("FULL", result.getStatus());
+        assertEquals("https://i.pinimg.com/736x/f3/f2/a2/f3f2a2d6b0c26389bc95260364251cef.jpg", result.getUrlFoto());
+        assertEquals(mockUser, result.getPemilik());
 
-        Kos retrievedKos = pengelolaanService.findById("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        Kos retrievedKos = pengelolaanService.findById(kosId);
         assertEquals("Melati", retrievedKos.getNama());
         assertEquals(30, retrievedKos.getJumlah());
 
         verify(pengelolaanRepository, times(1)).update(updatedKos);
+        verify(pengelolaanRepository, times(1)).findByIdOrThrow(kosId);
     }
 
     @Test
     void testDeleteKos() {
+        UUID kosId = UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6");
+
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        kos.setId(kosId);
         kos.setNama("Tulip");
+        kos.setPemilik(mockUser);
 
         doNothing().when(pengelolaanRepository).delete(kos);
-        when(pengelolaanRepository.findAll()).thenReturn(Collections.emptyIterator());
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
 
         pengelolaanService.delete(kos);
         List<Kos> retrievedKosList = pengelolaanService.findAll();
@@ -121,24 +144,83 @@ public class PengelolaanServiceTest {
 
     @Test
     void testFindAllEmpty() {
-        when(pengelolaanRepository.findAll()).thenReturn(Collections.emptyIterator());
-
+        when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
         List<Kos> kosList = pengelolaanService.findAll();
         assertTrue(kosList.isEmpty());
     }
 
     @Test
     void testFindById() {
+        UUID kosId = UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6");
+
         Kos kos = new Kos();
-        kos.setId("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        kos.setId(kosId);
+        kos.setNama("Tulip");
+        kos.setPemilik(mockUser);
+
+        when(pengelolaanRepository.findByIdOrThrow(kosId)).thenReturn(kos);
+
+        Kos retrievedKos = pengelolaanService.findById(kosId);
+        assertEquals("Tulip", retrievedKos.getNama());
+        assertEquals(kosId, retrievedKos.getId());
+        assertEquals(mockUser, retrievedKos.getPemilik());
+
+        verify(pengelolaanRepository, times(1)).findByIdOrThrow(kosId);
+    }
+
+    @Test
+    void testFindByIdNotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+
+        when(pengelolaanRepository.findByIdOrThrow(nonExistentId))
+                .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos dengan ID " + nonExistentId + " tidak ditemukan."));
+
+        PengelolaanRepository.KosNotFoundException thrown = assertThrows(
+                PengelolaanRepository.KosNotFoundException.class,
+                () -> pengelolaanService.findById(nonExistentId)
+        );
+
+        assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
+        verify(pengelolaanRepository, times(1)).findByIdOrThrow(nonExistentId);
+    }
+
+    @Test
+    void testUpdateKosNotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+
+        Kos kos = new Kos();
+        kos.setId(nonExistentId);
+        kos.setNama("Melati");
+
+        when(pengelolaanRepository.update(any(Kos.class)))
+                .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos dengan ID " + nonExistentId + " tidak ditemukan."));
+
+        PengelolaanRepository.KosNotFoundException thrown = assertThrows(
+                PengelolaanRepository.KosNotFoundException.class,
+                () -> pengelolaanService.update(kos)
+        );
+
+        assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
+        verify(pengelolaanRepository, times(1)).update(kos);
+    }
+
+    @Test
+    void testDeleteKosNotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+
+        Kos kos = new Kos();
+        kos.setId(nonExistentId);
         kos.setNama("Tulip");
 
-        when(pengelolaanRepository.findById("eb558e9f-1c39-460e-8860-71af6af63bd6")).thenReturn(kos);
+        doThrow(new PengelolaanRepository.KosNotFoundException("Kos dengan ID " + nonExistentId + " tidak ditemukan."))
+                .when(pengelolaanRepository).delete(kos);
 
-        Kos retrievedKos = pengelolaanService.findById("eb558e9f-1c39-460e-8860-71af6af63bd6");
-        assertEquals("Tulip", retrievedKos.getNama());
-        assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", retrievedKos.getId());
+        PengelolaanRepository.KosNotFoundException thrown = assertThrows(
+                PengelolaanRepository.KosNotFoundException.class,
+                () -> pengelolaanService.delete(kos)
+        );
 
-        verify(pengelolaanRepository, times(1)).findById("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
+        verify(pengelolaanRepository, times(1)).delete(kos);
     }
 }

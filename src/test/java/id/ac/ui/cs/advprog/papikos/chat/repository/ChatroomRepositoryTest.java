@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +24,7 @@ class ChatroomRepositoryTest {
         Chatroom chatroom = new Chatroom();
         chatroom.setRenterId(101L);
         chatroom.setOwnerId(202L);
-        chatroom.setPropertyId(303L);
+        chatroom.setPropertyId(UUID.randomUUID());
         chatroomRepository.save(chatroom);
     }
 
@@ -43,17 +44,19 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByRenterIdAndOwnerIdAndPropertyId() {
-        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(101L, 202L, 303L);
+        UUID propertyId = chatroomRepository.findByRenterId(101L).get(0).getPropertyId();
+
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(101L, 202L, propertyId);
 
         assertTrue(result.isPresent());
         assertEquals(101L, result.get().getRenterId());
         assertEquals(202L, result.get().getOwnerId());
-        assertEquals(303L, result.get().getPropertyId());
+        assertEquals(propertyId, result.get().getPropertyId());
     }
 
     @Test
     void testFindByRenterIdAndOwnerIdAndPropertyId_NotFound() {
-        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(999L, 888L, 777L);
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(999L, 888L, UUID.randomUUID());
 
         assertTrue(result.isEmpty());
     }

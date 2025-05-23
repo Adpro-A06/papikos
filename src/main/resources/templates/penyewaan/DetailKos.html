@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Kos - PapiKos</title>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --secondary-blue: #4285f4;
+            --light-blue: #e8f0fe;
+            --hover-blue: #0d47a1;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --dark-gray: #757575;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: var(--text-color);
+            background-color: #f9fafb;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: var(--dark-gray);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-logout:hover {
+            color: var(--primary-blue);
+        }
+
+        .logout-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--hover-blue);
+        }
+
+        .btn-back {
+            background-color: white;
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+        }
+
+        .btn-back:hover {
+            background-color: var(--light-blue);
+            color: var(--hover-blue);
+        }
+
+        .btn-rent {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 12px 24px;
+            font-size: 18px;
+        }
+
+        .kos-detail-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .kos-image-gallery {
+            height: 400px;
+            background-color: var(--light-gray);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .placeholder-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-gray);
+            font-size: 24px;
+        }
+
+        .kos-info {
+            padding: 30px;
+        }
+
+        .kos-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .kos-address {
+            font-size: 16px;
+            color: var(--dark-gray);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kos-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .kos-stat-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 100px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--dark-gray);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .price-value {
+            color: var(--primary-blue);
+            font-size: 24px;
+        }
+
+        .kos-description {
+            margin-top: 20px;
+        }
+
+        .description-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .description-text {
+            font-size: 16px;
+            color: var(--text-color);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .owner-info {
+            background-color: var(--light-blue);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .owner-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .owner-details {
+            flex: 1;
+        }
+
+        .owner-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .owner-contact {
+            font-size: 15px;
+            color: var(--dark-gray);
+        }
+
+        .actions-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--dark-gray);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .rent-action-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-rent-action {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 14px 28px;
+            font-size: 18px;
+            display: inline-block;
+            width: auto;
+            min-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .kos-image-gallery {
+                height: 250px;
+            }
+
+            .kos-info {
+                padding: 20px;
+            }
+
+            .kos-name {
+                font-size: 24px;
+            }
+
+            .kos-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .actions-container {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="/penyewa/home" class="logo">PapiKos</a>
+            <div class="header-title">Detail Kos</div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
+                        P</div>
+                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
+                </div>
+                <form th:action="@{/api/auth/logout}" method="post">
+                    <button type="submit" class="btn-logout">
+                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="actions-container">
+            <a href="/penyewa/home" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+                </svg>
+                Kembali ke pencarian
+            </a>
+        </div>
+
+        <div class="kos-detail-container" th:if="${kos != null}">
+            <div class="kos-image-gallery">
+                <div class="placeholder-image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
+                        <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="kos-info">
+                <h1 class="kos-name" th:text="${kos.nama}">Kos Melati</h1>
+                <div class="kos-address">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                    </svg>
+                    <span th:text="${kos.alamat}">Jl. Kenanga No. 10</span>
+                </div>
+
+                <div class="kos-stats">
+                    <div class="kos-stat-item">
+                        <span class="stat-label">Harga</span>
+                        <span class="stat-value price-value">
+                            Rp <span
+                                th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
+                            / bulan
+                        </span>
+                    </div>
+                    <div class="kos-stat-item">
+                        <span class="stat-label">Kamar Tersedia</span>
+                        <span class="stat-value" th:text="${kos.jumlah}">5</span>
+                    </div>
+                    <div class="kos-stat-item">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value" th:text="${kos.status}">AVAILABLE</span>
+                    </div>
+                </div>
+
+                <div class="kos-description">
+                    <h2 class="description-title">Deskripsi</h2>
+                    <p class="description-text" th:text="${kos.deskripsi}">
+                        Kos nyaman dekat dengan kampus. Fasilitas lengkap dengan kamar mandi dalam, AC, WiFi, dan area
+                        parkir yang luas.
+                        Lingkungan aman dan tenang, cocok untuk mahasiswa maupun karyawan.
+                    </p>
+                </div>
+
+                <div class="owner-info" th:if="${kos.pemilik != null}">
+                    <div class="owner-avatar"
+                        th:text="${kos.pemilik.email != null ? kos.pemilik.email.substring(0, 1).toUpperCase() : 'P'}">P
+                    </div>
+                    <div class="owner-details">
+                        <div class="owner-name" th:text="${kos.pemilik.email}">pemilik@example.com</div>
+                        <div class="owner-contact">Pemilik Kos</div>
+                    </div>
+                </div>
+
+                <div class="rent-action-container">
+                    <a th:href="@{/penyewaan/new/{kosId}(kosId=${kos.id})}" class="btn btn-rent-action">
+                        Ajukan Penyewaan
+                    </a>
+                    <button type="button" id="chatButton" class="btn btn-rent-action btn-chat"
+                            th:data-kos-id="${kos.id}"
+                            th:data-renter-id="${user.id}"
+                            th:data-owner-id="${kos.pemilik.id}">
+                        Tanya Pemilik Kos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatButton = document.getElementById('chatButton');
+
+            if (chatButton) {
+                chatButton.addEventListener('click', async function() {
+                    const kosId = this.getAttribute('data-kos-id');
+                    const renterId = this.getAttribute('data-renter-id');
+                    const ownerId = this.getAttribute('data-owner-id');
+
+                    // Validate that all required data is present
+                    if (!kosId || !renterId || !ownerId) {
+                        alert('Data tidak lengkap. Silakan refresh halaman dan coba lagi.');
+                        return;
+                    }
+
+                    // Show loading state
+                    this.classList.add('loading');
+                    this.textContent = 'Membuat chat...';
+                    this.disabled = true;
+
+                    try {
+                        console.log('Creating chatroom with:', { kosId, renterId, ownerId });
+
+                        const response = await fetch(`/api/chatrooms/create/${kosId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                renterId: renterId,  // Removed parseInt - keep as UUID string
+                                ownerId: ownerId,    // Removed parseInt - keep as UUID string
+                                propertyId: kosId
+                            })
+                        });
+
+                        console.log('Response status:', response.status);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('Response data:', data);
+
+                            if (data.success && data.chatRoomId) {
+                                // Success! Redirect to the new chatroom
+                                window.location.href = `/chatrooms/${data.chatRoomId}`;
+                            } else {
+                                throw new Error(data.message || 'Failed to create chatroom');
+                            }
+                        } else {
+                            // Try to get error message from response
+                            let errorMessage = 'Gagal membuat chat. Silakan coba lagi.';
+                            try {
+                                const errorData = await response.json();
+                                if (errorData.message) {
+                                    errorMessage = errorData.message;
+                                }
+                            } catch (e) {
+                                // If response is not JSON, use default message
+                            }
+                            throw new Error(errorMessage);
+                        }
+                    } catch (error) {
+                        console.error('Error creating chat:', error);
+                        alert('Gagal membuat chat: ' + error.message);
+                    } finally {
+                        // Reset button state
+                        this.classList.remove('loading');
+                        this.textContent = 'Tanya Pemilik Kos';
+                        this.disabled = false;
+                    }
+                });
+            }
+        });
+
+    </script>
+</body>
+
+</html>

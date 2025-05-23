@@ -4,12 +4,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public class Chatroom {
-    private Long id;
-    private Long renterId;
-    private Long ownerId;
-    private Long propertyId;
+    private UUID id;  // Changed from Long to UUID
+    private UUID renterId;  // Changed from Long to UUID
+    private UUID ownerId;  // Changed from Long to UUID
+    private UUID propertyId;
     private LocalDateTime createdAt;
     private List<Message> messages;
 
@@ -17,35 +18,35 @@ public class Chatroom {
         this.messages = new ArrayList<>();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Long getRenterId() {
+    public UUID getRenterId() {
         return renterId;
     }
 
-    public void setRenterId(Long renterId) {
+    public void setRenterId(UUID renterId) {
         this.renterId = renterId;
     }
 
-    public Long getOwnerId() {
+    public UUID getOwnerId() {
         return ownerId;
     }
 
-    public void setOwnerId(Long ownerId) {
+    public void setOwnerId(UUID ownerId) {
         this.ownerId = ownerId;
     }
 
-    public Long getPropertyId() {
+    public UUID getPropertyId() {
         return propertyId;
     }
 
-    public void setPropertyId(Long propertyId) {
+    public void setPropertyId(UUID propertyId) {
         this.propertyId = propertyId;
     }
 
@@ -78,7 +79,7 @@ public class Chatroom {
                 .orElse(null);
     }
 
-    public int getUnreadMessageCount(Long userId) {
+    public int getUnreadMessageCount(UUID userId) {  // Changed from Long to UUID
         return (int) messages.stream()
                 .filter(m -> !m.getSenderId().equals(userId) && !m.isRead())
                 .count();

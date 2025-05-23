@@ -47,6 +47,8 @@ dependencies {
     implementation("org.webjars:webjars-locator-core")
     implementation("org.webjars:stomp-websocket:2.3.4")
     implementation("org.webjars:sockjs-client:1.5.1")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")

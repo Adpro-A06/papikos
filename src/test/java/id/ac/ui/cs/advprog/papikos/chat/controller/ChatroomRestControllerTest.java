@@ -14,13 +14,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class ChatroomControllerTest {
+public class ChatroomRestControllerTest {
 
     private MockMvc mockMvc;
 
@@ -28,20 +29,23 @@ public class ChatroomControllerTest {
     private ChatroomService chatroomService;
 
     @InjectMocks
-    private ChatroomController chatroomController;
+    private ChatroomRestController chatroomRestController;
 
     private Chatroom mockChatroom;
+    private UUID propertyId;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(chatroomController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(chatroomRestController).build();
+
+        propertyId = UUID.randomUUID();
 
         mockChatroom = new Chatroom();
         mockChatroom.setId(1L);
         mockChatroom.setRenterId(101L);
         mockChatroom.setOwnerId(201L);
-        mockChatroom.setPropertyId(301L);
+        mockChatroom.setPropertyId(propertyId);
         mockChatroom.setCreatedAt(LocalDateTime.now());
     }
 
@@ -55,7 +59,7 @@ public class ChatroomControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].renterId").value(101))
                 .andExpect(jsonPath("$[0].ownerId").value(201))
-                .andExpect(jsonPath("$[0].propertyId").value(301));
+                .andExpect(jsonPath("$[0].propertyId").value(propertyId.toString()));
     }
 
     @Test
@@ -68,7 +72,7 @@ public class ChatroomControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].renterId").value(101))
                 .andExpect(jsonPath("$[0].ownerId").value(201))
-                .andExpect(jsonPath("$[0].propertyId").value(301));
+                .andExpect(jsonPath("$[0].propertyId").value(propertyId.toString()));
     }
 
     @Test
@@ -80,20 +84,20 @@ public class ChatroomControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.renterId").value(101))
                 .andExpect(jsonPath("$.ownerId").value(201))
-                .andExpect(jsonPath("$.propertyId").value(301));
+                .andExpect(jsonPath("$.propertyId").value(propertyId.toString()));
     }
 
     @Test
     void createChatroom_ShouldReturnCreatedChatroom() throws Exception {
-        when(chatroomService.createChatroom(anyLong(), anyLong(), anyLong())).thenReturn(mockChatroom);
+        when(chatroomService.createChatroom(anyLong(), anyLong(), any(UUID.class))).thenReturn(mockChatroom);
 
-        mockMvc.perform(post("/api/chatrooms")
+        mockMvc.perform(post("/api/chatrooms/create/{propertyId}", propertyId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"renterId\":101,\"ownerId\":201,\"propertyId\":301}"))
+                        .content("{\"renterId\":101,\"ownerId\":201,\"propertyId\":\"" + propertyId.toString() + "\"}"))  // Memasukkan UUID dalam JSON
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.renterId").value(101))
                 .andExpect(jsonPath("$.ownerId").value(201))
-                .andExpect(jsonPath("$.propertyId").value(301));
+                .andExpect(jsonPath("$.propertyId").value(propertyId.toString()));  // Memastikan propertyId sebagai UUID
     }
 }

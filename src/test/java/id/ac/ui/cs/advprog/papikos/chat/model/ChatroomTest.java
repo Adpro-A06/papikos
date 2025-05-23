@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,15 +13,17 @@ public class ChatroomTest {
 
     private Chatroom chatroom;
     private LocalDateTime createdAt;
+    private UUID propertyId;
 
     @BeforeEach
     void setup() {
         createdAt = LocalDateTime.now();
         chatroom = new Chatroom();
+        propertyId = UUID.randomUUID();
         chatroom.setId(1L);
         chatroom.setRenterId(101L);
         chatroom.setOwnerId(202L);
-        chatroom.setPropertyId(303L);
+        chatroom.setPropertyId(propertyId);
         chatroom.setCreatedAt(createdAt);
         chatroom.setMessages(new ArrayList<>());
     }
@@ -42,7 +45,7 @@ public class ChatroomTest {
 
     @Test
     void testGetPropertyId() {
-        assertEquals(303L, chatroom.getPropertyId());
+        assertEquals(propertyId, chatroom.getPropertyId());
     }
 
     @Test
