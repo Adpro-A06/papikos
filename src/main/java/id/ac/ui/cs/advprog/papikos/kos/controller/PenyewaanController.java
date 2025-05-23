@@ -15,6 +15,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +31,7 @@ public class PenyewaanController {
     private final PenyewaanService penyewaanService;
     private final KosService kosService;
     private final AuthService authService;
+    private static final Logger logger = LoggerFactory.getLogger(PenyewaanController.class);
 
     @Autowired
     public PenyewaanController(PenyewaanService penyewaanService,
@@ -55,11 +58,13 @@ public class PenyewaanController {
             List<Penyewaan> penyewaanList = penyewaanService.findByPenyewa(user).get();
             model.addAttribute("penyewaanList", penyewaanList);
             model.addAttribute("user", user);
+            logger.info("User [{}] accessed [GET] /penyewaan/", user.getEmail());
             return "penyewaan/ListSewa";
         } catch (InterruptedException | ExecutionException e) {
             Throwable cause = e.getCause();
             String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
             ra.addFlashAttribute("error", "Gagal memuat data penyewaan: " + errorMessage);
+            logger.error("Failed to load penyewaan for user [{}]: {}", user.getEmail(), errorMessage);
             return "redirect:/penyewa/home";
         }
     }
@@ -89,6 +94,8 @@ public class PenyewaanController {
 
             Kos kos = kosService.findById(kosUUID)
                     .orElseThrow(() -> new EntityNotFoundException("Kos tidak ditemukan"));
+
+            logger.info("User [{}] accessed [GET] /penyewaan/new/{}", user.getEmail(), kosId);
 
             Penyewaan penyewaan = new Penyewaan();
             penyewaan.setTanggalCheckIn(LocalDate.now().plusDays(1));
@@ -132,12 +139,14 @@ public class PenyewaanController {
             penyewaan.setDurasiSewa(durasiSewa);
 
             penyewaanService.createPenyewaan(penyewaan, kosId, user).get();
+            logger.info("Penyewaan created successfully for user [{}]", user.getEmail());
             ra.addFlashAttribute("success", "Pengajuan penyewaan berhasil dibuat");
             return "redirect:/penyewaan/";
         } catch (InterruptedException | ExecutionException e) {
             Throwable cause = e.getCause();
             String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
             ra.addFlashAttribute("error", errorMessage);
+            logger.error("Failed to create penyewaan for user [{}]: {}", user.getEmail(), errorMessage);
             return "redirect:/penyewaan/new/" + kosId;
         }
     }
@@ -168,6 +177,8 @@ public class PenyewaanController {
                 ra.addFlashAttribute("error", "Penyewaan tidak dapat diedit");
                 return "redirect:/penyewaan/";
             }
+
+            logger.info("User [{}] accessed [GET] /penyewaan/{}/edit", user.getEmail(), id);
 
             model.addAttribute("penyewaan", penyewaan);
             model.addAttribute("kos", penyewaan.getKos());
@@ -209,12 +220,14 @@ public class PenyewaanController {
             updatedPenyewaan.setDurasiSewa(durasiSewa);
 
             penyewaanService.updatePenyewaan(updatedPenyewaan, id, user).get();
+            logger.info("Penyewaan [{}] updated successfully for user [{}]", id, user.getEmail());
             ra.addFlashAttribute("success", "Penyewaan berhasil diperbarui");
             return "redirect:/penyewaan/";
         } catch (InterruptedException | ExecutionException e) {
             Throwable cause = e.getCause();
             String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
             ra.addFlashAttribute("error", errorMessage);
+            logger.error("Failed to update penyewaan [{}] for user [{}]: {}", id, user.getEmail(), errorMessage);
             return "redirect:/penyewaan/" + id + "/edit";
         }
     }
@@ -239,6 +252,8 @@ public class PenyewaanController {
             if (penyewaanOpt.isEmpty()) {
                 throw new EntityNotFoundException("Penyewaan tidak ditemukan");
             }
+
+            logger.info("User [{}] accessed [GET] /penyewaan/{}", user.getEmail(), id);
 
             Penyewaan penyewaan = penyewaanOpt.get();
             model.addAttribute("penyewaan", penyewaan);
@@ -269,6 +284,7 @@ public class PenyewaanController {
         }
 
         try {
+            logger.info("Penyewaan [{}] cancelled successfully for user [{}]", id, user.getEmail());
             penyewaanService.cancelPenyewaan(id, user).get();
             ra.addFlashAttribute("success", "Penyewaan berhasil dibatalkan");
             return "redirect:/penyewaan/";
@@ -276,6 +292,7 @@ public class PenyewaanController {
             Throwable cause = e.getCause();
             String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
             ra.addFlashAttribute("error", errorMessage);
+            logger.error("Failed to cancel penyewaan [{}] for user [{}]: {}", id, user.getEmail(), errorMessage);
             return "redirect:/penyewaan/" + id;
         }
     }

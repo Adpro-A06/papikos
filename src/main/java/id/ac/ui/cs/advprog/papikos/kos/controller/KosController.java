@@ -12,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ public class KosController {
 
     private final KosService kosService;
     private final AuthService authService;
+    private static final Logger logger = LoggerFactory.getLogger(KosController.class);
 
     @Autowired
     public KosController(KosService kosService, AuthService authService) {
@@ -46,6 +49,7 @@ public class KosController {
         List<Kos> searchResults;
         if (keyword != null && !keyword.trim().isEmpty()) {
             searchResults = kosService.searchByKeyword(keyword);
+            logger.info("Found {} kos(s) for user [{}] with keyword '{}'", searchResults.size(), user.getEmail(), keyword);
         } else {
             searchResults = kosService.findAllAvailable();
         }
@@ -78,12 +82,15 @@ public class KosController {
 
             model.addAttribute("kos", kos);
             model.addAttribute("user", user);
+            logger.info("Kos [{}] details loaded successfully for user [{}]", id, user.getEmail());
             return "penyewaan/DetailKos";
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", "Format ID kos tidak valid");
+            logger.error("Invalid kos ID format [{}] accessed by user [{}]", id, user.getEmail());
             return "redirect:/penyewa/home";
         } catch (EntityNotFoundException e) {
             ra.addFlashAttribute("error", e.getMessage());
+            logger.error("Kos [{}] not found for user [{}]: {}", id, user.getEmail(), e.getMessage());
             return "redirect:/penyewa/home";
         }
     }
