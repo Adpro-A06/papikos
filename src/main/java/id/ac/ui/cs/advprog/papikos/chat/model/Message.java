@@ -1,6 +1,11 @@
 package id.ac.ui.cs.advprog.papikos.chat.model;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 public class Message {
     private Long id;
     private Long senderId;
@@ -12,46 +17,6 @@ public class Message {
     private boolean isEdited = false;
 
     public Message() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getSenderId() {
-        return senderId;
-    }
-
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
-    }
-
-    public Long getChatroomId() {
-        return chatroomId;
-    }
-
-    public void setChatroomId(Long chatroomId) {
-        this.chatroomId = chatroomId;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
     }
 
     // Read receipt
