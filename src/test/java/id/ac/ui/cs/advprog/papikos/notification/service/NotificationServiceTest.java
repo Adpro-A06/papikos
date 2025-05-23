@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,7 +29,7 @@ class NotificationServiceTest {
         wishlist = new Wishlist();
 
         kos = new Kos();
-        kos.setId("K001");
+        kos.setId(UUID.randomUUID());
         kos.setNama("Kos SatoruMyBaby");
 
         wishlist.addKos(kos);
@@ -54,7 +55,7 @@ class NotificationServiceTest {
     @Test
     void testNotifyTenantsWhenRoomAvailable_Unhappy_NoNotificationSent() {
         Kos kosLain = new Kos();
-        kosLain.setId("K999");
+        kosLain.setId(UUID.randomUUID());
         kosLain.setNama("Kos Tidak Ada");
 
         int sentCount = notificationService.notifyTenantsForAvailableRoom(
@@ -68,10 +69,8 @@ class NotificationServiceTest {
     @Test
     void testAdminCanSendNotificationToAllUsers_Happy() {
         List<User> allUsers = new ArrayList<>();
-        // Admin
         User admin = new User("admin@example.com", "Admin@123!", Role.ADMIN);
         allUsers.add(admin);
-        // Dua tenant
         allUsers.add(tenant1);
         allUsers.add(tenant2);
 
