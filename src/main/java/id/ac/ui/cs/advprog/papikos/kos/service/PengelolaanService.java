@@ -4,11 +4,12 @@ import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface PengelolaanService{
-    Kos create(Kos kos);
-    List<Kos> findAll();
-    Kos findById(UUID id);
-    Kos update(Kos kos);
-    void delete(Kos kos);
+    CompletableFuture<Kos> create(Kos kos);
+    CompletableFuture<List<Kos>> findAll();
+    CompletableFuture<Kos> findById(UUID id);
+    CompletableFuture<Kos> update(Kos kos);
+    CompletableFuture<Void> delete(Kos kos);
 }
