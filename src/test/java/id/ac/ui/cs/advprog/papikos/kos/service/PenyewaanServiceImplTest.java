@@ -144,11 +144,10 @@ class PenyewaanServiceImplTest {
         kos.setStatus("FULL");
         when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
-        CompletableFuture<Penyewaan> future = penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
-        ExecutionException exception = assertThrows(ExecutionException.class, future::get);
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa));
 
-        assertTrue(exception.getCause() instanceof IllegalStateException);
-        assertEquals("Kos tidak tersedia untuk disewa", exception.getCause().getMessage());
+        assertEquals("Kos tidak tersedia untuk disewa", exception.getMessage());
         verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
         kos.setStatus("AVAILABLE");
@@ -160,11 +159,10 @@ class PenyewaanServiceImplTest {
         kos.setJumlah(0);
         when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
-        CompletableFuture<Penyewaan> future = penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
-        ExecutionException exception = assertThrows(ExecutionException.class, future::get);
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa));
 
-        assertTrue(exception.getCause() instanceof IllegalStateException);
-        assertEquals("Tidak ada kamar tersedia untuk disewa", exception.getCause().getMessage());
+        assertEquals("Tidak ada kamar tersedia untuk disewa", exception.getMessage());
         verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
         kos.setJumlah(5);
@@ -173,15 +171,14 @@ class PenyewaanServiceImplTest {
     @Test
     void testCreatePenyewaanInvalidCheckInDate() {
         Penyewaan newPenyewaan = new Penyewaan();
-        newPenyewaan.setTanggalCheckIn(LocalDate.now().minusDays(1)); // Past date
+        newPenyewaan.setTanggalCheckIn(LocalDate.now().minusDays(1));
         newPenyewaan.setDurasiSewa(2);
         when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
-        CompletableFuture<Penyewaan> future = penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
-        ExecutionException exception = assertThrows(ExecutionException.class, future::get);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa));
 
-        assertTrue(exception.getCause() instanceof IllegalArgumentException);
-        assertEquals("Tanggal check-in tidak boleh di masa lalu", exception.getCause().getMessage());
+        assertEquals("Tanggal check-in tidak boleh di masa lalu", exception.getMessage());
         verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }
@@ -193,11 +190,10 @@ class PenyewaanServiceImplTest {
         newPenyewaan.setDurasiSewa(0);
         when(kosRepository.findById(UUID.fromString(kosId))).thenReturn(Optional.of(kos));
 
-        CompletableFuture<Penyewaan> future = penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa);
-        ExecutionException exception = assertThrows(ExecutionException.class, future::get);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> penyewaanService.createPenyewaan(newPenyewaan, kosId, penyewa));
 
-        assertTrue(exception.getCause() instanceof IllegalArgumentException);
-        assertEquals("Durasi sewa minimal 1 bulan", exception.getCause().getMessage());
+        assertEquals("Durasi sewa minimal 1 bulan", exception.getMessage());
         verify(kosRepository).findById(UUID.fromString(kosId));
         verify(penyewaanRepository, never()).save(any(Penyewaan.class));
     }

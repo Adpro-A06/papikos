@@ -47,31 +47,7 @@ public class PenyewaanServiceImpl implements PenyewaanService {
         return kosRepository.findById(kosUUID)
                 .map(kos -> {
                     CompletableFuture<Penyewaan> result = new CompletableFuture<>();
-                    if (!"AVAILABLE".equals(kos.getStatus())) {
-                        result.completeExceptionally(
-                                new IllegalStateException("Kos tidak tersedia untuk disewa"));
-                        return result;
-                    }
-                    if (kos.getJumlahTersedia() <= 0) {
-                        result.completeExceptionally(
-                                new IllegalStateException("Tidak ada kamar tersedia untuk disewa"));
-                        return result;
-                    }
-                    if (penyewaan.getTanggalCheckIn().isBefore(LocalDate.now())) {
-                        result.completeExceptionally(
-                                new IllegalArgumentException("Tanggal check-in tidak boleh di masa lalu"));
-                        return result;
-                    }
-                    if (penyewaan.getDurasiSewa() < 1) {
-                        result.completeExceptionally(
-                                new IllegalArgumentException("Durasi sewa minimal 1 bulan"));
-                        return result;
-                    }
-                    if (penyewaan.getDurasiSewa() > 12) {
-                        result.completeExceptionally(
-                                new IllegalArgumentException("Durasi sewa maksimal 12 bulan"));
-                        return result;
-                    }
+                    validateCreatePenyewaan(kos, penyewaan);
 
                     penyewaan.setKos(kos);
                     penyewaan.setPenyewa(penyewa);
@@ -139,16 +115,7 @@ public class PenyewaanServiceImpl implements PenyewaanService {
                 .thenApply(optionalPenyewaan -> optionalPenyewaan.orElseThrow(
                         () -> new EntityNotFoundException("Penyewaan tidak ditemukan atau bukan milik penyewa ini")))
                 .thenApply(existingPenyewaan -> {
-                    if (!isPenyewaanEditable(existingPenyewaan)) {
-                        throw new IllegalStateException(
-                                "Penyewaan tidak dapat diedit karena status: " + existingPenyewaan.getStatus());
-                    }
-                    if (updatedPenyewaan.getTanggalCheckIn().isBefore(LocalDate.now())) {
-                        throw new IllegalArgumentException("Tanggal check-in tidak boleh di masa lalu");
-                    }
-                    if (updatedPenyewaan.getDurasiSewa() < 1 || updatedPenyewaan.getDurasiSewa() > 12) {
-                        throw new IllegalArgumentException("Durasi sewa harus antara 1-12 bulan");
-                    }
+                    validateUpdatePenyewaan(existingPenyewaan, updatedPenyewaan);
 
                     existingPenyewaan.setNamaLengkap(updatedPenyewaan.getNamaLengkap());
                     existingPenyewaan.setNomorTelepon(updatedPenyewaan.getNomorTelepon());
@@ -189,5 +156,36 @@ public class PenyewaanServiceImpl implements PenyewaanService {
         return penyewaan.getStatus() == StatusPenyewaan.PENDING ||
                 (penyewaan.getStatus() == StatusPenyewaan.APPROVED &&
                         penyewaan.getTanggalCheckIn().isAfter(LocalDate.now()));
+    }
+
+    private void validateCreatePenyewaan(Kos kos, Penyewaan penyewaan) {
+        if (!"AVAILABLE".equals(kos.getStatus())) {
+            throw new IllegalStateException("Kos tidak tersedia untuk disewa");
+        }
+        if (kos.getJumlahTersedia() <= 0) {
+            throw new IllegalStateException("Tidak ada kamar tersedia untuk disewa");
+        }
+        if (penyewaan.getTanggalCheckIn().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Tanggal check-in tidak boleh di masa lalu");
+        }
+        if (penyewaan.getDurasiSewa() < 1) {
+            throw new IllegalArgumentException("Durasi sewa minimal 1 bulan");
+        }
+        if (penyewaan.getDurasiSewa() > 12) {
+            throw new IllegalArgumentException("Durasi sewa maksimal 12 bulan");
+        }
+    }
+
+    private void validateUpdatePenyewaan(Penyewaan existingPenyewaan, Penyewaan updatedPenyewaan) {
+        if (!isPenyewaanEditable(existingPenyewaan)) {
+            throw new IllegalStateException(
+                    "Penyewaan tidak dapat diedit karena status: " + existingPenyewaan.getStatus());
+        }
+        if (updatedPenyewaan.getTanggalCheckIn().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Tanggal check-in tidak boleh di masa lalu");
+        }
+        if (updatedPenyewaan.getDurasiSewa() < 1 || updatedPenyewaan.getDurasiSewa() > 12) {
+            throw new IllegalArgumentException("Durasi sewa harus antara 1-12 bulan");
+        }
     }
 }
