@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import org.springframework.scheduling.annotation.Async;
+
 
 @Service
 @RequiredArgsConstructor
@@ -93,12 +96,6 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<Payment> getUserTransactions(UUID userId) {
-        validateUserExists(userId);
-        return paymentRepository.findByUserId(userId);
-    }
-
-    @Override
     public List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
         List<Payment> transactions = paymentRepository.findByUserId(userId);
 
@@ -138,6 +135,25 @@ public class PaymentServiceImpl implements PaymentService {
     private void validateUserExists(UUID userId) {
         if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("User dengan ID " + userId + " tidak ditemukan");
+        }
+    }
+
+    @Override
+    @Async("paymentTaskExecutor")
+    public CompletableFuture<List<Payment>> getUserTransactionsAsync(UUID userId) {
+        try {
+            Thread.sleep(1000);
+
+            validateUserExists(userId);
+            List<Payment> transactions = paymentRepository.findByUserId(userId);
+
+            System.out.println("Async payment processing on thread: " + Thread.currentThread().getName());
+
+            return CompletableFuture.completedFuture(transactions);
+        } catch (Exception e) {
+            CompletableFuture<List<Payment>> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
         }
     }
 }

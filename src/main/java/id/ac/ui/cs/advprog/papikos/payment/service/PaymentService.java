@@ -7,11 +7,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface PaymentService {
     void topUp(UUID userId, BigDecimal amount);
     void pay(UUID fromUserId, UUID toUserId, BigDecimal amount);
     BigDecimal getBalance(UUID userId);
-    List<Payment> getUserTransactions(UUID userId);
+    CompletableFuture<List<Payment>> getUserTransactionsAsync(UUID userId);
     List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type);
 }
