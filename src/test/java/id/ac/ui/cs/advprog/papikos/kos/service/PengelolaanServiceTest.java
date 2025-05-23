@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -55,7 +56,7 @@ public class PengelolaanServiceTest {
         when(pengelolaanRepository.create(any(Kos.class))).thenReturn(savedKos);
         when(pengelolaanRepository.findAllOrThrow()).thenReturn(Arrays.asList(savedKos));
 
-        Kos createdKos = pengelolaanService.create(kos);
+        Kos createdKos = pengelolaanService.create(kos).join();
 
         assertNotNull(createdKos.getId());
         assertEquals("Tulip", createdKos.getNama());
@@ -67,7 +68,7 @@ public class PengelolaanServiceTest {
         assertEquals("https://example.com/kos.jpg", createdKos.getUrlFoto());
         assertEquals(mockUser, createdKos.getPemilik());
 
-        List<Kos> retrievedKosList = pengelolaanService.findAll();
+        List<Kos> retrievedKosList = pengelolaanService.findAll().join();
         assertEquals(1, retrievedKosList.size());
         Kos retrievedKos = retrievedKosList.get(0);
         assertEquals(createdKos.getId(), retrievedKos.getId());
@@ -104,7 +105,7 @@ public class PengelolaanServiceTest {
         when(pengelolaanRepository.update(any(Kos.class))).thenReturn(updatedKos);
         when(pengelolaanRepository.findByIdOrThrow(kosId)).thenReturn(updatedKos);
 
-        Kos result = pengelolaanService.update(updatedKos);
+        Kos result = pengelolaanService.update(updatedKos).join();
 
         assertEquals("Melati", result.getNama());
         assertEquals(30, result.getJumlah());
@@ -115,7 +116,7 @@ public class PengelolaanServiceTest {
         assertEquals("https://i.pinimg.com/736x/f3/f2/a2/f3f2a2d6b0c26389bc95260364251cef.jpg", result.getUrlFoto());
         assertEquals(mockUser, result.getPemilik());
 
-        Kos retrievedKos = pengelolaanService.findById(kosId);
+        Kos retrievedKos = pengelolaanService.findById(kosId).join();
         assertEquals("Melati", retrievedKos.getNama());
         assertEquals(30, retrievedKos.getJumlah());
 
@@ -135,8 +136,8 @@ public class PengelolaanServiceTest {
         doNothing().when(pengelolaanRepository).delete(kos);
         when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
 
-        pengelolaanService.delete(kos);
-        List<Kos> retrievedKosList = pengelolaanService.findAll();
+        pengelolaanService.delete(kos).join();
+        List<Kos> retrievedKosList = pengelolaanService.findAll().join();
         assertTrue(retrievedKosList.isEmpty());
 
         verify(pengelolaanRepository, times(1)).delete(kos);
@@ -145,7 +146,7 @@ public class PengelolaanServiceTest {
     @Test
     void testFindAllEmpty() {
         when(pengelolaanRepository.findAllOrThrow()).thenReturn(Collections.emptyList());
-        List<Kos> kosList = pengelolaanService.findAll();
+        List<Kos> kosList = pengelolaanService.findAll().join();
         assertTrue(kosList.isEmpty());
     }
 
@@ -160,7 +161,7 @@ public class PengelolaanServiceTest {
 
         when(pengelolaanRepository.findByIdOrThrow(kosId)).thenReturn(kos);
 
-        Kos retrievedKos = pengelolaanService.findById(kosId);
+        Kos retrievedKos = pengelolaanService.findById(kosId).join();
         assertEquals("Tulip", retrievedKos.getNama());
         assertEquals(kosId, retrievedKos.getId());
         assertEquals(mockUser, retrievedKos.getPemilik());
@@ -177,7 +178,7 @@ public class PengelolaanServiceTest {
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.findById(nonExistentId)
+                () -> pengelolaanService.findById(nonExistentId).join()
         );
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
@@ -197,7 +198,7 @@ public class PengelolaanServiceTest {
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.update(kos)
+                () -> pengelolaanService.update(kos).join()
         );
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
@@ -217,7 +218,7 @@ public class PengelolaanServiceTest {
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.delete(kos)
+                () -> pengelolaanService.delete(kos).join()
         );
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
