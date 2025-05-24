@@ -97,7 +97,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
-        List<Payment> transactions = paymentRepository.findByUserId(userId);
+        // Get transactions where the user is either the sender or the recipient
+        List<Payment> transactions = paymentRepository.findByFromUserIdOrToUserId(userId, userId);
 
         return transactions.stream()
                 .filter(payment -> {
@@ -115,6 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
 
                     return dateFilter && typeFilter;
                 })
+                .sorted((p1, p2) -> p2.getTimestamp().compareTo(p1.getTimestamp())) // Sort by timestamp (newest first)
                 .collect(Collectors.toList());
     }
 
@@ -139,21 +141,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    @Async("paymentTaskExecutor")
-    public CompletableFuture<List<Payment>> getUserTransactionsAsync(UUID userId) {
-        try {
-            Thread.sleep(1000);
-
-            validateUserExists(userId);
-            List<Payment> transactions = paymentRepository.findByUserId(userId);
-
-            System.out.println("Async payment processing on thread: " + Thread.currentThread().getName());
-
-            return CompletableFuture.completedFuture(transactions);
-        } catch (Exception e) {
-            CompletableFuture<List<Payment>> future = new CompletableFuture<>();
-            future.completeExceptionally(e);
-            return future;
-        }
+    public List<Payment> getUserTransactions(UUID userId) {
+        validateUserExists(userId);
+        return paymentRepository.findByFromUserIdOrToUserId(userId, userId);
     }
 }
+
