@@ -60,6 +60,7 @@ public class HomeController {
         }
 
         model.addAttribute("approved", user.isApproved());
+        model.addAttribute("user", user);
         
         return "home/PemilikKosHome";
     }
