@@ -11,14 +11,17 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+
+
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/pemilik")
@@ -33,144 +36,159 @@ public class PengelolaanController {
     }
 
     @GetMapping("/create")
-    public String createKosPage(Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> createKosPage(Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         Kos kos = new Kos();
         model.addAttribute("kos", kos);
-        return "pengelolaan/CreateKos";
+        return CompletableFuture.completedFuture("pengelolaan/CreateKos");
     }
 
     @GetMapping("/daftarkos")
-    public String kosListPage(HttpSession session, RedirectAttributes ra, Model model) {
+    public CompletableFuture<String> kosListPage(HttpSession session, RedirectAttributes ra, Model model) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
-        List<Kos> allKos = service.findAll();
-        List<Kos> filteredKos = allKos.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        model.addAttribute("allKos", filteredKos);
-        return "pengelolaan/ListKos";
+        return service.findAll()
+                .thenApply(allKos -> {
+                    List<Kos> filteredKos = allKos.stream()
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    model.addAttribute("allKos", filteredKos);
+                    return "pengelolaan/ListKos";
+                });
     }
 
     @PostMapping("/create")
-    public String createKosPost(@Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> createKosPost(@Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("kos", kos);
-            return "pengelolaan/CreateKos";
+            return CompletableFuture.completedFuture("pengelolaan/CreateKos");
         }
 
-        try {
-            kos.setPemilik(user);
-            service.create(kos);
-            ra.addFlashAttribute("success", "Kos berhasil dibuat");
-            return "redirect:daftarkos";
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Gagal membuat kos: " + e.getMessage());
-            return "redirect:/pemilik/create";
-        }
+        kos.setPemilik(user);
+        return service.create(kos)
+                .thenApply(result -> {
+                    ra.addFlashAttribute("success", "Kos berhasil dibuat");
+                    return "redirect:daftarkos";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal membuat kos: " + throwable.getMessage());
+                    return "redirect:/pemilik/create";
+                });
     }
 
     @GetMapping("/edit/{id}")
-    public String editKosPage(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> editKosPage(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
-        try {
-            Kos kos = service.findById(id);
-            model.addAttribute("kos", kos);
-            return "pengelolaan/EditKos";
-        } catch (PengelolaanRepository.KosNotFoundException e) {
-            System.out.println("kos not found");
-            return "pengelolaan/error/KosNotFound";
-        }
+        return service.findById(id)
+                .thenApply(kos -> {
+                    model.addAttribute("kos", kos);
+                    return "pengelolaan/EditKos";
+                })
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof PengelolaanRepository.KosNotFoundException) {
+                        System.out.println("kos not found");
+                        return "pengelolaan/error/KosNotFound";
+                    }
+                    ra.addFlashAttribute("error", "Gagal mengambil data kos: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarkos";
+                });
     }
 
     @PostMapping("/edit/{id}")
-    public String editKosPost(@PathVariable UUID id, @Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> editKosPost(@PathVariable UUID id, @Valid @ModelAttribute Kos kos, BindingResult bindingResult, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("kos", kos);
-            return "pengelolaan/EditKos";
+            return CompletableFuture.completedFuture("pengelolaan/EditKos");
         }
 
-        try {
-            kos.setId(id);
-            kos.setPemilik(user);
-            service.update(kos);
-            ra.addFlashAttribute("success", "Kos berhasil diperbarui");
-            return "redirect:/pemilik/daftarkos";
-        } catch (PengelolaanRepository.KosNotFoundException e) {
-            return "pengelolaan/error/KosNotFound";
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Gagal memperbarui kos: " + e.getMessage());
-            return "redirect:/pemilik/edit/" + id;
-        }
+        kos.setId(id);
+        kos.setPemilik(user);
+        return service.update(kos)
+                .thenApply(result -> {
+                    ra.addFlashAttribute("success", "Kos berhasil diperbarui");
+                    return "redirect:/pemilik/daftarkos";
+                })
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof PengelolaanRepository.KosNotFoundException) {
+                        return "pengelolaan/error/KosNotFound";
+                    }
+                    ra.addFlashAttribute("error", "Gagal memperbarui kos: " + throwable.getMessage());
+                    return "redirect:/pemilik/edit/" + id;
+                });
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteKos(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> deleteKos(@PathVariable UUID id, Model model, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
         if (user.getRole() != Role.PEMILIK_KOS) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return "redirect:/api/auth/login";
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
-        try {
-            Kos kos = service.findById(id);
-            service.delete(kos);
-            ra.addFlashAttribute("success", "Kos berhasil dihapus");
-            return "redirect:/pemilik/daftarkos";
-        } catch (PengelolaanRepository.KosNotFoundException e) {
-            model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");
-            return "pengelolaan/error/KosNotFound";
-        }
+        return service.findById(id)
+                .thenCompose(kos -> service.delete(kos)
+                        .thenApply(v -> {
+                            ra.addFlashAttribute("success", "Kos berhasil dihapus");
+                            return "redirect:/pemilik/daftarkos";
+                        }))
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof PengelolaanRepository.KosNotFoundException) {
+                        model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");
+                        return "pengelolaan/error/KosNotFound";
+                    }
+                    ra.addFlashAttribute("error", "Gagal menghapus kos: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarkos";
+                });
     }
 
     private User getCurrentUser(HttpSession session, RedirectAttributes ra) {

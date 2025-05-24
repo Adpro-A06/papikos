@@ -17,9 +17,12 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,8 +63,13 @@ public class PengelolaanControllerTest {
 
     @Test
     void testCreateKosPage() throws Exception {
-        mockMvc.perform(get("/pemilik/create")
+        MvcResult result = mockMvc.perform(get("/pemilik/create")
                         .session(session))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/CreateKos"))
                 .andExpect(model().attributeExists("kos"))
@@ -80,10 +88,15 @@ public class PengelolaanControllerTest {
         kos.setPemilik(user);
         List<Kos> listKos = List.of(kos);
 
-        when(pengelolaanService.findAll()).thenReturn(listKos);
+        when(pengelolaanService.findAll()).thenReturn(CompletableFuture.completedFuture(listKos));
 
-        mockMvc.perform(get("/pemilik/daftarkos")
+        MvcResult result = mockMvc.perform(get("/pemilik/daftarkos")
                         .session(session))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/ListKos"))
                 .andExpect(model().attribute("allKos", hasSize(1)))
@@ -117,9 +130,9 @@ public class PengelolaanControllerTest {
         createdKos.setUrlFoto(kos.getUrlFoto());
         createdKos.setPemilik(kos.getPemilik());
 
-        when(pengelolaanService.create(any(Kos.class))).thenReturn(createdKos);
+        when(pengelolaanService.create(any(Kos.class))).thenReturn(CompletableFuture.completedFuture(createdKos));
 
-        mockMvc.perform(post("/pemilik/create")
+        MvcResult result = mockMvc.perform(post("/pemilik/create")
                         .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", kos.getNama())
@@ -129,6 +142,11 @@ public class PengelolaanControllerTest {
                         .param("harga", String.valueOf(kos.getHarga()))
                         .param("status", kos.getStatus())
                         .param("urlFoto", kos.getUrlFoto()))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("daftarkos"));
 
@@ -156,10 +174,15 @@ public class PengelolaanControllerTest {
         kos.setUrlFoto("https://example.com/kos.jpg");
         kos.setPemilik(user);
 
-        when(pengelolaanService.findById(kos.getId())).thenReturn(kos);
+        when(pengelolaanService.findById(kos.getId())).thenReturn(CompletableFuture.completedFuture(kos));
 
-        mockMvc.perform(get("/pemilik/edit/{id}", kos.getId().toString())
+        MvcResult result = mockMvc.perform(get("/pemilik/edit/{id}", kos.getId().toString())
                         .session(session))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/EditKos"))
                 .andExpect(model().attribute("kos", kos));
@@ -182,9 +205,9 @@ public class PengelolaanControllerTest {
         updatedKos.setUrlFoto("https://example.com/kos_updated.jpg");
         updatedKos.setPemilik(user);
 
-        when(pengelolaanService.update(any(Kos.class))).thenReturn(updatedKos);
+        when(pengelolaanService.update(any(Kos.class))).thenReturn(CompletableFuture.completedFuture(updatedKos));
 
-        mockMvc.perform(post("/pemilik/edit/{id}", updatedKos.getId().toString())
+        MvcResult result = mockMvc.perform(post("/pemilik/edit/{id}", updatedKos.getId().toString())
                         .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", updatedKos.getNama())
@@ -194,6 +217,11 @@ public class PengelolaanControllerTest {
                         .param("harga", String.valueOf(updatedKos.getHarga()))
                         .param("status", updatedKos.getStatus())
                         .param("urlFoto", updatedKos.getUrlFoto()))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/pemilik/daftarkos"));
 
@@ -216,11 +244,11 @@ public class PengelolaanControllerTest {
 
     @Test
     void testUpdateKosPostNotFound() throws Exception {
-        UUID id = UUID.randomUUID();
+        UUID id = UUID.fromString("66c08015-1179-4a7e-aea0-0f712171404c");
         when(pengelolaanService.update(any(Kos.class)))
-                .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos not found"));
+                .thenReturn(CompletableFuture.failedFuture(new PengelolaanRepository.KosNotFoundException("Kos not found")));
 
-        mockMvc.perform(post("/pemilik/edit/{id}", id.toString())
+        MvcResult result = mockMvc.perform(post("/pemilik/edit/{id}", id.toString())
                         .session(session)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("nama", "Test Kos")
@@ -230,6 +258,11 @@ public class PengelolaanControllerTest {
                         .param("harga", "1000000")
                         .param("status", "AVAILABLE")
                         .param("urlFoto", "https://example.com/kos.jpg"))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(view().name("pengelolaan/error/KosNotFound"));
 
@@ -245,11 +278,16 @@ public class PengelolaanControllerTest {
         kos.setUrlFoto("https://example.com/kos.jpg");
         kos.setPemilik(user);
 
-        when(pengelolaanService.findById(kos.getId())).thenReturn(kos);
-        doNothing().when(pengelolaanService).delete(any(Kos.class));
+        when(pengelolaanService.findById(kos.getId())).thenReturn(CompletableFuture.completedFuture(kos));
+        when(pengelolaanService.delete(any(Kos.class))).thenReturn(CompletableFuture.completedFuture(null));
 
-        mockMvc.perform(post("/pemilik/delete/{id}", kos.getId().toString())
+        MvcResult result = mockMvc.perform(post("/pemilik/delete/{id}", kos.getId().toString())
                         .session(session))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/pemilik/daftarkos"));
 
