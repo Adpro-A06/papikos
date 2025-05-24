@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @RestController
 @RequestMapping("/api/chatrooms")
 public class ChatroomRestController {
@@ -82,33 +85,11 @@ public class ChatroomRestController {
         }
     }
 
+    @Getter
+    @Setter
     static class ChatroomRequest {
         private UUID renterId;
         private UUID ownerId;
         private String propertyId;
-
-        public UUID getRenterId() {
-            return renterId;
-        }
-
-        public void setRenterId(UUID renterId) {
-            this.renterId = renterId;
-        }
-
-        public UUID getOwnerId() {
-            return ownerId;
-        }
-
-        public void setOwnerId(UUID ownerId) {
-            this.ownerId = ownerId;
-        }
-
-        public String getPropertyId() {
-            return propertyId;
-        }
-
-        public void setPropertyId(String propertyId) {
-            this.propertyId = propertyId;
-        }
     }
 }
