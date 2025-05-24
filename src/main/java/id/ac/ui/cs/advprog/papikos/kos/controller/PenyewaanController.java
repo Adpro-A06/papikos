@@ -61,11 +61,8 @@ public class PenyewaanController {
             logger.info("User [{}] accessed [GET] /penyewaan/", user.getEmail());
             return "penyewaan/ListSewa";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", "Gagal memuat data penyewaan: " + errorMessage);
-            logger.error("Failed to load penyewaan for user [{}]: {}", user.getEmail(), errorMessage);
-            return "redirect:/penyewa/home";
+            return handleServiceException(e, user, ra, "redirect:/penyewa/home",
+                    "Gagal memuat data penyewaan: ");
         }
     }
 
@@ -143,11 +140,8 @@ public class PenyewaanController {
             ra.addFlashAttribute("success", "Pengajuan penyewaan berhasil dibuat");
             return "redirect:/penyewaan/";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", errorMessage);
-            logger.error("Failed to create penyewaan for user [{}]: {}", user.getEmail(), errorMessage);
-            return "redirect:/penyewaan/new/" + kosId;
+            return handleServiceException(e, user, ra, "redirect:/penyewaan/new/" + kosId,
+                    "Gagal membuat penyewaan: ");
         }
     }
 
@@ -185,10 +179,8 @@ public class PenyewaanController {
             model.addAttribute("user", user);
             return "penyewaan/EditSewa";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", errorMessage);
-            return "redirect:/penyewaan/";
+            return handleServiceException(e, user, ra, "redirect:/penyewaan/",
+                    "Gagal memuat form edit: ");
         }
     }
 
@@ -224,11 +216,8 @@ public class PenyewaanController {
             ra.addFlashAttribute("success", "Penyewaan berhasil diperbarui");
             return "redirect:/penyewaan/";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", errorMessage);
-            logger.error("Failed to update penyewaan [{}] for user [{}]: {}", id, user.getEmail(), errorMessage);
-            return "redirect:/penyewaan/" + id + "/edit";
+            return handleServiceException(e, user, ra, "redirect:/penyewaan/" + id + "/edit",
+                    "Gagal memperbarui penyewaan: ");
         }
     }
 
@@ -262,10 +251,8 @@ public class PenyewaanController {
             model.addAttribute("user", user);
             return "penyewaan/DetailSewa";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", errorMessage);
-            return "redirect:/penyewaan/";
+            return handleServiceException(e, user, ra, "redirect:/penyewaan/",
+                    "Gagal memuat detail penyewaan: ");
         }
     }
 
@@ -289,11 +276,8 @@ public class PenyewaanController {
             ra.addFlashAttribute("success", "Penyewaan berhasil dibatalkan");
             return "redirect:/penyewaan/";
         } catch (InterruptedException | ExecutionException e) {
-            Throwable cause = e.getCause();
-            String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
-            ra.addFlashAttribute("error", errorMessage);
-            logger.error("Failed to cancel penyewaan [{}] for user [{}]: {}", id, user.getEmail(), errorMessage);
-            return "redirect:/penyewaan/" + id;
+            return handleServiceException(e, user, ra, "redirect:/penyewaan/" + id,
+                    "Gagal membatalkan penyewaan: ");
         }
     }
 
@@ -312,5 +296,18 @@ public class PenyewaanController {
             session.removeAttribute("JWT_TOKEN");
             return null;
         }
+    }
+
+    private String handleServiceException(Exception e, User user, RedirectAttributes ra,
+            String redirectUrl, String errorPrefix) {
+        if (e instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+        }
+
+        Throwable cause = e.getCause();
+        String errorMessage = cause != null ? cause.getMessage() : e.getMessage();
+        ra.addFlashAttribute("error", errorPrefix + errorMessage);
+        logger.error("{} for user [{}]: {}", errorPrefix, user.getEmail(), errorMessage);
+        return redirectUrl;
     }
 }
