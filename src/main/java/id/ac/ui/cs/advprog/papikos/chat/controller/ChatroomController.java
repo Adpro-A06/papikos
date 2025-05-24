@@ -40,7 +40,7 @@ public class ChatroomController {
             return "redirect:/api/auth/login";
         }
 
-        if (user.getRole() != Role.PENYEWA) {
+        if (user.getRole() != Role.PENYEWA || !user.getId().equals(renterId)) {
             ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
             return "redirect:/";
         }
