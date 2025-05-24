@@ -17,6 +17,7 @@ public class Message {
     private boolean isRead = false;
     private LocalDateTime readAt;
     private boolean isEdited = false;
+    private boolean isDeleted = false;
 
     // isEdited flag
     public boolean isEdited() {
@@ -25,5 +26,14 @@ public class Message {
 
     public void setEdited(boolean edited) {
         isEdited = edited;
+    }
+
+    // isDeleted flag
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }
