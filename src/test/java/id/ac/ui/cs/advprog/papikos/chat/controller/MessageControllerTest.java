@@ -29,7 +29,7 @@ public class MessageControllerTest {
     private MessageService messageService;
 
     @InjectMocks
-    private MessageController messageController;
+    private MessageRestController messageController;
 
     private Message mockMessage;
     private UUID chatroomId;

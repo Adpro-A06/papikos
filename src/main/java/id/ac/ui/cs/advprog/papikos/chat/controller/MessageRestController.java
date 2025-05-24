@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.controller;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
-import id.ac.ui.cs.advprog.papikos.chat.service.MessageService;
+import id.ac.ui.cs.advprog.papikos.chat.service.MessageServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +13,11 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chatrooms/{chatroomId}/messages")
-public class MessageController {
+public class MessageRestController {
 
-    private final MessageService messageService;
+    private final MessageServiceImpl messageService;
 
-    public MessageController(MessageService messageService) {
+    public MessageRestController(MessageServiceImpl messageService) {
         this.messageService = messageService;
     }
 
