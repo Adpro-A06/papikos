@@ -62,7 +62,10 @@ public class ChatroomRestController {
             // Create response yang sesuai dengan yang diharapkan JavaScript
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("chatRoomId", chatroom.getId().toString());
+            response.put("chatroomId", chatroom.getId().toString());
+            response.put("renterId", chatroom.getRenterId().toString());
+            response.put("ownerId", chatroom.getOwnerId().toString());
+            response.put("propertyId", chatroom.getPropertyId().toString());
             response.put("message", "Chatroom created successfully");
 
             logger.info("Chatroom created successfully with id: {}", chatroom.getId());

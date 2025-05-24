@@ -15,48 +15,54 @@ class ChatroomRepositoryTest {
 
     private ChatroomRepository chatroomRepository;
 
+    private UUID renterId;
+    private UUID ownerId;
+    private UUID propertyId;
+
     @BeforeEach
     void setUp() {
-        // Langsung instantiate repository di sini
         chatroomRepository = new ChatroomRepositoryImpl();
 
-        // Buat dan simpan chatroom untuk testing
+        renterId = UUID.randomUUID();
+        ownerId = UUID.randomUUID();
+        propertyId = UUID.randomUUID();
+
         Chatroom chatroom = new Chatroom();
-        chatroom.setRenterId(101L);
-        chatroom.setOwnerId(202L);
-        chatroom.setPropertyId(UUID.randomUUID());
+        chatroom.setRenterId(renterId);
+        chatroom.setOwnerId(ownerId);
+        chatroom.setPropertyId(propertyId);
         chatroomRepository.save(chatroom);
     }
 
     @Test
     void testFindChatroomsByRenterId() {
-        List<Chatroom> result = chatroomRepository.findByRenterId(101L);
+        List<Chatroom> result = chatroomRepository.findByRenterId(renterId);
         assertEquals(1, result.size());
-        assertEquals(101L, result.getFirst().getRenterId());
+        assertEquals(renterId, result.getFirst().getRenterId());
     }
 
     @Test
     void testFindChatroomsByOwnerId() {
-        List<Chatroom> result = chatroomRepository.findByOwnerId(202L);
+        List<Chatroom> result = chatroomRepository.findByOwnerId(ownerId);
         assertEquals(1, result.size());
-        assertEquals(202L, result.getFirst().getOwnerId());
+        assertEquals(ownerId, result.getFirst().getOwnerId());
     }
 
     @Test
     void testFindByRenterIdAndOwnerIdAndPropertyId() {
-        UUID propertyId = chatroomRepository.findByRenterId(101L).get(0).getPropertyId();
+        UUID propertyId = chatroomRepository.findByRenterId(renterId).getFirst().getPropertyId();
 
-        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(101L, 202L, propertyId);
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId);
 
         assertTrue(result.isPresent());
-        assertEquals(101L, result.get().getRenterId());
-        assertEquals(202L, result.get().getOwnerId());
+        assertEquals(renterId, result.get().getRenterId());
+        assertEquals(ownerId, result.get().getOwnerId());
         assertEquals(propertyId, result.get().getPropertyId());
     }
 
     @Test
     void testFindByRenterIdAndOwnerIdAndPropertyId_NotFound() {
-        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(999L, 888L, UUID.randomUUID());
+        Optional<Chatroom> result = chatroomRepository.findByRenterIdAndOwnerIdAndPropertyId(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
         assertTrue(result.isEmpty());
     }

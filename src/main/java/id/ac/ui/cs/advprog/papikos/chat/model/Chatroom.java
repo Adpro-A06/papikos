@@ -6,65 +6,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class Chatroom {
-    private UUID id;  // Changed from Long to UUID
-    private UUID renterId;  // Changed from Long to UUID
-    private UUID ownerId;  // Changed from Long to UUID
+    private UUID id;
+    private UUID renterId;
+    private UUID ownerId;
     private UUID propertyId;
     private LocalDateTime createdAt;
-    private List<Message> messages;
-
-    public Chatroom() {
-        this.messages = new ArrayList<>();
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getRenterId() {
-        return renterId;
-    }
-
-    public void setRenterId(UUID renterId) {
-        this.renterId = renterId;
-    }
-
-    public UUID getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(UUID ownerId) {
-        this.ownerId = ownerId;
-    }
-
-    public UUID getPropertyId() {
-        return propertyId;
-    }
-
-    public void setPropertyId(UUID propertyId) {
-        this.propertyId = propertyId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
-    }
-
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
-    }
+    private List<Message> messages = new ArrayList<>();
 
     public void addMessage(Message message) {
         this.messages.add(message);
@@ -79,7 +34,7 @@ public class Chatroom {
                 .orElse(null);
     }
 
-    public int getUnreadMessageCount(UUID userId) {  // Changed from Long to UUID
+    public int getUnreadMessageCount(UUID userId) {
         return (int) messages.stream()
                 .filter(m -> !m.getSenderId().equals(userId) && !m.isRead())
                 .count();

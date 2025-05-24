@@ -14,15 +14,22 @@ public class ChatroomTest {
     private Chatroom chatroom;
     private LocalDateTime createdAt;
     private UUID propertyId;
+    private UUID chatroomId;
+    private UUID renterId;
+    private UUID ownerId;
 
     @BeforeEach
     void setup() {
         createdAt = LocalDateTime.now();
         chatroom = new Chatroom();
         propertyId = UUID.randomUUID();
-        chatroom.setId(1L);
-        chatroom.setRenterId(101L);
-        chatroom.setOwnerId(202L);
+        chatroomId = UUID.randomUUID();
+        renterId = UUID.randomUUID();
+        ownerId = UUID.randomUUID();
+
+        chatroom.setId(chatroomId);
+        chatroom.setRenterId(renterId);
+        chatroom.setOwnerId(ownerId);
         chatroom.setPropertyId(propertyId);
         chatroom.setCreatedAt(createdAt);
         chatroom.setMessages(new ArrayList<>());
@@ -30,17 +37,17 @@ public class ChatroomTest {
 
     @Test
     void testGetId() {
-        assertEquals(1L, chatroom.getId());
+        assertEquals(chatroomId, chatroom.getId());
     }
 
     @Test
     void testGetRenterId() {
-        assertEquals(101L, chatroom.getRenterId());
+        assertEquals(renterId, chatroom.getRenterId());
     }
 
     @Test
     void testGetOwnerId() {
-        assertEquals(202L, chatroom.getOwnerId());
+        assertEquals(ownerId, chatroom.getOwnerId());
     }
 
     @Test
@@ -61,9 +68,9 @@ public class ChatroomTest {
     @Test
     void testAddMessage() {
         Message message = new Message();
-        message.setId(1L);
-        message.setSenderId(101L);
-        message.setChatroomId(1L);
+        message.setId(UUID.randomUUID());
+        message.setSenderId(UUID.randomUUID());
+        message.setChatroomId(UUID.randomUUID());
         message.setContent("Test message");
         message.setTimestamp(LocalDateTime.now());
 
@@ -76,7 +83,7 @@ public class ChatroomTest {
     @Test
     void testGetLastMessage() {
         Message newMessage = new Message();
-        newMessage.setId(2L);
+        newMessage.setId(UUID.randomUUID());
         newMessage.setContent("Newer message");
         newMessage.setTimestamp(LocalDateTime.now().plusMinutes(5));
         chatroom.addMessage(newMessage);

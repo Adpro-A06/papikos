@@ -25,16 +25,23 @@ class ChatroomServiceTest {
 
     private Chatroom mockChatroom;
     private UUID propertyId;
+    private UUID renterId;
+    private UUID ownerId;
+    private UUID chatroomId;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
         propertyId = UUID.randomUUID();
+        renterId = UUID.randomUUID();
+        ownerId = UUID.randomUUID();
+        chatroomId = UUID.randomUUID();
+
         mockChatroom = new Chatroom();
-        mockChatroom.setId(1L);
-        mockChatroom.setRenterId(101L);
-        mockChatroom.setOwnerId(201L);
+        mockChatroom.setId(chatroomId);
+        mockChatroom.setRenterId(renterId);
+        mockChatroom.setOwnerId(ownerId);
         mockChatroom.setPropertyId(propertyId);
         mockChatroom.setCreatedAt(LocalDateTime.now());
     }
@@ -42,82 +49,82 @@ class ChatroomServiceTest {
     @Test
     void createChatroom_WhenNewChatroom_ShouldCreateAndReturnChatroom() {
         when(chatroomRepository
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId))
+                .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId))
                 .thenReturn(Optional.empty());
         when(chatroomRepository.save(any(Chatroom.class)))
                 .thenReturn(mockChatroom);
 
-        Chatroom result = chatroomService.createChatroom(101L, 201L, propertyId);
+        Chatroom result = chatroomService.createChatroom(renterId, ownerId, propertyId);
 
         assertNotNull(result);
-        assertEquals(1L, result.getId());
+        assertEquals(chatroomId, result.getId());
         verify(chatroomRepository)
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId);
+                .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId);
         verify(chatroomRepository).save(any(Chatroom.class));
     }
 
     @Test
     void createChatroom_WhenChatroomExists_ShouldReturnExistingChatroom() {
         when(chatroomRepository
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId))
+                .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId))
                 .thenReturn(Optional.of(mockChatroom));
 
-        Chatroom result = chatroomService.createChatroom(101L, 201L, propertyId);
+        Chatroom result = chatroomService.createChatroom(renterId, ownerId, propertyId);
 
         assertNotNull(result);
-        assertEquals(1L, result.getId());
+        assertEquals(chatroomId, result.getId());
         verify(chatroomRepository)
-                .findByRenterIdAndOwnerIdAndPropertyId(101L, 201L, propertyId);
+                .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId);
         verify(chatroomRepository, never()).save(any());
     }
 
     @Test
     void getChatroomsByRenterId_ShouldReturnList() {
         List<Chatroom> list = List.of(mockChatroom);
-        when(chatroomRepository.findByRenterId(101L)).thenReturn(list);
+        when(chatroomRepository.findByRenterId(renterId)).thenReturn(list);
 
-        List<Chatroom> result = chatroomService.getChatroomsByRenterId(101L);
+        List<Chatroom> result = chatroomService.getChatroomsByRenterId(renterId);
 
         assertEquals(1, result.size());
         assertSame(mockChatroom, result.get(0));
-        verify(chatroomRepository).findByRenterId(101L);
-        verify(chatroomRepository, never()).findByOwnerId(anyLong());
+        verify(chatroomRepository).findByRenterId(renterId);
+        verify(chatroomRepository, never()).findByOwnerId(any());
     }
 
     @Test
     void getChatroomsByOwnerId_ShouldReturnList() {
         List<Chatroom> list = List.of(mockChatroom);
-        when(chatroomRepository.findByOwnerId(201L)).thenReturn(list);
+        when(chatroomRepository.findByOwnerId(ownerId)).thenReturn(list);
 
-        List<Chatroom> result = chatroomService.getChatroomsByOwnerId(201L);
+        List<Chatroom> result = chatroomService.getChatroomsByOwnerId(ownerId);
 
         assertEquals(1, result.size());
         assertSame(mockChatroom, result.get(0));
-        verify(chatroomRepository).findByOwnerId(201L);
-        verify(chatroomRepository, never()).findByRenterId(anyLong());
+        verify(chatroomRepository).findByOwnerId(ownerId);
+        verify(chatroomRepository, never()).findByRenterId(any());
     }
 
     @Test
     void getChatroomById_WhenExists_ShouldReturnChatroom() {
-        when(chatroomRepository.findById(1L))
+        when(chatroomRepository.findById(chatroomId))
                 .thenReturn(Optional.of(mockChatroom));
 
-        Chatroom result = chatroomService.getChatroomById(1L);
+        Chatroom result = chatroomService.getChatroomById(chatroomId);
 
         assertSame(mockChatroom, result);
-        verify(chatroomRepository).findById(1L);
+        verify(chatroomRepository).findById(chatroomId);
     }
 
     @Test
     void getChatroomById_WhenNotExists_ShouldThrow() {
-        when(chatroomRepository.findById(1L))
+        when(chatroomRepository.findById(chatroomId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> chatroomService.getChatroomById(1L)
+                () -> chatroomService.getChatroomById(chatroomId)
         );
-        assertEquals("Chatroom not found with id: 1", ex.getMessage());
-        verify(chatroomRepository).findById(1L);
+        assertEquals("Chatroom not found with id: " + chatroomId, ex.getMessage());
+        verify(chatroomRepository).findById(chatroomId);
     }
 }
