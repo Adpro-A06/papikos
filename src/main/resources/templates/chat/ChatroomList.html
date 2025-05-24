@@ -15,6 +15,7 @@
             --light-gray: #f5f5f5;
             --dark-gray: #757575;
             --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --success-green: #28a745;
         }
 
         * {
@@ -110,79 +111,228 @@
         }
 
         .page-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             color: var(--text-color);
+        }
+
+        .page-subtitle {
+            color: var(--dark-gray);
+            margin-bottom: 30px;
+            font-size: 16px;
         }
 
         .chatroom-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
         }
 
         .chatroom-card {
             background-color: white;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
         }
 
         .chatroom-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .chatroom-header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 20px;
+            position: relative;
+        }
+
+        .chatroom-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(20px, -20px);
+        }
+
+        .property-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .chatroom-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success-green);
         }
 
         .chatroom-details {
-            padding: 15px;
+            padding: 20px;
         }
 
-        .chatroom-details h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+
+        .detail-row:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+            font-weight: 500;
             color: var(--text-color);
+            text-align: right;
         }
 
-        .chatroom-info {
+        .created-date {
             color: var(--dark-gray);
             font-size: 14px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .chatroom-actions {
             display: flex;
             gap: 10px;
+            margin-top: 20px;
         }
 
         .btn-detail {
-            background-color: white;
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-            padding: 8px 16px;
-            border-radius: 4px;
+            flex: 1;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-detail:hover {
-            background-color: var(--light-blue);
+            background-color: var(--hover-blue);
+            transform: translateY(-1px);
         }
 
         .no-chatrooms {
             grid-column: 1 / -1;
             text-align: center;
-            padding: 40px;
+            padding: 60px 40px;
             background-color: white;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .no-chatrooms-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background-color: var(--light-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .no-chatrooms h3 {
+            color: var(--text-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .no-chatrooms p {
+            color: var(--dark-gray);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .back-link:hover {
+            background-color: var(--light-blue);
+            color: var(--hover-blue);
         }
 
         @media (max-width: 768px) {
             .chatroom-list {
                 grid-template-columns: 1fr;
             }
-        }
 
+            .main-content {
+                padding: 20px 15px;
+            }
+
+            .chatroom-header {
+                padding: 15px;
+            }
+
+            .property-name {
+                font-size: 18px;
+            }
+
+            .chatroom-details {
+                padding: 15px;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .detail-value {
+                text-align: left;
+            }
+        }
     </style>
 </head>
 <body>
@@ -211,12 +361,27 @@
 </header>
 
 <main class="main-content">
+    <a href="javascript:history.back()" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+                  d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+        </svg>
+        Kembali ke Beranda
+    </a>
+
     <h2 class="page-title">Daftar Chatroom</h2>
+    <p class="page-subtitle">Kelola percakapan Anda dengan pemilik kos atau penyewa</p>
 
     <!-- Cek apakah ada chatroom -->
     <div th:if="${chatrooms.isEmpty()}">
         <div class="no-chatrooms">
-            <p>Belum ada chatroom yang tersedia.</p>
+            <div class="no-chatrooms-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-blue);">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </div>
+            <h3>Belum Ada Chatroom</h3>
+            <p>Anda belum memiliki percakapan aktif. Chatroom akan muncul ketika Anda memulai komunikasi dengan pemilik kos atau penyewa.</p>
         </div>
     </div>
 
@@ -224,11 +389,54 @@
     <div th:unless="${chatrooms.isEmpty()}">
         <div class="chatroom-list">
             <div th:each="chatroom : ${chatrooms}" class="chatroom-card">
+                <div class="chatroom-header">
+                    <div class="property-name"
+                         th:text="${chatroomData.propertyNames[chatroom.propertyId.toString()] ?: 'Unknown Property'}">
+                        Property Name
+                    </div>
+                    <div class="chatroom-status">
+                        <div class="status-dot"></div>
+                        Aktif
+                    </div>
+                </div>
+
                 <div class="chatroom-details">
-                    <h3 th:text="${chatroom.propertyId}">Properti</h3>
-                    <p class="chatroom-info" th:text="${chatroom.createdAt}">Dibuat: -</p>
+                    <div class="created-date"
+                         th:text="'Dibuat: ' + ${#temporals.format(chatroom.createdAt, 'dd MMM yyyy HH:mm')}">
+                        Dibuat: -
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Pemilik Kos</span>
+                        <span class="detail-value"
+                              th:text="${chatroomData.userNames[chatroom.ownerId.toString()] ?: 'Unknown Owner'}">
+                            Owner Name
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Penyewa</span>
+                        <span class="detail-value"
+                              th:text="${chatroomData.userNames[chatroom.renterId.toString()] ?: 'Unknown Renter'}">
+                            Renter Name
+                        </span>
+                    </div>
+
+                    <div class="detail-row" th:if="${chatroom.lastMessage != null}">
+                        <span class="detail-label">Pesan Terakhir</span>
+                        <span class="detail-value"
+                              th:text="${#temporals.format(chatroom.lastMessage.timestamp, 'HH:mm')}">
+                            --:--
+                        </span>
+                    </div>
+
                     <div class="chatroom-actions">
-                        <a th:href="@{/chatrooms/{id}(id=${chatroom.id})}" class="btn btn-detail">Lihat Detail</a>
+                        <a th:href="@{/chatrooms/{id}(id=${chatroom.id})}" class="btn-detail">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            Buka Chat
+                        </a>
                     </div>
                 </div>
             </div>

@@ -5,6 +5,8 @@ import id.ac.ui.cs.advprog.papikos.chat.service.ChatroomService;
 import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
+import id.ac.ui.cs.advprog.papikos.kos.service.KosService;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,18 +18,23 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Optional;
 
 @Controller
 public class ChatroomController {
 
     private final ChatroomService chatroomService;
     private final AuthService authService;
+    private final KosService kosService;
     private static final Logger logger = LoggerFactory.getLogger(ChatroomController.class);
 
     @Autowired
-    public ChatroomController(ChatroomService chatroomService, AuthService authService) {
+    public ChatroomController(ChatroomService chatroomService, AuthService authService, KosService kosService) {
         this.chatroomService = chatroomService;
         this.authService = authService;
+        this.kosService = kosService;
     }
 
     @GetMapping("/chatrooms/renter/{renterId}")
@@ -46,10 +53,15 @@ public class ChatroomController {
         }
 
         List<Chatroom> chatrooms = chatroomService.getChatroomsByRenterId(renterId);
+
+        // Prepare chatroom data with names
+        Map<String, Object> chatroomData = prepareChatroomData(chatrooms);
+
         model.addAttribute("chatrooms", chatrooms);
+        model.addAttribute("chatroomData", chatroomData);
         model.addAttribute("user", user);
         logger.info("Loaded {} chatrooms for renter [{}]", chatrooms.size(), user.getEmail());
-        return "chat/ChatroomList";  // Template untuk menampilkan daftar chatroom
+        return "chat/ChatroomList";
     }
 
     @GetMapping("/chatrooms/owner/{ownerId}")
@@ -68,7 +80,12 @@ public class ChatroomController {
         }
 
         List<Chatroom> chatrooms = chatroomService.getChatroomsByOwnerId(ownerId);
+
+        // Prepare chatroom data with names
+        Map<String, Object> chatroomData = prepareChatroomData(chatrooms);
+
         model.addAttribute("chatrooms", chatrooms);
+        model.addAttribute("chatroomData", chatroomData);
         model.addAttribute("user", user);
         logger.info("Loaded {} chatrooms for owner [{}]", chatrooms.size(), user.getEmail());
         return "chat/ChatroomList";
@@ -91,14 +108,74 @@ public class ChatroomController {
 
         try {
             Chatroom chatroom = chatroomService.getChatroomById(id);
+
+            // Get user names
+            String renterName = getUserEmailById(chatroom.getRenterId());
+            String ownerName = getUserEmailById(chatroom.getOwnerId());
+            String propertyName = getPropertyNameById(chatroom.getPropertyId());
+
             model.addAttribute("chatroom", chatroom);
+            model.addAttribute("renterName", renterName);
+            model.addAttribute("ownerName", ownerName);
+            model.addAttribute("propertyName", propertyName);
             model.addAttribute("user", user);
+
             logger.info("Loaded chatroom [{}] details successfully for user [{}]", id, user.getEmail());
-            return "chat/Chatroom";  // Template untuk menampilkan detail chatroom
+            return "chat/Chatroom";
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Chatroom tidak ditemukan");
             logger.error("Chatroom [{}] not found for user [{}]", id, user.getEmail());
-            return "redirect:/chatrooms/renter/" + user.getId();  // Redirect ke daftar chatroom renter
+            return "redirect:/chatrooms/renter/" + user.getId();
+        }
+    }
+
+    private Map<String, Object> prepareChatroomData(List<Chatroom> chatrooms) {
+        Map<String, Object> data = new HashMap<>();
+        Map<String, String> userNames = new HashMap<>();
+        Map<String, String> propertyNames = new HashMap<>();
+
+        for (Chatroom chatroom : chatrooms) {
+            // Cache user names
+            if (!userNames.containsKey(chatroom.getRenterId().toString())) {
+                userNames.put(chatroom.getRenterId().toString(), getUserEmailById(chatroom.getRenterId()));
+            }
+            if (!userNames.containsKey(chatroom.getOwnerId().toString())) {
+                userNames.put(chatroom.getOwnerId().toString(), getUserEmailById(chatroom.getOwnerId()));
+            }
+
+            // Cache property names
+            if (!propertyNames.containsKey(chatroom.getPropertyId().toString())) {
+                propertyNames.put(chatroom.getPropertyId().toString(), getPropertyNameById(chatroom.getPropertyId()));
+            }
+        }
+
+        data.put("userNames", userNames);
+        data.put("propertyNames", propertyNames);
+        return data;
+    }
+
+    private String getUserEmailById(UUID userId) {
+        try {
+            User user = authService.findById(userId);
+            return user != null ? user.getEmail().split("@")[0] : "Unknown User";
+        } catch (Exception e) {
+            logger.warn("Failed to get user name for ID: {}", userId);
+            return "Unknown User";
+        }
+    }
+
+    private String getPropertyNameById(UUID propertyId) {
+        try {
+            Optional<Kos> kosOptional = kosService.findById(propertyId);
+            if (kosOptional.isPresent()) {
+                Kos kos = kosOptional.get();
+                // Menggunakan field 'nama' dari model Kos
+                return kos.getNama();
+            }
+            return "Unknown Property";
+        } catch (Exception e) {
+            logger.warn("Failed to get property name for ID: {}", propertyId, e);
+            return "Property-" + propertyId.toString().substring(0, 8);
         }
     }
 

@@ -122,16 +122,44 @@
 
         .chat-info {
             background-color: white;
-            padding: 15px 20px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
         }
 
         .chat-title {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            color: var(--primary-blue);
+        }
+
+        .chat-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--dark-gray);
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
         }
 
         .chat-subtitle {
@@ -403,7 +431,7 @@
 
         .notification {
             position: fixed;
-            top: 20px;  /* Position it at the top */
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 16px;
@@ -419,7 +447,7 @@
         .notification.show {
             opacity: 1;
             pointer-events: auto;
-            transform: translateX(-50%) translateY(0);  /* Show notification at the top center */
+            transform: translateX(-50%) translateY(0);
         }
 
         .notification.success {
@@ -452,6 +480,10 @@
                 padding: 15px;
             }
 
+            .chat-details {
+                grid-template-columns: 1fr;
+            }
+
             .message-actions {
                 position: absolute;
                 top: -10px;
@@ -462,7 +494,7 @@
 
             .message.sent:hover .message-actions,
             .message.received:hover .message-actions {
-                display: flex;  /* Show when the message is hovered */
+                display: flex;
             }
 
             .message.deleted {
@@ -516,10 +548,28 @@
     </a>
 
     <div class="chat-info" th:if="${chatroom != null}">
-        <div class="chat-title">Chat dengan Pemilik Kos</div>
-        <div class="chat-subtitle">
-            Property ID: <span th:text="${chatroom.propertyId}">-</span> |
-            Dibuat: <span th:text="${#temporals.format(chatroom.createdAt, 'dd MMM yyyy HH:mm')}">-</span>
+        <div class="chat-title" th:text="${propertyName ?: 'Property Name'}">Property Name</div>
+        <div class="chat-subtitle" th:text="'Dibuat: ' + ${#temporals.format(chatroom.createdAt, 'dd MMM yyyy HH:mm')}">Dibuat: -</div>
+
+        <div class="chat-details">
+            <div class="detail-item">
+                <div class="detail-label">Properti</div>
+                <div class="detail-value" th:text="${propertyName ?: 'Unknown Property'}">Unknown Property</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Pemilik Kos</div>
+                <div class="detail-value" th:text="${ownerName ?: 'Unknown Owner'}">Unknown Owner</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Penyewa</div>
+                <div class="detail-value" th:text="${renterName ?: 'Unknown Renter'}">Unknown Renter</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">
+                    <span style="color: var(--success-green); font-weight: 600;">● Aktif</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -632,8 +682,8 @@
             const isCurrentUser = message.senderId === currentUserId;
 
             if (message.isDeleted) {
-                messageDiv.className = `message deleted`; // Show the placeholder for deleted messages
-                messageDiv.innerHTML = `Pesan ini telah dihapus.`;  // Placeholder text
+                messageDiv.className = `message deleted`;
+                messageDiv.innerHTML = `Pesan ini telah dihapus.`;
             } else {
                 messageDiv.className = `message ${isCurrentUser ? 'sent' : 'received'}`;
                 messageDiv.setAttribute('data-message-id', message.id);
