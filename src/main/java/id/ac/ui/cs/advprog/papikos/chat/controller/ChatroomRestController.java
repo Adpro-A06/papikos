@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.controller;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
-import id.ac.ui.cs.advprog.papikos.chat.service.ChatroomService;
+import id.ac.ui.cs.advprog.papikos.chat.service.ChatroomServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,10 +17,10 @@ import java.util.UUID;
 @RequestMapping("/api/chatrooms")
 public class ChatroomRestController {
 
-    private final ChatroomService chatroomService;
+    private final ChatroomServiceImpl chatroomService;
     private static final Logger logger = LoggerFactory.getLogger(ChatroomRestController.class);
 
-    public ChatroomRestController(ChatroomService chatroomService) {
+    public ChatroomRestController(ChatroomServiceImpl chatroomService) {
         this.chatroomService = chatroomService;
     }
 
