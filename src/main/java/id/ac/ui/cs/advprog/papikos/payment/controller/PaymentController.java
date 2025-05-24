@@ -43,6 +43,7 @@ public class PaymentController {
         BigDecimal balance = paymentService.getBalance(user.getId());
         model.addAttribute("balance", balance);
         model.addAttribute("userId", user.getId());
+        model.addAttribute("user", user);
 
         return "payment/TopUp";
     }
@@ -77,7 +78,7 @@ public class PaymentController {
             ra.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/payment/transactions";
+        return "redirect:/payment/wallet";
     }
 
     @GetMapping("/pay")
@@ -101,6 +102,7 @@ public class PaymentController {
         BigDecimal balance = paymentService.getBalance(user.getId());
         model.addAttribute("balance", balance);
         model.addAttribute("fromUserId", user.getId());
+        model.addAttribute("user", user);
 
         if (toUserId != null) {
             model.addAttribute("toUserId", toUserId);
@@ -130,7 +132,7 @@ public class PaymentController {
 
         if (!user.getId().equals(fromUserId)) {
             ra.addFlashAttribute("error", "Anda hanya dapat melakukan pembayaran dari akun Anda sendiri");
-            return "redirect:/payment/transactions";
+            return "redirect:/payment/wallet";
         }
 
         try {
@@ -140,11 +142,11 @@ public class PaymentController {
             ra.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/payment/transactions";
+        return "redirect:/payment/wallet";
     }
 
-    @GetMapping("/transactions")
-    public String viewTransactions(
+    @GetMapping("/wallet")
+    public String showWallet(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String transactionType,
@@ -177,8 +179,13 @@ public class PaymentController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("transactionType", transactionType);
         model.addAttribute("transactionTypes", TransactionType.values());
+        model.addAttribute("wallet", new Object() {
+            public BigDecimal getBalance() { return balance; }
+        });
+        model.addAttribute("recentTransactions", transactions);
+        model.addAttribute("user", user);
 
-        return "payment/TransactionList";
+        return "payment/Wallet";
     }
 
     private User getCurrentUser(HttpSession session) {
@@ -194,6 +201,5 @@ public class PaymentController {
             return null;
         }
     }
-
-
 }
+
