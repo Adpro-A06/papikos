@@ -10,11 +10,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Repository
-public class ChatroomRepositoryImpl implements ChatroomRepository {
+public class ChatroomRepositoryImpl {
 
     private final List<Chatroom> chatrooms = new CopyOnWriteArrayList<>();
 
-    @Override
+//    @Override
     public Chatroom save(Chatroom chatroom) {
         if (chatroom.getId() == null) {
             // New chatroom, generate UUID
@@ -32,26 +32,26 @@ public class ChatroomRepositoryImpl implements ChatroomRepository {
         return chatroom;
     }
 
-    @Override
+    // @Override
     public Optional<Chatroom> findById(UUID id) {
         return chatrooms.stream().filter(chatroom -> chatroom.getId().equals(id)).findFirst();
     }
 
-    @Override
+    // @Override
     public List<Chatroom> findByRenterId(UUID renterId) {
         return chatrooms.stream()
                 .filter(chatroom -> chatroom.getRenterId().equals(renterId))
                 .collect(Collectors.toList());
     }
 
-    @Override
+    // @Override
     public List<Chatroom> findByOwnerId(UUID ownerId) {
         return chatrooms.stream()
                 .filter(chatroom -> chatroom.getOwnerId().equals(ownerId))
                 .collect(Collectors.toList());
     }
 
-    @Override
+    // @Override
     public Optional<Chatroom> findByRenterIdAndOwnerIdAndPropertyId(UUID renterId, UUID ownerId, UUID propertyId) {
         return chatrooms.stream()
                 .filter(c -> c.getRenterId().equals(renterId)

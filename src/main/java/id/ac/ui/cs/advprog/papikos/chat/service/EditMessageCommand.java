@@ -25,18 +25,14 @@ public class EditMessageCommand implements Command {
 
     @Override
     public void execute() {
-        // Find message in chatroom
-        for (Message msg : chatroom.getMessages()) {
-            if (msg.getId().equals(messageId)) {
-                this.message = msg;
-                this.oldContent = msg.getContent();
-                msg.setContent(newContent);
-                msg.setEdited(true);
+        message = messageRepository.findById(messageId).orElse(null);
 
-                // Persist changes to repository
-                messageRepository.save(msg);
-                break;
-            }
+        if (message != null) {
+            this.oldContent = message.getContent();
+            message.setContent(newContent);
+            message.setEdited(true);
+
+            messageRepository.save(message);
         }
     }
 
@@ -46,7 +42,6 @@ public class EditMessageCommand implements Command {
             message.setContent(oldContent);
             message.setEdited(false);
 
-            // Persist changes to repository
             messageRepository.save(message);
         }
     }

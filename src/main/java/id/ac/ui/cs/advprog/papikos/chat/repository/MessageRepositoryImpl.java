@@ -11,12 +11,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
-public class MessageRepositoryImpl implements MessageRepository {
+public class MessageRepositoryImpl {
 
     private final List<Message> messages = new ArrayList<>();
     private Long idCounter = 1L; // The counter for UUIDs might be obsolete, but can still be used for any temporary ID generation
 
-    @Override
+    //@Override
     public Message save(Message message) {
         if (message.getId() == null) {
             // If message doesn't have an ID, generate it as UUID
@@ -38,21 +38,21 @@ public class MessageRepositoryImpl implements MessageRepository {
         return message;
     }
 
-    @Override
+    //@Override
     public Optional<Message> findById(UUID id) {
         return messages.stream()
                 .filter(m -> m.getId().equals(id))
                 .findFirst();
     }
 
-    @Override
+    //@Override
     public List<Message> findByChatroomId(UUID chatroomId) {
         return messages.stream()
                 .filter(m -> m.getChatroomId().equals(chatroomId))
                 .collect(Collectors.toList());
     }
 
-    @Override
+    //@Override
     public List<Message> findByChatroomIdOrderByTimestampDesc(UUID chatroomId) {
         return messages.stream()
                 .filter(m -> m.getChatroomId().equals(chatroomId))
@@ -60,7 +60,7 @@ public class MessageRepositoryImpl implements MessageRepository {
                 .collect(Collectors.toList());
     }
 
-    @Override
+    //@Override
     public void deleteById(UUID id) {
         messages.removeIf(m -> m.getId().equals(id));
     }

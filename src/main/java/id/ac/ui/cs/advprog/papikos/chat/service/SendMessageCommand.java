@@ -11,7 +11,7 @@ import java.util.UUID;
 public class SendMessageCommand implements Command {
     private final Chatroom chatroom;
     @Getter
-    private Message message; // Remove final to allow reassignment
+    private Message message;
     private final MessageRepository messageRepository;
 
     public SendMessageCommand(Chatroom chatroom, UUID senderId, String content, MessageRepository messageRepository) {
@@ -26,22 +26,18 @@ public class SendMessageCommand implements Command {
 
     @Override
     public void execute() {
-        // Persist message to repository first
         Message savedMessage = messageRepository.save(message);
-
-        // Replace the message reference with the saved one
         this.message = savedMessage;
 
-        // Add the saved message to chatroom's message list
-        chatroom.addMessage(savedMessage);
+        if (!chatroom.getMessages().contains(savedMessage)) {
+            chatroom.addMessage(savedMessage);
+        }
     }
 
     @Override
     public void undo() {
-        // Remove from chatroom using the actual message object
         chatroom.getMessages().remove(message);
 
-        // Remove from repository
         if (message.getId() != null) {
             messageRepository.deleteById(message.getId());
         }

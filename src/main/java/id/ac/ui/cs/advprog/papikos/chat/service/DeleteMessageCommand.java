@@ -11,7 +11,6 @@ public class DeleteMessageCommand implements Command {
     private final UUID messageId;
     private final MessageRepository messageRepository;
     private Message deletedMessage;
-    private int originalIndex;
 
     public DeleteMessageCommand(Chatroom chatroom, UUID messageId, MessageRepository messageRepository) {
         this.chatroom = chatroom;
@@ -21,33 +20,21 @@ public class DeleteMessageCommand implements Command {
 
     @Override
     public void execute() {
-        for (int i = 0; i < chatroom.getMessages().size(); i++) {
-            Message message = chatroom.getMessages().get(i);
-            if (message.getId().equals(messageId)) {
-                deletedMessage = message;
-                originalIndex = i;
+        deletedMessage = messageRepository.findById(messageId).orElse(null);
 
-                // Remove from chatroom
-                chatroom.getMessages().remove(i);
-
-                // Remove from repository
-                messageRepository.deleteById(messageId);
-                break;
-            }
+        if (deletedMessage != null) {
+            messageRepository.deleteById(messageId);
+            chatroom.getMessages().remove(deletedMessage);
         }
     }
 
     @Override
     public void undo() {
         if (deletedMessage != null) {
-            // Restore to repository
-            messageRepository.save(deletedMessage);
+            Message restoredMessage = messageRepository.save(deletedMessage);
 
-            // Restore to chatroom
-            if (originalIndex <= chatroom.getMessages().size()) {
-                chatroom.getMessages().add(originalIndex, deletedMessage);
-            } else {
-                chatroom.getMessages().add(deletedMessage);
+            if (!chatroom.getMessages().contains(restoredMessage)) {
+                chatroom.addMessage(restoredMessage);
             }
         }
     }
