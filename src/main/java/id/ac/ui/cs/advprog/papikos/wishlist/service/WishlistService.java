@@ -3,77 +3,65 @@ package id.ac.ui.cs.advprog.papikos.wishlist.service;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistNotifier;
+import id.ac.ui.cs.advprog.papikos.wishlist.repository.WishlistRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class WishlistService {
 
-    private final List<Wishlist> wishlistStorage = new ArrayList<>();
+    private final WishlistRepository repository;
     private final WishlistNotifier notifier;
 
-    public WishlistService(WishlistNotifier notifier) {
-        this.notifier = Objects.requireNonNull(notifier, "Notifier must not be null");
+    public WishlistService(
+        WishlistRepository repository,
+        WishlistNotifier notifier
+    ) {
+        this.repository = repository;
+        this.notifier = notifier;
     }
 
     public Wishlist createWishlist(Wishlist wishlist) {
-        Objects.requireNonNull(wishlist, "Wishlist must not be null");
-        String name = wishlist.getName();
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Wishlist name is required");
+        if (wishlist == null
+            || wishlist.getName() == null
+            || wishlist.getName().trim().isEmpty()
+        ) {
+            return null;
         }
-        List<Kos> kosList = wishlist.getKosList();
-        if (kosList == null) {
-            kosList = Collections.emptyList();
-        }
-        wishlist.setId(wishlistStorage.size() + 1);
-        wishlist.setKosList(filterDuplicateKos(kosList));
-        wishlistStorage.add(wishlist);
-        notifier.notifyObservers(wishlist, "created");
-        return wishlist;
+        wishlist.setKosList(removeDuplicates(wishlist.getKosList()));
+        Wishlist saved = repository.save(wishlist);
+        notifier.notifyObservers(saved, "created");
+        return saved;
     }
 
-    public void addKosToWishlist(Integer wishlistId, String kosId) {
-        Objects.requireNonNull(wishlistId, "Wishlist ID must not be null");
-        Objects.requireNonNull(kosId, "Kos ID must not be null");
-        Wishlist w = wishlistStorage.stream()
-            .filter(x -> x.getId().equals(wishlistId))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Wishlist not found: " + wishlistId));
-        UUID kosUuid = UUID.fromString(kosId);
-        boolean exists = w.getKosList().stream()
-            .anyMatch(k -> kosUuid.equals(k.getId()));
-        if (!exists) {
-            Kos kos = new Kos();
-            kos.setId(kosUuid);
-            w.getKosList().add(kos);
+    public Wishlist addKosToWishlist(Long wishlistId, String kosId) {
+        Wishlist w = repository.findById(wishlistId)
+            .orElseThrow(() ->
+                new IllegalArgumentException("Wishlist not found: " + wishlistId)
+            );
+        UUID uuid = UUID.fromString(kosId);
+        if (w.getKosList().stream().noneMatch(k -> k.getId().equals(uuid))) {
+            Kos newKos = new Kos();
+            newKos.setId(uuid);
+            w.getKosList().add(newKos);
+            w.setKosList(removeDuplicates(w.getKosList()));
+            w = repository.save(w);
             notifier.notifyObservers(w, "kosAdded");
         }
+        return w;
     }
 
-    public Wishlist getUserWishlist(UUID userId) {
-        Objects.requireNonNull(userId, "User ID must not be null");
-        return wishlistStorage.stream()
-            .filter(x -> userId.equals(x.getUserId()))
-            .findFirst()
-            .orElse(null);
+    public List<Wishlist> getUserWishlist(UUID userId) {
+        return repository.findByUserId(userId);
     }
 
-    private List<Kos> filterDuplicateKos(List<Kos> kosList) {
-        if (kosList == null) {
-            return Collections.emptyList();
-        }
-        List<Kos> unique = new ArrayList<>();
-        for (Kos k : kosList) {
-            if (!unique.contains(k)) {
-                unique.add(k);
-            }
-        }
-        return unique;
+    private List<Kos> removeDuplicates(List<Kos> kosList) {
+        if (kosList == null) return List.of();
+        return kosList.stream()
+            .distinct()
+            .collect(Collectors.toList());
     }
 }
