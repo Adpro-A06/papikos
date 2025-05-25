@@ -280,7 +280,6 @@ public class PengelolaanController {
                 });
     }
 
-
     private User getCurrentUser(HttpSession session, RedirectAttributes ra) {
         String token = (String) session.getAttribute("JWT_TOKEN");
         if (token == null) {
