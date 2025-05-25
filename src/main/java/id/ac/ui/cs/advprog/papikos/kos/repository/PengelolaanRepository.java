@@ -1,7 +1,9 @@
 package id.ac.ui.cs.advprog.papikos.kos.repository;
 
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -50,8 +52,20 @@ public interface PengelolaanRepository extends JpaRepository<Kos, UUID> {
         return findAll();
     }
 
+    @Query("SELECT p FROM Penyewaan p WHERE p.kos.pemilik.id = :pemilikId")
+    List<Penyewaan> findAllSewaByPemilikId(UUID pemilikId);
+
+    @Query("SELECT p FROM Penyewaan p WHERE p.id = :id")
+    Penyewaan findPenyewaanById(UUID id);
+
     class KosNotFoundException extends RuntimeException {
         public KosNotFoundException(String message) {
+            super(message);
+        }
+    }
+
+    class PenyewaanNotFoundException extends RuntimeException {
+        public PenyewaanNotFoundException(String message) {
             super(message);
         }
     }

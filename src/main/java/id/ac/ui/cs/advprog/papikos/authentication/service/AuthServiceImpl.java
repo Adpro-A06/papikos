@@ -158,4 +158,10 @@ public class AuthServiceImpl implements AuthService {
     public boolean isTokenValid(String token) {
         return validTokens.contains(token);
     }
+
+    @Override
+    public List<User> findAllPemilikKos() {
+        return userRepository.findByRole(Role.PEMILIK_KOS);
+    }
 }
+

@@ -43,15 +43,21 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.webjars:webjars-locator-core")
+    implementation("org.webjars:stomp-websocket:2.3.4")
+    implementation("org.webjars:sockjs-client:1.5.1")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     implementation ("io.micrometer:micrometer-registry-prometheus")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
+    testImplementation("org.springframework:spring-websocket")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.h2database:h2")
     testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumJavaVersion")
@@ -60,6 +66,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("me.paulschwarz:spring-dotenv:3.0.0")
 }
 
 tasks.register<Test>("unitTest") {
@@ -96,3 +103,4 @@ tasks.jacocoTestReport {
         xml.required = true
     }
 }
+

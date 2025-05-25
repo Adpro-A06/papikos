@@ -1,102 +1,383 @@
 package id.ac.ui.cs.advprog.papikos.payment.service;
 
+import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
+import id.ac.ui.cs.advprog.papikos.payment.model.Wallet;
+import id.ac.ui.cs.advprog.papikos.payment.monitoring.PaymentMetrics;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
+import id.ac.ui.cs.advprog.papikos.payment.repository.WalletRepository;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-public class PaymentServiceImplTest {
+class PaymentServiceImplTest {
 
     @Mock
     private IPaymentRepository paymentRepository;
 
+    @Mock
+    private WalletRepository walletRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PaymentMetrics paymentMetrics;
+
+    @Mock
+    private Timer.Sample timerSample;
+
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
+    @Captor
+    private ArgumentCaptor<Payment> paymentCaptor;
+
+    @Captor
+    private ArgumentCaptor<Wallet> walletCaptor;
+
     private UUID userId;
+    private UUID otherUserId;
+    private Wallet userWallet;
+    private Wallet otherWallet;
+    private final BigDecimal initialBalance = new BigDecimal("100000");
+    private final BigDecimal topUpAmount = new BigDecimal("50000");
+    private final BigDecimal paymentAmount = new BigDecimal("75000");
 
     @BeforeEach
     void setUp() {
         userId = UUID.randomUUID();
+        otherUserId = UUID.randomUUID();
+
+        userWallet = new Wallet(userId);
+        userWallet.addBalance(initialBalance);
+
+        otherWallet = new Wallet(otherUserId);
+
+        // Setup timer mock behavior - use lenient to avoid unnecessary stubbing warnings
+        lenient().when(paymentMetrics.startPaymentProcessingTimer()).thenReturn(timerSample);
     }
 
-    // topUp - Happy Path
     @Test
-    void topUp_fromZero() {
-        BigDecimal amount = new BigDecimal("50000");
+    void topUp_withValidAmount_shouldSucceed() {
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
 
-        paymentService.topUp(userId, amount);
+        paymentService.topUp(userId, topUpAmount);
 
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
+        verify(walletRepository).save(walletCaptor.capture());
+        verify(paymentRepository).save(paymentCaptor.capture());
 
-        Payment saved = captor.getValue();
-        assertEquals(userId, saved.getToUserId());
-        assertNull(saved.getFromUserId());
-        assertEquals(amount, saved.getAmount());
-        assertEquals(TransactionType.TOPUP, saved.getType());
-        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
+        // Verify metrics were called
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordTopUp(topUpAmount);
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordFailedPayment();
+
+        Wallet savedWallet = walletCaptor.getValue();
+        Payment savedPayment = paymentCaptor.getValue();
+
+        assertEquals(initialBalance.add(topUpAmount), savedWallet.getBalance());
+
+        assertNull(savedPayment.getFromUserId());
+        assertEquals(userId, savedPayment.getToUserId());
+        assertEquals(topUpAmount, savedPayment.getAmount());
+        assertEquals(TransactionType.TOPUP, savedPayment.getType());
+        assertEquals(PaymentStatus.SUCCESS, savedPayment.getStatus());
+        assertEquals("Top-up balance", savedPayment.getDescription());
     }
 
-    // topUp - Unhappy Path
     @Test
-    void topUp_zeroAmount() {
-        assertThrows(IllegalArgumentException.class, () -> paymentService.topUp(userId, BigDecimal.ZERO));
+    void topUp_withNegativeAmount_shouldThrowException() {
+        BigDecimal negativeAmount = new BigDecimal("-100");
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.topUp(userId, negativeAmount)
+        );
+
+        assertEquals("Jumlah harus lebih besar dari nol", exception.getMessage());
+        verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
 
     @Test
-    void topUp_negativeAmount() {
-        assertThrows(IllegalArgumentException.class, () -> paymentService.topUp(userId, new BigDecimal("-10000")));
+    void topUp_withZeroAmount_shouldThrowException() {
+        BigDecimal zeroAmount = BigDecimal.ZERO;
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.topUp(userId, zeroAmount)
+        );
+
+        assertEquals("Jumlah harus lebih besar dari nol", exception.getMessage());
+        verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
 
-    // pay - Happy Path
     @Test
-    void pay_valid() {
-        UUID from = UUID.randomUUID();
-        UUID to = UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("150000");
+    void topUp_withNonExistentUser_shouldThrowException() {
+        when(userRepository.existsById(userId)).thenReturn(false);
 
-        paymentService.pay(from, to, amount);
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.topUp(userId, topUpAmount)
+        );
 
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
-
-        Payment saved = captor.getValue();
-        assertEquals(from, saved.getFromUserId());
-        assertEquals(to, saved.getToUserId());
-        assertEquals(amount, saved.getAmount());
-        assertEquals(TransactionType.PAYMENT, saved.getType());
-        assertEquals(PaymentStatus.SUCCESS, saved.getStatus()); // ✅ Check status
-    }
-
-    // pay - Unhappy Path
-    @Test
-    void pay_zeroAmount() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            paymentService.pay(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.ZERO);
-        });
+        assertTrue(exception.getMessage().contains("tidak ditemukan"));
+        verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
 
     @Test
-    void pay_negativeAmount() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            paymentService.pay(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("-50000"));
-        });
+    void pay_withSufficientFunds_shouldSucceed() {
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(userRepository.existsById(otherUserId)).thenReturn(true);
+        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
+        when(walletRepository.findById(otherUserId)).thenReturn(Optional.of(otherWallet));
+
+        paymentService.pay(userId, otherUserId, paymentAmount);
+
+        verify(walletRepository, times(2)).save(walletCaptor.capture());
+        verify(paymentRepository).save(paymentCaptor.capture());
+
+        // Verify metrics were called
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordPayment(paymentAmount);
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordFailedPayment();
+
+        List<Wallet> savedWallets = walletCaptor.getAllValues();
+        Payment savedPayment = paymentCaptor.getValue();
+
+        assertEquals(initialBalance.subtract(paymentAmount), savedWallets.get(0).getBalance());
+        assertEquals(paymentAmount, savedWallets.get(1).getBalance());
+
+        assertEquals(userId, savedPayment.getFromUserId());
+        assertEquals(otherUserId, savedPayment.getToUserId());
+        assertEquals(paymentAmount, savedPayment.getAmount());
+        assertEquals(TransactionType.PAYMENT, savedPayment.getType());
+        assertEquals(PaymentStatus.SUCCESS, savedPayment.getStatus());
+    }
+
+    @Test
+    void pay_withInsufficientFunds_shouldThrowException() {
+        BigDecimal tooLargeAmount = new BigDecimal("200000");
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(userRepository.existsById(otherUserId)).thenReturn(true);
+        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
+        when(walletRepository.findById(otherUserId)).thenReturn(Optional.of(otherWallet));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.pay(userId, otherUserId, tooLargeAmount)
+        );
+
+        assertEquals("Saldo tidak mencukupi", exception.getMessage());
+        verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Current service implementation calls recordFailedPayment() twice:
+        // 1. In the insufficient balance check (line 107)
+        // 2. In the catch block (line 134)
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics, times(2)).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordPayment(any());
+    }
+
+    @Test
+    void pay_withNonExistentRecipient_shouldThrowException() {
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(userRepository.existsById(otherUserId)).thenReturn(false);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.pay(userId, otherUserId, paymentAmount)
+        );
+
+        assertTrue(exception.getMessage().contains("tidak ditemukan"));
+        verify(walletRepository, never()).save(any());
+        verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordPayment(any());
+    }
+
+    @Test
+    void getBalance_withExistingWallet_shouldReturnBalance() {
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
+
+        BigDecimal balance = paymentService.getBalance(userId);
+
+        assertEquals(initialBalance, balance);
+        // getBalance doesn't use metrics, so no metrics verification needed
+    }
+
+    @Test
+    void getBalance_withNoWallet_shouldReturnZero() {
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(walletRepository.findById(userId)).thenReturn(Optional.empty());
+
+        BigDecimal balance = paymentService.getBalance(userId);
+
+        assertEquals(BigDecimal.ZERO, balance);
+    }
+
+    @Test
+    void getBalance_withNonExistentUser_shouldThrowException() {
+        when(userRepository.existsById(userId)).thenReturn(false);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                paymentService.getBalance(userId)
+        );
+
+        assertTrue(exception.getMessage().contains("tidak ditemukan"));
+    }
+
+    @Test
+    void getUserTransactions_shouldReturnAllTransactions() {
+        List<Payment> transactions = createTestTransactions();
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
+
+        List<Payment> result = paymentService.getUserTransactions(userId);
+
+        assertEquals(transactions, result);
+    }
+
+    @Test
+    void filterTransactions_withNoFilters_shouldReturnAllTransactions() {
+        List<Payment> transactions = createTestTransactions();
+
+        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
+
+        List<Payment> result = paymentService.filterTransactions(userId, null, null, null);
+
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void filterTransactions_byDateRange_shouldFilterCorrectly() {
+        List<Payment> transactions = createTestTransactions();
+
+        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+
+        List<Payment> result = paymentService.filterTransactions(userId, yesterday, tomorrow, null);
+
+        assertEquals(1, result.size());
+        assertEquals(TransactionType.PAYMENT, result.get(0).getType());
+    }
+
+    @Test
+    void filterTransactions_byType_shouldFilterCorrectly() {
+        List<Payment> transactions = createTestTransactions();
+
+        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
+
+        List<Payment> result = paymentService.filterTransactions(userId, null, null, TransactionType.TOPUP);
+
+        assertEquals(2, result.size());
+        assertTrue(result.stream().allMatch(p -> p.getType() == TransactionType.TOPUP));
+    }
+
+    @Test
+    void filterTransactions_byDateAndType_shouldFilterCorrectly() {
+        List<Payment> transactions = createTestTransactions();
+
+        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+
+        List<Payment> result = paymentService.filterTransactions(userId, yesterday, tomorrow, TransactionType.PAYMENT);
+
+        assertEquals(1, result.size());
+        assertEquals(TransactionType.PAYMENT, result.get(0).getType());
+    }
+
+    private List<Payment> createTestTransactions() {
+        List<Payment> transactions = new ArrayList<>();
+
+        Payment topUpLastWeek = new Payment(
+                null,
+                userId,
+                new BigDecimal("50000"),
+                TransactionType.TOPUP,
+                PaymentStatus.SUCCESS,
+                null,
+                "Top-up from last week"
+        );
+        topUpLastWeek.setTimestamp(LocalDateTime.now().minusDays(7));
+        transactions.add(topUpLastWeek);
+
+        Payment paymentToday = new Payment(
+                userId,
+                otherUserId,
+                new BigDecimal("30000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Payment today"
+        );
+        paymentToday.setTimestamp(LocalDateTime.now());
+        transactions.add(paymentToday);
+
+        Payment topUpNextWeek = new Payment(
+                null,
+                userId,
+                new BigDecimal("70000"),
+                TransactionType.TOPUP,
+                PaymentStatus.SUCCESS,
+                null,
+                "Top-up for next week"
+        );
+        topUpNextWeek.setTimestamp(LocalDateTime.now().plusDays(7));
+        transactions.add(topUpNextWeek);
+
+        return transactions;
     }
 }

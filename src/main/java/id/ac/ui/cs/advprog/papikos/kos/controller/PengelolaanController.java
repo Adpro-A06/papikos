@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
 import jakarta.servlet.http.HttpSession;
@@ -188,6 +189,94 @@ public class PengelolaanController {
                     }
                     ra.addFlashAttribute("error", "Gagal menghapus kos: " + throwable.getMessage());
                     return "redirect:/pemilik/daftarkos";
+                });
+    }
+
+    @GetMapping("/daftarsewa")
+    public CompletableFuture<String> daftarSewa(HttpSession session, RedirectAttributes ra, Model model) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        model.addAttribute("user", user);
+        return service.findAllSewa(user.getId())
+                .thenApply(allSewa -> {
+                    List<Penyewaan> filteredSewa = allSewa.stream()
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    model.addAttribute("allSewa", filteredSewa);
+                    return "pengelolaan/ListSewa";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal memuat daftar sewa: " + throwable.getMessage());
+                    return "redirect:/pemilik/home";
+                });
+    }
+
+    @PostMapping("/ajuan-sewa/{id}")
+    public CompletableFuture<String> acceptPenyewaan(@PathVariable String id, HttpSession session, RedirectAttributes ra) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        try {
+            UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "ID penyewaan tidak valid");
+            return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
+        }
+
+        return service.terimaSewa(id, user.getId())
+                .thenApply(v -> {
+                    ra.addFlashAttribute("success", "Penyewaan berhasil diterima");
+                    return "redirect:/pemilik/daftarsewa";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal menerima penyewaan: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarsewa";
+                });
+    }
+
+    @PostMapping("/tolak-sewa/{id}")
+    public CompletableFuture<String> rejectPenyewaan(@PathVariable String id, HttpSession session, RedirectAttributes ra, Model model) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        try {
+            UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "ID penyewaan tidak valid");
+            return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
+        }
+
+        return service.tolakSewa(id, user.getId())
+                .thenApply(v -> {
+                    ra.addFlashAttribute("success", "Penyewaan berhasil ditolak");
+                    return "redirect:/pemilik/daftarsewa";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal menolak penyewaan: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarsewa";
                 });
     }
 
