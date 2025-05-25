@@ -9,8 +9,10 @@ import id.ac.ui.cs.advprog.papikos.payment.repository.WalletRepository;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,11 +22,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
-import org.springframework.scheduling.annotation.Async;
-
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
     private final IPaymentRepository paymentRepository;
@@ -144,5 +145,89 @@ public class PaymentServiceImpl implements PaymentService {
         validateUserExists(userId);
         return paymentRepository.findByFromUserIdOrToUserId(userId, userId);
     }
-}
 
+
+    @Async("paymentTaskExecutor")
+    @Override
+    public CompletableFuture<Void> topUpAsync(UUID userId, BigDecimal amount) {
+        return CompletableFuture.runAsync(() -> {
+            log.info("Processing asynchronous top-up for user: {}, amount: {}", userId, amount);
+            try {
+                topUp(userId, amount);
+                log.info("Asynchronous top-up completed successfully for user: {}", userId);
+            } catch (Exception e) {
+                log.error("Error during asynchronous top-up for user: {}", userId, e);
+                throw e;
+            }
+        });
+    }
+
+    @Async("paymentTaskExecutor")
+    @Override
+    public CompletableFuture<Void> payAsync(UUID fromUserId, UUID toUserId, BigDecimal amount) {
+        return CompletableFuture.runAsync(() -> {
+            log.info("Processing asynchronous payment from user: {} to user: {}, amount: {}",
+                    fromUserId, toUserId, amount);
+            try {
+                pay(fromUserId, toUserId, amount);
+                log.info("Asynchronous payment completed successfully from user: {} to user: {}",
+                        fromUserId, toUserId);
+            } catch (Exception e) {
+                log.error("Error during asynchronous payment from user: {} to user: {}",
+                        fromUserId, toUserId, e);
+                throw e;
+            }
+        });
+    }
+
+    @Async("paymentTaskExecutor")
+    @Override
+    public CompletableFuture<BigDecimal> getBalanceAsync(UUID userId) {
+        return CompletableFuture.supplyAsync(() -> {
+            log.info("Getting balance asynchronously for user: {}", userId);
+            try {
+                BigDecimal balance = getBalance(userId);
+                log.info("Asynchronously retrieved balance for user: {}", userId);
+                return balance;
+            } catch (Exception e) {
+                log.error("Error during asynchronous balance retrieval for user: {}", userId, e);
+                throw e;
+            }
+        });
+    }
+
+    @Async("paymentTaskExecutor")
+    @Override
+    public CompletableFuture<List<Payment>> getUserTransactionsAsync(UUID userId) {
+        return CompletableFuture.supplyAsync(() -> {
+            log.info("Retrieving transactions asynchronously for user: {}", userId);
+            try {
+                List<Payment> transactions = getUserTransactions(userId);
+                log.info("Asynchronously retrieved {} transactions for user: {}",
+                        transactions.size(), userId);
+                return transactions;
+            } catch (Exception e) {
+                log.error("Error during asynchronous transaction retrieval for user: {}", userId, e);
+                throw e;
+            }
+        });
+    }
+
+    @Async("paymentTaskExecutor")
+    @Override
+    public CompletableFuture<List<Payment>> filterTransactionsAsync(
+            UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
+        return CompletableFuture.supplyAsync(() -> {
+            log.info("Filtering transactions asynchronously for user: {}", userId);
+            try {
+                List<Payment> transactions = filterTransactions(userId, startDate, endDate, type);
+                log.info("Asynchronously filtered {} transactions for user: {}",
+                        transactions.size(), userId);
+                return transactions;
+            } catch (Exception e) {
+                log.error("Error during asynchronous transaction filtering for user: {}", userId, e);
+                throw e;
+            }
+        });
+    }
+}
