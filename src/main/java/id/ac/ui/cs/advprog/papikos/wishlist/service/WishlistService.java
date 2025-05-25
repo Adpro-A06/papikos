@@ -23,14 +23,9 @@ public class WishlistService {
         if (wishlist.getName() == null || wishlist.getName().trim().isEmpty()) {
             return null;
         }
-
-        // assign a new UUID as the wishlist ID
-        wishlist.setId(UUID.randomUUID());
-
-        // remove duplicates in the initial kos list
+        wishlist.setId(wishlistStorage.size() + 1);
         List<Kos> filteredKos = filterDuplicateKos(wishlist.getKosList());
         wishlist.setKosList(filteredKos);
-
         wishlistStorage.add(wishlist);
         notifier.notifyObservers(wishlist, "created");
         return wishlist;
@@ -43,12 +38,10 @@ public class WishlistService {
             .orElseThrow(() ->
                 new IllegalArgumentException("Wishlist not found: " + wishlistId)
             );
-
         UUID kosUuid = UUID.fromString(kosId);
-        boolean alreadyInList = wishlist.getKosList().stream()
+        boolean alreadyPresent = wishlist.getKosList().stream()
             .anyMatch(k -> k.getId().equals(kosUuid));
-
-        if (!alreadyInList) {
+        if (!alreadyPresent) {
             Kos newKos = new Kos();
             newKos.setId(kosUuid);
             wishlist.getKosList().add(newKos);
@@ -64,12 +57,12 @@ public class WishlistService {
     }
 
     private List<Kos> filterDuplicateKos(List<Kos> kosList) {
-        List<Kos> uniqueKos = new ArrayList<>();
-        for (Kos kos : kosList) {
-            if (!uniqueKos.contains(kos)) {
-                uniqueKos.add(kos);
+        List<Kos> unique = new ArrayList<>();
+        for (Kos k : kosList) {
+            if (!unique.contains(k)) {
+                unique.add(k);
             }
         }
-        return uniqueKos;
+        return unique;
     }
 }
