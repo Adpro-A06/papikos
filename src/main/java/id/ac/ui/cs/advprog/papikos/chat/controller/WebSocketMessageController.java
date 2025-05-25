@@ -29,14 +29,12 @@ public class WebSocketMessageController {
         try {
             logger.info("Received WebSocket message for chatroom: {}", chatroomId);
 
-            // Save message menggunakan existing service
             Message savedMessage = messageService.sendMessage(
                     chatroomId,
                     chatMessage.getSenderId(),
                     chatMessage.getContent()
             );
 
-            // Broadcast message ke semua subscriber di chatroom ini
             messagingTemplate.convertAndSend(
                     "/topic/chatroom/" + chatroomId,
                     savedMessage
@@ -48,7 +46,6 @@ public class WebSocketMessageController {
         }
     }
 
-    // Method untuk broadcast message edit
     public void broadcastMessageEdit(UUID chatroomId, Message message) {
         messagingTemplate.convertAndSend(
                 "/topic/chatroom/" + chatroomId + "/edit",
@@ -56,7 +53,6 @@ public class WebSocketMessageController {
         );
     }
 
-    // Method untuk broadcast message delete
     public void broadcastMessageDelete(UUID chatroomId, UUID messageId) {
         messagingTemplate.convertAndSend(
                 "/topic/chatroom/" + chatroomId + "/delete",
@@ -64,7 +60,6 @@ public class WebSocketMessageController {
         );
     }
 
-    // DTO class untuk WebSocket message
     public static class ChatMessage {
         private UUID senderId;
         private String content;
