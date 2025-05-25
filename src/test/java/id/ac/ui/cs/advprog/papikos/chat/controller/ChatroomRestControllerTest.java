@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.controller;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Chatroom;
-import id.ac.ui.cs.advprog.papikos.chat.service.ChatroomService;
+import id.ac.ui.cs.advprog.papikos.chat.service.ChatroomServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -26,7 +26,7 @@ public class ChatroomRestControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private ChatroomService chatroomService;
+    private ChatroomServiceImpl chatroomService;
 
     @InjectMocks
     private ChatroomRestController chatroomRestController;
@@ -48,7 +48,7 @@ public class ChatroomRestControllerTest {
         ownerId = UUID.randomUUID();
 
         mockChatroom = new Chatroom();
-        mockChatroom.setId(chatroomId); // Set chatroomId as UUID
+        mockChatroom.setId(chatroomId);
         mockChatroom.setRenterId(renterId);
         mockChatroom.setOwnerId(ownerId);
         mockChatroom.setPropertyId(propertyId);
@@ -60,11 +60,11 @@ public class ChatroomRestControllerTest {
         List<Chatroom> mockChatrooms = Arrays.asList(mockChatroom);
         when(chatroomService.getChatroomsByRenterId(any(UUID.class))).thenReturn(mockChatrooms);
 
-        mockMvc.perform(get("/api/chatrooms/renter/{renterId}", renterId.toString())) // Using renterId as UUID
+        mockMvc.perform(get("/api/chatrooms/renter/{renterId}", renterId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$[0].renterId").value(renterId.toString())) // Expect renterId as UUID
-                .andExpect(jsonPath("$[0].ownerId").value(ownerId.toString())) // Expect ownerId as UUID
+                .andExpect(jsonPath("$[0].id").value(chatroomId.toString()))
+                .andExpect(jsonPath("$[0].renterId").value(renterId.toString()))
+                .andExpect(jsonPath("$[0].ownerId").value(ownerId.toString()))
                 .andExpect(jsonPath("$[0].propertyId").value(propertyId.toString()));
     }
 
@@ -73,11 +73,11 @@ public class ChatroomRestControllerTest {
         List<Chatroom> mockChatrooms = Arrays.asList(mockChatroom);
         when(chatroomService.getChatroomsByOwnerId(any(UUID.class))).thenReturn(mockChatrooms);
 
-        mockMvc.perform(get("/api/chatrooms/owner/{ownerId}", ownerId.toString())) // Using ownerId as UUID
+        mockMvc.perform(get("/api/chatrooms/owner/{ownerId}", ownerId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$[0].renterId").value(renterId.toString())) // Expect renterId as UUID
-                .andExpect(jsonPath("$[0].ownerId").value(ownerId.toString())) // Expect ownerId as UUID
+                .andExpect(jsonPath("$[0].id").value(chatroomId.toString()))
+                .andExpect(jsonPath("$[0].renterId").value(renterId.toString()))
+                .andExpect(jsonPath("$[0].ownerId").value(ownerId.toString()))
                 .andExpect(jsonPath("$[0].propertyId").value(propertyId.toString()));
     }
 
@@ -87,23 +87,48 @@ public class ChatroomRestControllerTest {
 
         mockMvc.perform(get("/api/chatrooms/{id}", chatroomId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$.renterId").value(renterId.toString())) // Expect renterId as UUID
-                .andExpect(jsonPath("$.ownerId").value(ownerId.toString())) // Expect ownerId as UUID
+                .andExpect(jsonPath("$.id").value(chatroomId.toString()))
+                .andExpect(jsonPath("$.renterId").value(renterId.toString()))
+                .andExpect(jsonPath("$.ownerId").value(ownerId.toString()))
                 .andExpect(jsonPath("$.propertyId").value(propertyId.toString()));
     }
 
     @Test
-    void createChatroom_ShouldReturnCreatedChatroom() throws Exception {
-        when(chatroomService.createChatroom(any(UUID.class), any(UUID.class), any(UUID.class))).thenReturn(mockChatroom);
+    void getChatroomById_ShouldReturnNotFound_WhenChatroomNotExists() throws Exception {
+        when(chatroomService.getChatroomById(any(UUID.class)))
+                .thenThrow(new RuntimeException("Chatroom not found"));
 
-        mockMvc.perform(post("/api/chatrooms/create/{propertyId}", propertyId.toString()) // Pass propertyId as UUID
+        mockMvc.perform(get("/api/chatrooms/{id}", chatroomId.toString()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createChatroom_ShouldReturnCreatedChatroom() throws Exception {
+        when(chatroomService.createChatroom(any(UUID.class), any(UUID.class), any(UUID.class)))
+                .thenReturn(mockChatroom);
+
+        mockMvc.perform(post("/api/chatrooms/create/{kosId}", propertyId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"renterId\":\"" + renterId.toString() + "\",\"ownerId\":\"" + ownerId.toString() + "\",\"propertyId\":\"" + propertyId.toString() + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$.renterId").value(renterId.toString())) // Expect renterId as UUID
-                .andExpect(jsonPath("$.ownerId").value(ownerId.toString())) // Expect ownerId as UUID
-                .andExpect(jsonPath("$.propertyId").value(propertyId.toString()));  // Expect propertyId as UUID
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString()))
+                .andExpect(jsonPath("$.renterId").value(renterId.toString()))
+                .andExpect(jsonPath("$.ownerId").value(ownerId.toString()))
+                .andExpect(jsonPath("$.propertyId").value(propertyId.toString()))
+                .andExpect(jsonPath("$.message").value("Chatroom created successfully"));
+    }
+
+    @Test
+    void createChatroom_ShouldReturnInternalServerError_WhenExceptionOccurs() throws Exception {
+        when(chatroomService.createChatroom(any(UUID.class), any(UUID.class), any(UUID.class)))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(post("/api/chatrooms/create/{kosId}", propertyId.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"renterId\":\"" + renterId.toString() + "\",\"ownerId\":\"" + ownerId.toString() + "\",\"propertyId\":\"" + propertyId.toString() + "\"}"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Failed to create chatroom: Database error"));
     }
 }
