@@ -4,11 +4,15 @@ import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.model.Wallet;
+import id.ac.ui.cs.advprog.papikos.payment.monitoring.PaymentMetrics;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
 import id.ac.ui.cs.advprog.papikos.payment.repository.WalletRepository;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.repository.UserRepository;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,76 +31,117 @@ import org.springframework.scheduling.annotation.Async;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentServiceImpl.class);
+
     private final IPaymentRepository paymentRepository;
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
+    private final PaymentMetrics paymentMetrics;
 
     @Override
     @Transactional
     public void topUp(UUID userId, BigDecimal amount) {
-        validateAmount(amount);
-        validateUserExists(userId);
+        Timer.Sample sample = paymentMetrics.startPaymentProcessingTimer();
+        log.info("Starting top-up operation for user {} with amount {}", userId, amount);
 
-        Wallet wallet = getOrCreateWallet(userId);
+        try {
+            validateAmount(amount);
+            validateUserExists(userId);
 
-        Payment payment = new Payment(
-                null,
-                userId,
-                amount,
-                TransactionType.TOPUP,
-                PaymentStatus.SUCCESS,
-                null,
-                "Top-up balance"
-        );
+            Wallet wallet = getOrCreateWallet(userId);
 
-        wallet.addBalance(amount);
+            Payment payment = new Payment(
+                    null,
+                    userId,
+                    amount,
+                    TransactionType.TOPUP,
+                    PaymentStatus.SUCCESS,
+                    null,
+                    "Top-up balance"
+            );
 
-        walletRepository.save(wallet);
-        paymentRepository.save(payment);
+            wallet.addBalance(amount);
+
+            walletRepository.save(wallet);
+            paymentRepository.save(payment);
+
+            paymentMetrics.recordTopUp(amount);
+            log.info("Completed top-up operation for user {} with amount {}", userId, amount);
+        } catch (Exception e) {
+            log.error("Failed to process top-up for user {}: {}", userId, e.getMessage());
+            paymentMetrics.recordFailedPayment();
+            throw e;
+        } finally {
+            paymentMetrics.stopPaymentProcessingTimer(sample);
+        }
     }
 
     @Override
     public BigDecimal getBalance(UUID userId) {
+        log.debug("Getting balance for user {}", userId);
         validateUserExists(userId);
 
         Optional<Wallet> wallet = walletRepository.findById(userId);
-        return wallet.map(Wallet::getBalance).orElse(BigDecimal.ZERO);
+        BigDecimal balance = wallet.map(Wallet::getBalance).orElse(BigDecimal.ZERO);
+        log.debug("Balance for user {}: {}", userId, balance);
+        return balance;
     }
 
     @Override
     @Transactional
     public void pay(UUID fromUserId, UUID toUserId, BigDecimal amount) {
-        validateAmount(amount);
-        validateUserExists(fromUserId);
-        validateUserExists(toUserId);
+        Timer.Sample sample = paymentMetrics.startPaymentProcessingTimer();
+        log.info("Starting payment from user {} to user {} with amount {}", fromUserId, toUserId, amount);
 
-        Wallet fromWallet = getOrCreateWallet(fromUserId);
-        Wallet toWallet = getOrCreateWallet(toUserId);
+        try {
+            validateAmount(amount);
+            validateUserExists(fromUserId);
+            validateUserExists(toUserId);
 
-        if (fromWallet.getBalance().compareTo(amount) < 0) {
-            throw new IllegalArgumentException("Saldo tidak mencukupi");
+            Wallet fromWallet = getOrCreateWallet(fromUserId);
+            Wallet toWallet = getOrCreateWallet(toUserId);
+
+            if (fromWallet.getBalance().compareTo(amount) < 0) {
+                log.warn("Insufficient balance for user {}: requested {} but has {}",
+                        fromUserId, amount, fromWallet.getBalance());
+                paymentMetrics.recordFailedPayment();
+                throw new IllegalArgumentException("Saldo tidak mencukupi");
+            }
+
+            Payment payment = new Payment(
+                    fromUserId,
+                    toUserId,
+                    amount,
+                    TransactionType.PAYMENT,
+                    PaymentStatus.SUCCESS,
+                    null,
+                    "Pembayaran kos"
+            );
+
+            fromWallet.subtractBalance(amount);
+            toWallet.addBalance(amount);
+
+            walletRepository.save(fromWallet);
+            walletRepository.save(toWallet);
+            paymentRepository.save(payment);
+
+            paymentMetrics.recordPayment(amount);
+            log.info("Completed payment from user {} to user {} with amount {}",
+                    fromUserId, toUserId, amount);
+        } catch (Exception e) {
+            log.error("Failed to process payment from user {} to user {}: {}",
+                    fromUserId, toUserId, e.getMessage());
+            paymentMetrics.recordFailedPayment();
+            throw e;
+        } finally {
+            paymentMetrics.stopPaymentProcessingTimer(sample);
         }
-
-        Payment payment = new Payment(
-                fromUserId,
-                toUserId,
-                amount,
-                TransactionType.PAYMENT,
-                PaymentStatus.SUCCESS,
-                null,
-                "Pembayaran kos"
-        );
-
-        fromWallet.subtractBalance(amount);
-        toWallet.addBalance(amount);
-
-        walletRepository.save(fromWallet);
-        walletRepository.save(toWallet);
-        paymentRepository.save(payment);
     }
 
     @Override
     public List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
+        log.debug("Filtering transactions for user {} from {} to {} with type {}",
+                userId, startDate, endDate, type);
         List<Payment> transactions = paymentRepository.findByFromUserIdOrToUserId(userId, userId);
 
         return transactions.stream()
@@ -145,3 +190,4 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.findByFromUserIdOrToUserId(userId, userId);
     }
 }
+

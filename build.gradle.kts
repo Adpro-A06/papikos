@@ -46,6 +46,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     implementation ("io.micrometer:micrometer-registry-prometheus")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -97,3 +98,4 @@ tasks.jacocoTestReport {
         xml.required = true
     }
 }
+

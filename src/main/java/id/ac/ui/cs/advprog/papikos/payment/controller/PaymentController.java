@@ -5,9 +5,12 @@ import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
+import id.ac.ui.cs.advprog.papikos.payment.monitoring.PaymentMetrics;
 import id.ac.ui.cs.advprog.papikos.payment.service.PaymentService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,18 +27,22 @@ import java.util.UUID;
 @RequestMapping("/payment")
 public class PaymentController {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
     private final PaymentService paymentService;
     private final AuthService authService;
+    private final PaymentMetrics paymentMetrics;
 
     @GetMapping("/topup")
     public String showTopUpForm(HttpSession session, Model model, RedirectAttributes ra) {
         User user = getCurrentUser(session);
         if (user == null) {
+            log.warn("Unauthenticated user attempted to access top-up form");
             ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return "redirect:/api/auth/login";
         }
 
         if (user.getRole() != Role.PENYEWA) {
+            log.warn("Non-renter user (role: {}) attempted to access top-up form", user.getRole());
             ra.addFlashAttribute("error", "Hanya penyewa yang dapat melakukan top-up");
             return "redirect:/";
         }
@@ -44,6 +51,7 @@ public class PaymentController {
         model.addAttribute("balance", balance);
         model.addAttribute("userId", user.getId());
         model.addAttribute("user", user);
+        log.debug("Showing top-up form for user {} with balance {}", user.getId(), balance);
 
         return "payment/TopUp";
     }
@@ -57,24 +65,30 @@ public class PaymentController {
 
         User user = getCurrentUser(session);
         if (user == null) {
+            log.warn("Unauthenticated user attempted to perform top-up operation");
             ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return "redirect:/api/auth/login";
         }
 
         if (user.getRole() != Role.PENYEWA) {
+            log.warn("Non-renter user (role: {}) attempted to perform top-up operation", user.getRole());
             ra.addFlashAttribute("error", "Hanya penyewa yang dapat melakukan top-up");
             return "redirect:/";
         }
 
         if (!user.getId().equals(userId)) {
+            log.warn("User {} attempted to top-up for a different user account {}", user.getId(), userId);
             ra.addFlashAttribute("error", "Anda hanya dapat top-up ke akun Anda sendiri");
             return "redirect:/payment/topup";
         }
 
         try {
+            log.info("User {} initiated top-up for amount {}", userId, amount);
             paymentService.topUp(userId, amount);
+            log.info("Top-up successful for user {} with amount {}", userId, amount);
             ra.addFlashAttribute("success", "Top-up berhasil. Rp " + amount + " telah ditambahkan ke akun Anda.");
         } catch (IllegalArgumentException e) {
+            log.error("Top-up failed for user {} with amount {}: {}", userId, amount, e.getMessage());
             ra.addFlashAttribute("error", e.getMessage());
         }
 
@@ -92,11 +106,13 @@ public class PaymentController {
 
         User user = getCurrentUser(session);
         if (user == null) {
+            log.warn("Unauthenticated user attempted to access payment form");
             ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return "redirect:/api/auth/login";
         }
 
         if (user.getRole() != Role.PENYEWA) {
+            log.warn("Non-renter user (role: {}) attempted to access payment form", user.getRole());
             ra.addFlashAttribute("error", "Hanya penyewa yang dapat melakukan pembayaran");
             return "redirect:/";
         }
@@ -116,7 +132,7 @@ public class PaymentController {
                 User pemilik = authService.findById(toUserId);
                 model.addAttribute("pemilikEmail", pemilik.getEmail());
             } catch (Exception e) {
-
+                log.error("Failed to find pemilik with ID {}: {}", toUserId, e.getMessage());
             }
         }
 
@@ -128,6 +144,7 @@ public class PaymentController {
             model.addAttribute("prefilledDescription", description);
         }
 
+        log.debug("Showing payment form for user {} with balance {}", user.getId(), balance);
         return "payment/PaymentForm";
     }
 
@@ -141,24 +158,30 @@ public class PaymentController {
 
         User user = getCurrentUser(session);
         if (user == null) {
+            log.warn("Unauthenticated user attempted to perform payment operation");
             ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return "redirect:/api/auth/login";
         }
 
         if (user.getRole() != Role.PENYEWA) {
+            log.warn("Non-renter user (role: {}) attempted to perform payment operation", user.getRole());
             ra.addFlashAttribute("error", "Hanya penyewa yang dapat melakukan pembayaran");
             return "redirect:/";
         }
 
         if (!user.getId().equals(fromUserId)) {
+            log.warn("User {} attempted to pay from a different user account {}", user.getId(), fromUserId);
             ra.addFlashAttribute("error", "Anda hanya dapat melakukan pembayaran dari akun Anda sendiri");
             return "redirect:/payment/wallet";
         }
 
         try {
+            log.info("User {} initiated payment to user {} for amount {}", fromUserId, toUserId, amount);
             paymentService.pay(fromUserId, toUserId, amount);
+            log.info("Payment successful from user {} to user {} for amount {}", fromUserId, toUserId, amount);
             ra.addFlashAttribute("success", "Pembayaran berhasil. Rp " + amount + " telah dikirim.");
         } catch (IllegalArgumentException e) {
+            log.error("Payment failed from user {} to user {} for amount {}: {}", fromUserId, toUserId, amount, e.getMessage());
             ra.addFlashAttribute("error", e.getMessage());
         }
 
@@ -176,6 +199,7 @@ public class PaymentController {
 
         User user = getCurrentUser(session);
         if (user == null) {
+            log.warn("Unauthenticated user attempted to access wallet");
             ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return "redirect:/api/auth/login";
         }
@@ -185,6 +209,7 @@ public class PaymentController {
             try {
                 type = TransactionType.valueOf(transactionType);
             } catch (IllegalArgumentException ignored) {
+                log.warn("Invalid transaction type provided: {}", transactionType);
             }
         }
 
@@ -202,10 +227,10 @@ public class PaymentController {
                             penyewaEmails.put(payment.getFromUserId(), penyewa.getEmail());
                         }
                     } catch (Exception ignored) {
+                        log.warn("Failed to find penyewa with ID {}", payment.getFromUserId());
                     }
                 }
             }
-
 
             model.addAttribute("penyewaEmails", penyewaEmails);
         }
@@ -224,12 +249,14 @@ public class PaymentController {
         model.addAttribute("recentTransactions", transactions);
         model.addAttribute("user", user);
 
+        log.debug("Showing wallet for user {} with balance {}", user.getId(), balance);
         return "payment/Wallet";
     }
 
     private User getCurrentUser(HttpSession session) {
         String token = (String) session.getAttribute("JWT_TOKEN");
         if (token == null) {
+            log.warn("No JWT token found in session");
             return null;
         }
 
@@ -237,7 +264,9 @@ public class PaymentController {
             String idStr = authService.decodeToken(token);
             return authService.findById(UUID.fromString(idStr));
         } catch (Exception e) {
+            log.error("Failed to decode JWT token: {}", e.getMessage());
             return null;
         }
     }
 }
+
