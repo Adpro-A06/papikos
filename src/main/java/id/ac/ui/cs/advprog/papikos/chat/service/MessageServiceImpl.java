@@ -54,6 +54,10 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Message sendMessage(UUID chatroomId, UUID senderId, String content) {
+        if (content == null) {
+            throw new IllegalArgumentException("Message content cannot be null");
+        }
+
         logger.info("Sending message - chatroomId: {}, senderId: {}, content length: {}",
                 chatroomId, senderId, content.length());
 
@@ -61,8 +65,12 @@ public class MessageServiceImpl implements MessageService {
 
         Message message = chatCommandService.sendMessage(chatroom, senderId, content);
 
-        logger.info("Message sent successfully - messageId: {}, chatroomId: {}",
-                message.getId(), chatroomId);
+        if (message != null) {
+            logger.info("Message sent successfully - messageId: {}, chatroomId: {}",
+                    message.getId(), chatroomId);
+        } else {
+            logger.warn("Message sending returned null - chatroomId: {}", chatroomId);
+        }
 
         messagingTemplate.convertAndSend(
                 "/topic/chatroom/" + chatroomId,
