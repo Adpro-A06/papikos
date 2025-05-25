@@ -3,87 +3,163 @@ package id.ac.ui.cs.advprog.papikos.payment.repository;
 import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.InjectMocks;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
+@DataJpaTest
 public class PaymentRepositoryTest {
 
-    @InjectMocks
-    private PaymentRepository repository;
+    @Autowired
+    private IPaymentRepository paymentRepository;
 
-    @Test
-    void shouldSaveValidPayment() {
-        UUID id = UUID.randomUUID();
-        UUID fromUserId = UUID.randomUUID();
-        UUID toUserId = UUID.randomUUID();
+    private UUID user1Id;
+    private UUID user2Id;
+    private UUID paymentId1;
+    private UUID paymentId2;
 
-        Payment payment = new Payment(id, fromUserId, toUserId,
-                new BigDecimal("100000"), TransactionType.PAYMENT, LocalDateTime.now(), PaymentStatus.SUCCESS);
+    @BeforeEach
+    void setUp() {
+        paymentRepository.deleteAll();
 
-        repository.save(payment);
-        List<Payment> all = repository.findAll();
-
-        assertEquals(1, all.size());
-        assertEquals(id, all.get(0).getId());
+        user1Id = UUID.randomUUID();
+        user2Id = UUID.randomUUID();
+        paymentId1 = UUID.randomUUID();
+        paymentId2 = UUID.randomUUID();
     }
 
     @Test
-    void shouldSaveMultiplePayments() {
-        repository.save(new Payment(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("50000"), TransactionType.PAYMENT, LocalDateTime.now(), PaymentStatus.SUCCESS));
-        repository.save(new Payment(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("60000"), TransactionType.TOPUP, LocalDateTime.now(), PaymentStatus.SUCCESS));
+    void shouldSaveAndRetrievePayment() {
+        Payment payment = new Payment(
+                user1Id,
+                user2Id,
+                new BigDecimal("100000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Test payment"
+        );
+        payment.setId(paymentId1);
 
-        List<Payment> all = repository.findAll();
-        assertEquals(2, all.size());
+        paymentRepository.save(payment);
+
+        Optional<Payment> retrieved = paymentRepository.findById(paymentId1);
+
+        assertTrue(retrieved.isPresent());
+        assertEquals(paymentId1, retrieved.get().getId());
+        assertEquals(user1Id, retrieved.get().getFromUserId());
+        assertEquals(user2Id, retrieved.get().getToUserId());
+        assertEquals(new BigDecimal("100000"), retrieved.get().getAmount());
     }
 
     @Test
-    void shouldReturnPaymentsForGivenUser() {
-        UUID user1 = UUID.randomUUID();
-        UUID user2 = UUID.randomUUID();
+    void shouldFindByFromUserIdOrToUserId() {
 
-        repository.save(new Payment(UUID.randomUUID(), user1, UUID.randomUUID(), new BigDecimal("70000"), TransactionType.PAYMENT, LocalDateTime.now(), PaymentStatus.SUCCESS));
-        repository.save(new Payment(UUID.randomUUID(), user2, UUID.randomUUID(), new BigDecimal("80000"), TransactionType.PAYMENT, LocalDateTime.now(), PaymentStatus.SUCCESS));
+        Payment payment1 = new Payment(
+                user1Id,
+                user2Id,
+                new BigDecimal("50000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Payment from user1 to user2"
+        );
+        payment1.setId(paymentId1);
 
-        List<Payment> user1Payments = repository.findByUserId(user1);
-        assertEquals(1, user1Payments.size());
-        assertEquals(user1, user1Payments.get(0).getFromUserId());
+        Payment payment2 = new Payment(
+                user2Id,
+                user1Id,
+                new BigDecimal("30000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Payment from user2 to user1"
+        );
+        payment2.setId(paymentId2);
+
+        paymentRepository.save(payment1);
+        paymentRepository.save(payment2);
+
+        List<Payment> user1Transactions = paymentRepository.findByFromUserIdOrToUserId(user1Id, user1Id);
+        assertEquals(2, user1Transactions.size());
+
+        List<Payment> user2Transactions = paymentRepository.findByFromUserIdOrToUserId(user2Id, user2Id);
+        assertEquals(2, user2Transactions.size());
     }
 
     @Test
-    void shouldReturnEmptyListWhenNoPaymentSaved() {
-        List<Payment> all = repository.findAll();
-        assertTrue(all.isEmpty());
+    void shouldFindByToUserIdEquals() {
+        Payment payment1 = new Payment(
+                user1Id,
+                user2Id,
+                new BigDecimal("50000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Payment to user2"
+        );
+        payment1.setId(paymentId1);
+
+        paymentRepository.save(payment1);
+
+        List<Payment> user2ReceivedPayments = paymentRepository.findByToUserIdEquals(user2Id);
+        assertEquals(1, user2ReceivedPayments.size());
+        assertEquals(user2Id, user2ReceivedPayments.get(0).getToUserId());
+
+        List<Payment> randomUserReceivedPayments = paymentRepository.findByToUserIdEquals(UUID.randomUUID());
+        assertEquals(0, randomUserReceivedPayments.size());
     }
 
     @Test
-    void shouldThrowExceptionWhenSavingNullPayment() {
-        assertThrows(IllegalArgumentException.class, () -> repository.save(null));
+    void shouldFindByFromUserIdAndStatusOrToUserIdAndStatus() {
+        Payment payment1 = new Payment(
+                user1Id,
+                user2Id,
+                new BigDecimal("50000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.SUCCESS,
+                null,
+                "Successful payment"
+        );
+        payment1.setId(paymentId1);
+
+        Payment payment2 = new Payment(
+                user2Id,
+                user1Id,
+                new BigDecimal("30000"),
+                TransactionType.PAYMENT,
+                PaymentStatus.PENDING,
+                null,
+                "Pending payment"
+        );
+        payment2.setId(paymentId2);
+
+        paymentRepository.save(payment1);
+        paymentRepository.save(payment2);
+
+        List<Payment> successTransactions = paymentRepository.findByFromUserIdAndStatusOrToUserIdAndStatus(
+                user1Id, PaymentStatus.SUCCESS, user1Id, PaymentStatus.SUCCESS);
+        assertEquals(1, successTransactions.size());
+        assertEquals(PaymentStatus.SUCCESS, successTransactions.get(0).getStatus());
+
+        List<Payment> pendingTransactions = paymentRepository.findByFromUserIdAndStatusOrToUserIdAndStatus(
+                user1Id, PaymentStatus.PENDING, user1Id, PaymentStatus.PENDING);
+        assertEquals(1, pendingTransactions.size());
+        assertEquals(PaymentStatus.PENDING, pendingTransactions.get(0).getStatus());
     }
 
     @Test
-    void shouldThrowExceptionWhenSavingDuplicateId() {
-        UUID id = UUID.randomUUID();
-        Payment p1 = new Payment(id, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("50000"), TransactionType.PAYMENT, LocalDateTime.now(), PaymentStatus.SUCCESS);
-        Payment p2 = new Payment(id, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("60000"), TransactionType.TOPUP, LocalDateTime.now(), PaymentStatus.SUCCESS);
-
-        repository.save(p1);
-        assertThrows(IllegalArgumentException.class, () -> repository.save(p2));
-    }
-
-    @Test
-    void shouldReturnEmptyListIfUserHasNoTransaction() {
-        UUID ghostUser = UUID.randomUUID();
-        List<Payment> result = repository.findByUserId(ghostUser);
+    void shouldReturnEmptyListWhenNoPayments() {
+        List<Payment> result = paymentRepository.findByFromUserIdOrToUserId(UUID.randomUUID(), UUID.randomUUID());
         assertTrue(result.isEmpty());
     }
 }

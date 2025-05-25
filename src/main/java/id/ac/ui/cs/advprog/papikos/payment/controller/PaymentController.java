@@ -106,19 +106,17 @@ public class PaymentController {
         model.addAttribute("fromUserId", user.getId());
         model.addAttribute("user", user);
 
-        // Get all pemilik kos (landlords) for dropdown selection
         List<User> allPemilikKos = authService.findAllPemilikKos();
         model.addAttribute("allPemilikKos", allPemilikKos);
 
-        // Pre-fill data if provided
         if (toUserId != null) {
             model.addAttribute("toUserId", toUserId);
-            // Get pemilik info for display
+
             try {
                 User pemilik = authService.findById(toUserId);
                 model.addAttribute("pemilikEmail", pemilik.getEmail());
             } catch (Exception e) {
-                // Handle error silently, will show generic message
+
             }
         }
 

@@ -22,7 +22,7 @@ public class PaymentTest {
 
     @BeforeEach
     void setUp() {
-        // Hardcoded data for testing
+
         fromUserId = UUID.randomUUID();
         toUserId = UUID.randomUUID();
         amount = new BigDecimal("1000.50");
@@ -31,7 +31,7 @@ public class PaymentTest {
         roomId = UUID.randomUUID();
         description = "Test Payment";
 
-        // Create Payment object using constructor
+
         payment = new Payment(fromUserId, toUserId, amount, type, status, roomId, description);
     }
 
@@ -50,12 +50,12 @@ public class PaymentTest {
 
     @Test
     void testSettersAndGetters() {
-        // Modify fields using setters
+
         payment.setAmount(new BigDecimal("2000.00"));
         payment.setStatus(PaymentStatus.FAILED);
         payment.setDescription("Updated Payment Description");
 
-        // Validate updated fields using getters
+
         assertEquals(new BigDecimal("2000.00"), payment.getAmount(), "Amount should be updated");
         assertEquals(PaymentStatus.FAILED, payment.getStatus(), "Status should be updated");
         assertEquals("Updated Payment Description", payment.getDescription(), "Description should be updated");
@@ -63,13 +63,11 @@ public class PaymentTest {
 
     @Test
     void testPaymentIdGeneration() {
-        // Since the ID is randomly generated in the constructor, check if it's not null
         assertNotNull(payment.getId(), "Payment ID should be generated upon creation");
     }
 
     @Test
     void testConstructorSetsAllFields() {
-        // Verify that all fields are initialized correctly via constructor
         assertEquals(fromUserId, payment.getFromUserId(), "From User ID mismatch");
         assertEquals(toUserId, payment.getToUserId(), "To User ID mismatch");
         assertEquals(amount, payment.getAmount(), "Amount mismatch");
@@ -82,7 +80,6 @@ public class PaymentTest {
 
     @Test
     void testTimestampIsSet() {
-        // Check if timestamp is set upon creation
         assertNotNull(payment.getTimestamp(), "Timestamp should be set in the constructor");
         assertTrue(payment.getTimestamp().isBefore(LocalDateTime.now()) || payment.getTimestamp().isEqual(LocalDateTime.now()), "Timestamp should be in the past or present");
     }

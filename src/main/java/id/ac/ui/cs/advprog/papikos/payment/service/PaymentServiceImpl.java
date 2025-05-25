@@ -83,7 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
                 amount,
                 TransactionType.PAYMENT,
                 PaymentStatus.SUCCESS,
-                null, // Will be set when room payment is implemented
+                null,
                 "Pembayaran kos"
         );
 
@@ -97,7 +97,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type) {
-        // Get transactions where the user is either the sender or the recipient
         List<Payment> transactions = paymentRepository.findByFromUserIdOrToUserId(userId, userId);
 
         return transactions.stream()
@@ -116,7 +115,7 @@ public class PaymentServiceImpl implements PaymentService {
 
                     return dateFilter && typeFilter;
                 })
-                .sorted((p1, p2) -> p2.getTimestamp().compareTo(p1.getTimestamp())) // Sort by timestamp (newest first)
+                .sorted((p1, p2) -> p2.getTimestamp().compareTo(p1.getTimestamp()))
                 .collect(Collectors.toList());
     }
 

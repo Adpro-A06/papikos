@@ -19,7 +19,7 @@ public class PaymentDto {
         private UUID fromUserId;
         private UUID toUserId;
         private BigDecimal amount;
-        private UUID roomId; // Optional, for room payment references
+        private UUID roomId;
     }
 
     @Data
