@@ -221,7 +221,7 @@ public class PengelolaanController {
     }
 
     @PostMapping("/ajuan-sewa/{id}")
-    public CompletableFuture<String> acceptPenyewaan(@PathVariable String id, Model model, HttpSession session, RedirectAttributes ra) {
+    public CompletableFuture<String> acceptPenyewaan(@PathVariable String id, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
             return CompletableFuture.completedFuture("redirect:/api/auth/login");
@@ -250,47 +250,6 @@ public class PengelolaanController {
                 });
     }
 
-
-    @PostMapping("/kurangi-jumlah-kos/{id}")
-    public CompletableFuture<String> reduceKosJumlah(@PathVariable UUID id, @RequestParam int newJumlah, Model model, HttpSession session, RedirectAttributes ra) {
-        User user = getCurrentUser(session, ra);
-        if (user == null) {
-            return CompletableFuture.completedFuture("redirect:/api/auth/login");
-        }
-
-        if (user.getRole() != Role.PEMILIK_KOS) {
-            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
-            return CompletableFuture.completedFuture("redirect:/api/auth/login");
-        }
-
-        if (newJumlah < 1) {
-            ra.addFlashAttribute("error", "Jumlah kamar minimal 1");
-            return CompletableFuture.completedFuture("redirect:/pemilik/daftarkos");
-        }
-
-        return service.reduceKosJumlah(id, user.getId(), newJumlah)
-                .thenApply(v -> {
-                    ra.addFlashAttribute("success", "Jumlah kamar kos berhasil diperbarui");
-                    return "redirect:/pemilik/daftarkos";
-                })
-                .exceptionally(throwable -> {
-                    if (throwable.getCause() instanceof PengelolaanRepository.KosNotFoundException) {
-                        model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");
-                        return "pengelolaan/error/KosNotFound";
-                    }
-                    if (throwable.getCause() instanceof IllegalArgumentException) {
-                        ra.addFlashAttribute("error", throwable.getCause().getMessage());
-                        return "redirect:/pemilik/daftarkos";
-                    }
-                    if (throwable.getCause() instanceof IllegalStateException) {
-                        ra.addFlashAttribute("error", "Jumlah kamar tidak boleh kurang dari penyewaan yang sudah disetujui");
-                        return "redirect:/pemilik/daftarkos";
-                    }
-                    ra.addFlashAttribute("error", "Gagal mengurangi jumlah kamar: " + throwable.getMessage());
-                    return "redirect:/pemilik/daftarkos";
-                });
-    }
-
     @PostMapping("/tolak-sewa/{id}")
     public CompletableFuture<String> rejectPenyewaan(@PathVariable String id, HttpSession session, RedirectAttributes ra, Model model) {
         User user = getCurrentUser(session, ra);
@@ -310,7 +269,7 @@ public class PengelolaanController {
             return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
         }
 
-        return service.rejectSewa(id, user.getId())
+        return service.tolakSewa(id, user.getId())
                 .thenApply(v -> {
                     ra.addFlashAttribute("success", "Penyewaan berhasil ditolak");
                     return "redirect:/pemilik/daftarsewa";

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -70,54 +71,55 @@ public class PengelolaanServiceImpl implements PengelolaanService {
 
     @Override
     @Async("pengelolaanTaskExecutor")
-    public CompletableFuture<Void> reduceKosJumlah(UUID kosId, UUID pemilikId, int newJumlah) {
-        logger.info("Mencoba mengurangi jumlah kamar untuk kos {} oleh pemilik {}", kosId, pemilikId);
-        Kos kos = pengelolaanRepository.findByIdOrThrow(kosId);
-        if (!kos.getPemilik().getId().equals(pemilikId)) {
-            logger.warn("Kos dengan ID {} tidak dimiliki oleh pemilik {}", kosId, pemilikId);
-            throw new IllegalArgumentException("Kos tidak dimiliki oleh pemilik ini");
-        }
-        if (newJumlah < 1) {
-            logger.warn("Jumlah kamar baru {} tidak valid untuk kos {}", newJumlah, kosId);
-            throw new IllegalArgumentException("Jumlah kamar minimal 1");
-        }
-        long jumlahApproved = penyewaanRepository.countByKosAndStatus(kos, StatusPenyewaan.APPROVED);
-        if (newJumlah < jumlahApproved) {
-            logger.warn("Jumlah kamar baru {} lebih kecil dari jumlah penyewaan APPROVED {} untuk kos {}", newJumlah, jumlahApproved, kosId);
-            throw new IllegalStateException("Jumlah kamar tidak boleh kurang dari penyewaan yang sudah disetujui");
-        }
-        kos.setJumlah(newJumlah);
-        pengelolaanRepository.save(kos);
-        logger.info("Jumlah kamar untuk kos {} berhasil diperbarui menjadi {}", kosId, newJumlah);
-        return CompletableFuture.completedFuture(null);
-    }
-
     public CompletableFuture<Void> terimaSewa(String id, UUID pemilikId) {
-        return CompletableFuture.runAsync(() -> {
-            Penyewaan penyewaan = penyewaanRepository.findById(id)
-                    .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
-
-            if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
-                throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
-            }
-
-            penyewaan.setStatus(StatusPenyewaan.APPROVED);
-            penyewaanRepository.save(penyewaan);
-        });
+        return CompletableFuture.runAsync(() -> terimaSewaSync(id, pemilikId));
     }
 
-    public CompletableFuture<Void> rejectSewa(String id, UUID pemilikId) {
-        return CompletableFuture.runAsync(() -> {
-            Penyewaan penyewaan = penyewaanRepository.findById(id)
-                    .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
-
-            if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
-                throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
-            }
-
-            penyewaan.setStatus(StatusPenyewaan.REJECTED);
-            penyewaanRepository.save(penyewaan);
-        });
+    @Override
+    @Async("pengelolaanTaskExecutor")
+    public CompletableFuture<Void> tolakSewa(String id, UUID pemilikId) {
+        return CompletableFuture.runAsync(() -> tolakSewaSync(id, pemilikId));
     }
 
+    @Transactional
+    public void terimaSewaSync(String id, UUID pemilikId) {
+        Penyewaan penyewaan = penyewaanRepository.findByIdWithKos(id)
+                .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
+
+        if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
+            throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
+        }
+
+        Kos kos = penyewaan.getKos();
+        int jumlahSekarang = kos.getJumlah();
+        if (jumlahSekarang <= 0) {
+            throw new IllegalStateException("Tidak ada kamar tersedia untuk disewakan");
+        }
+        kos.setJumlah(jumlahSekarang - 1);
+        pengelolaanRepository.save(kos);
+
+        penyewaan.setStatus(StatusPenyewaan.APPROVED);
+        penyewaan.setWaktuPerubahan(java.time.LocalDateTime.now());
+        penyewaanRepository.save(penyewaan);
+    }
+
+    @Transactional
+    public void tolakSewaSync(String id, UUID pemilikId) {
+        Penyewaan penyewaan = penyewaanRepository.findByIdWithKos(id)
+                .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
+
+        if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
+            throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
+        }
+
+        penyewaan.setStatus(StatusPenyewaan.REJECTED);
+        penyewaan.setWaktuPerubahan(LocalDateTime.now());
+
+        try {
+            penyewaanRepository.save(penyewaan);
+        } catch (Exception e) {
+            logger.error("Gagal menolak penyewaan dengan id {}: ", id, e);
+            throw e;
+        }
+    }
 }

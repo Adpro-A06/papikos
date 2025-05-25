@@ -28,4 +28,6 @@ public interface PenyewaanRepository extends JpaRepository<Penyewaan, String> {
     List<Penyewaan> findByStatusAndTanggalCheckInGreaterThan(StatusPenyewaan status, LocalDate date);
     @Query("SELECT p FROM Penyewaan p JOIN FETCH p.kos WHERE p.kos.pemilik.id = :pemilikId")
     List<Penyewaan> findAllByKosPemilikId(UUID pemilikId);
+    @Query("SELECT p FROM Penyewaan p JOIN FETCH p.kos k WHERE p.id = :id")
+    Optional<Penyewaan> findByIdWithKos(@Param("id") String id);
 }

@@ -14,7 +14,6 @@ public interface PengelolaanService{
     CompletableFuture<Kos> update(Kos kos);
     CompletableFuture<Void> delete(Kos kos);
     CompletableFuture<List<Penyewaan>> findAllSewa(UUID pemilikId);
-    CompletableFuture<Void> reduceKosJumlah(UUID kosId, UUID pemilikId, int newJumlah);
     CompletableFuture<Void> terimaSewa(String id, UUID pemilikId);
-    CompletableFuture<Void> rejectSewa(String id, UUID pemilikId);
+    CompletableFuture<Void> tolakSewa(String id, UUID pemilikId);
 }
