@@ -728,24 +728,29 @@ public class PaymentRestControllerTest {
 
     @Test
     void getTransactionsAsync_UnhappyPath_ServiceException_ShouldReturnBadRequest() throws ExecutionException, InterruptedException {
+        // Setup
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now().minusDays(14);
+        String errorMessage = "Tanggal akhir tidak boleh sebelum tanggal awal";
 
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
+
         CompletableFuture<List<Payment>> failedFuture = new CompletableFuture<>();
-        failedFuture.completeExceptionally(new IllegalArgumentException("Tanggal akhir tidak boleh sebelum tanggal awal"));
+        failedFuture.completeExceptionally(new IllegalArgumentException(errorMessage));
         when(paymentService.filterTransactionsAsync(eq(testUserId), eq(startDate), eq(endDate), isNull()))
                 .thenReturn(failedFuture);
 
+        // Act
         CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(startDate, endDate, null, validAuthHeader);
         ResponseEntity<?> result = response.get();
 
+        // Assert
         assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
         assertNotNull(apiResponse);
         assertFalse(apiResponse.isSuccess());
-        assertEquals("Tanggal akhir tidak boleh sebelum tanggal awal", apiResponse.getMessage());
+        assertEquals(errorMessage, apiResponse.getMessage());
     }
 
     @Test
@@ -767,3 +772,4 @@ public class PaymentRestControllerTest {
         assertTrue(apiResponse.getMessage().contains("Database connection failed"));
     }
 }
+
