@@ -48,6 +48,8 @@ dependencies {
     implementation("org.webjars:stomp-websocket:2.3.4")
     implementation("org.webjars:sockjs-client:1.5.1")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation ("org.springframework.boot:spring-boot-starter-actuator")
+    implementation ("io.micrometer:micrometer-registry-prometheus")
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")

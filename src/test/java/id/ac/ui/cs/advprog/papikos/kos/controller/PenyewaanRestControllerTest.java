@@ -30,12 +30,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.awaitility.Awaitility.await;
 
 @ExtendWith(MockitoExtension.class)
 class PenyewaanRestControllerTest {
@@ -195,6 +197,29 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testGetAllPenyewaanWhenServiceException() throws Exception {
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(penyewaUser.getId())).thenReturn(penyewaUser);
+
+        CompletableFuture<List<Penyewaan>> future = new CompletableFuture<>();
+        future.completeExceptionally(new RuntimeException("Database error"));
+        when(penyewaanService.findByPenyewa(penyewaUser)).thenReturn(future);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getAllPenyewaan(validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Database error", body.get("message"));
+
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(penyewaUser.getId());
+        verify(penyewaanService).findByPenyewa(penyewaUser);
+    }
+
+    @Test
     void testGetPenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
@@ -287,6 +312,30 @@ class PenyewaanRestControllerTest {
         verify(authService).decodeToken(validToken);
         verify(authService).findById(UUID.fromString(userId));
         verify(penyewaanService, never()).findByIdAndPenyewa(anyString(), any());
+    }
+
+    @Test
+    void testGetPenyewaanWhenServiceException() throws Exception {
+        String penyewaanId = UUID.randomUUID().toString();
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(penyewaUser.getId())).thenReturn(penyewaUser);
+
+        CompletableFuture<java.util.Optional<Penyewaan>> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Database error"));
+        when(penyewaanService.findByIdAndPenyewa(penyewaanId, penyewaUser)).thenReturn(failedFuture);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.getPenyewaan(penyewaanId, validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Database error", body.get("message"));
+
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(penyewaUser.getId());
+        verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
     @Test
@@ -407,6 +456,39 @@ class PenyewaanRestControllerTest {
     }
 
     @Test
+    void testCreatePenyewaanWhenServiceException() throws Exception {
+        String kosId = UUID.randomUUID().toString();
+
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(penyewaUser.getId())).thenReturn(penyewaUser);
+
+        Penyewaan newPenyewaan = new Penyewaan();
+        newPenyewaan.setNamaLengkap("John Doe");
+        newPenyewaan.setNomorTelepon("08123456789");
+        newPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
+        newPenyewaan.setDurasiSewa(3);
+
+        CompletableFuture<Penyewaan> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Unexpected database error"));
+        when(penyewaanService.createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser)))
+                .thenReturn(failedFuture);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.createPenyewaan(
+                kosId, newPenyewaan, bindingResult, validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Unexpected database error", body.get("message"));
+
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(penyewaUser.getId());
+        verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
+    }
+
+    @Test
     void testUpdatePenyewaanSuccess() {
         when(authService.decodeToken(validToken)).thenReturn(userId);
         when(authService.findById(any(UUID.class))).thenReturn(penyewaUser);
@@ -502,6 +584,66 @@ class PenyewaanRestControllerTest {
         assertErrorResponse(response.getBody(), "Token tidak valid");
         verify(authService).decodeToken(anyString());
         verify(penyewaanService, never()).updatePenyewaan(any(), anyString(), any());
+    }
+
+    @Test
+    void testUpdatePenyewaanWhenServiceException() throws Exception {
+        String penyewaanId = UUID.randomUUID().toString();
+
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(penyewaUser.getId())).thenReturn(penyewaUser);
+
+        Penyewaan updatedPenyewaan = new Penyewaan();
+        updatedPenyewaan.setNamaLengkap("John Doe Updated");
+        updatedPenyewaan.setNomorTelepon("08123456789");
+        updatedPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(7));
+        updatedPenyewaan.setDurasiSewa(4);
+
+        CompletableFuture<Penyewaan> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Database connection error"));
+        when(penyewaanService.updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser)))
+                .thenReturn(failedFuture);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
+                penyewaanId, updatedPenyewaan, bindingResult, validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Database connection error", body.get("message"));
+
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(penyewaUser.getId());
+        verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
+    }
+
+    @Test
+    void testUpdatePenyewaanNoNPenyewa() throws Exception {
+        String penyewaanId = UUID.randomUUID().toString();
+        when(authService.decodeToken(validToken)).thenReturn(pemilikUser.getId().toString());
+        when(authService.findById(pemilikUser.getId())).thenReturn(pemilikUser);
+
+        Penyewaan updatedPenyewaan = new Penyewaan();
+        updatedPenyewaan.setNamaLengkap("John Doe");
+        updatedPenyewaan.setNomorTelepon("08123456789");
+        updatedPenyewaan.setTanggalCheckIn(LocalDate.now().plusDays(5));
+        updatedPenyewaan.setDurasiSewa(3);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.updatePenyewaan(
+                penyewaanId, updatedPenyewaan, bindingResult, validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Anda tidak memiliki akses ke resource ini", body.get("message"));
+
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(pemilikUser.getId());
+        verifyNoInteractions(penyewaanService);
     }
 
     @Test
@@ -626,6 +768,33 @@ class PenyewaanRestControllerTest {
         verify(authService).decodeToken(validToken);
         verify(authService).findById(UUID.fromString(userId));
         verify(penyewaanService, never()).cancelPenyewaan(anyString(), any());
+    }
+
+    @Test
+    void testCancelPenyewaanWhenServiceException() {
+        String penyewaanId = UUID.randomUUID().toString();
+
+        when(authService.decodeToken(validToken)).thenReturn(userId);
+        when(authService.findById(penyewaUser.getId())).thenReturn(penyewaUser);
+
+        CompletableFuture<Void> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Unexpected database error during cancellation"));
+        when(penyewaanService.cancelPenyewaan(eq(penyewaanId), eq(penyewaUser))).thenReturn(failedFuture);
+
+        DeferredResult<ResponseEntity<?>> result = penyewaanRestController.cancelPenyewaan(
+                penyewaanId, validAuthHeader);
+        await().atMost(1, TimeUnit.SECONDS).until(result::hasResult);
+        ResponseEntity<?> response = (ResponseEntity<?>) result.getResult();
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertEquals("error", body.get("status"));
+        assertEquals("Unexpected database error during cancellation", body.get("message"));
+
+        // Verify service interactions
+        verify(authService).decodeToken(validToken);
+        verify(authService).findById(penyewaUser.getId());
+        verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
     }
 
     @Test
