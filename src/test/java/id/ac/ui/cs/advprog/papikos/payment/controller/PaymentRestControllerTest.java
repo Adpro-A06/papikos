@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -79,7 +81,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void topUp_HappyPath_ShouldReturnSuccessResponse() {
-
         PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
         request.setUserId(testUserId);
         request.setAmount(amount);
@@ -110,16 +111,13 @@ public class PaymentRestControllerTest {
 
     @Test
     void topUp_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
-
         PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
         request.setUserId(testUserId);
         request.setAmount(amount);
 
         when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
 
-
         ResponseEntity<?> response = paymentRestController.topUp(request, invalidAuthHeader);
-
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -132,7 +130,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void topUp_UnhappyPath_DifferentUser_ShouldReturnForbidden() {
-
         PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
         request.setUserId(UUID.randomUUID());
         request.setAmount(amount);
@@ -140,9 +137,7 @@ public class PaymentRestControllerTest {
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
 
-
         ResponseEntity<?> response = paymentRestController.topUp(request, validAuthHeader);
-
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -155,7 +150,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void topUp_UnhappyPath_ServiceThrowsException_ShouldReturnBadRequest() {
-
         PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
         request.setUserId(testUserId);
         request.setAmount(new BigDecimal("-100"));
@@ -164,9 +158,7 @@ public class PaymentRestControllerTest {
         when(authService.findById(testUserId)).thenReturn(testUser);
         doThrow(new IllegalArgumentException("Jumlah top-up tidak boleh kurang dari 0")).when(paymentService).topUp(testUserId, request.getAmount());
 
-
         ResponseEntity<?> response = paymentRestController.topUp(request, validAuthHeader);
-
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -175,11 +167,92 @@ public class PaymentRestControllerTest {
         assertEquals("Jumlah top-up tidak boleh kurang dari 0", apiResponse.getMessage());
     }
 
+    @Test
+    void topUpAsync_HappyPath_ShouldReturnAcceptedResponse() {
+        PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
+        request.setUserId(testUserId);
+        request.setAmount(amount);
 
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.topUpAsync(testUserId, amount)).thenReturn(CompletableFuture.completedFuture(null));
+
+        ResponseEntity<?> response = paymentRestController.topUpAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.isSuccess());
+        assertEquals("Permintaan top-up sedang diproses", apiResponse.getMessage());
+
+        Map<String, Object> data = (Map<String, Object>) apiResponse.getData();
+        assertEquals(testUserId, data.get("userId"));
+        assertEquals(amount, data.get("amountRequested"));
+        assertEquals("processing", data.get("status"));
+
+        verify(paymentService).topUpAsync(testUserId, amount);
+    }
+
+    @Test
+    void topUpAsync_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
+        PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
+        request.setUserId(testUserId);
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
+
+        ResponseEntity<?> response = paymentRestController.topUpAsync(request, invalidAuthHeader);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Token tidak valid", apiResponse.getMessage());
+
+        verify(paymentService, never()).topUpAsync(any(UUID.class), any(BigDecimal.class));
+    }
+
+    @Test
+    void topUpAsync_UnhappyPath_DifferentUser_ShouldReturnForbidden() {
+        PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
+        request.setUserId(UUID.randomUUID());
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+
+        ResponseEntity<?> response = paymentRestController.topUpAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Anda hanya dapat top-up ke akun Anda sendiri", apiResponse.getMessage());
+
+        verify(paymentService, never()).topUpAsync(any(UUID.class), any(BigDecimal.class));
+    }
+
+    @Test
+    void topUpAsync_UnhappyPath_ServiceThrowsException_ShouldReturnBadRequest() {
+        PaymentDto.TopUpRequest request = new PaymentDto.TopUpRequest();
+        request.setUserId(testUserId);
+        request.setAmount(new BigDecimal("-100"));
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        doThrow(new IllegalArgumentException("Jumlah tidak valid")).when(paymentService).topUpAsync(testUserId, request.getAmount());
+
+        ResponseEntity<?> response = paymentRestController.topUpAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Jumlah tidak valid", apiResponse.getMessage());
+    }
 
     @Test
     void pay_HappyPath_ShouldReturnSuccessResponse() {
-
         PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
         request.setFromUserId(testUserId);
         request.setToUserId(pemilikUserId);
@@ -191,7 +264,6 @@ public class PaymentRestControllerTest {
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.getBalance(testUserId)).thenReturn(newBalance);
         doNothing().when(paymentService).pay(testUserId, pemilikUserId, amount);
-
 
         ResponseEntity<?> response = paymentRestController.pay(request, validAuthHeader);
 
@@ -213,7 +285,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void pay_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
-
         PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
         request.setFromUserId(testUserId);
         request.setToUserId(pemilikUserId);
@@ -221,9 +292,7 @@ public class PaymentRestControllerTest {
 
         when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
 
-
         ResponseEntity<?> response = paymentRestController.pay(request, invalidAuthHeader);
-
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -236,7 +305,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void pay_UnhappyPath_DifferentFromUser_ShouldReturnForbidden() {
-
         PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
         request.setFromUserId(UUID.randomUUID());
         request.setToUserId(pemilikUserId);
@@ -245,9 +313,7 @@ public class PaymentRestControllerTest {
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
 
-
         ResponseEntity<?> response = paymentRestController.pay(request, validAuthHeader);
-
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -260,7 +326,6 @@ public class PaymentRestControllerTest {
 
     @Test
     void pay_UnhappyPath_InsufficientBalance_ShouldReturnBadRequest() {
-
         PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
         request.setFromUserId(testUserId);
         request.setToUserId(pemilikUserId);
@@ -270,9 +335,7 @@ public class PaymentRestControllerTest {
         when(authService.findById(testUserId)).thenReturn(testUser);
         doThrow(new IllegalArgumentException("Saldo tidak mencukupi")).when(paymentService).pay(testUserId, pemilikUserId, amount);
 
-
         ResponseEntity<?> response = paymentRestController.pay(request, validAuthHeader);
-
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -281,6 +344,94 @@ public class PaymentRestControllerTest {
         assertEquals("Saldo tidak mencukupi", apiResponse.getMessage());
     }
 
+    @Test
+    void payAsync_HappyPath_ShouldReturnAcceptedResponse() {
+        PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
+        request.setFromUserId(testUserId);
+        request.setToUserId(pemilikUserId);
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.payAsync(testUserId, pemilikUserId, amount)).thenReturn(CompletableFuture.completedFuture(null));
+
+        ResponseEntity<?> response = paymentRestController.payAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.isSuccess());
+        assertEquals("Permintaan pembayaran sedang diproses", apiResponse.getMessage());
+
+        Map<String, Object> data = (Map<String, Object>) apiResponse.getData();
+        assertEquals(testUserId, data.get("fromUserId"));
+        assertEquals(pemilikUserId, data.get("toUserId"));
+        assertEquals(amount, data.get("amountRequested"));
+        assertEquals("processing", data.get("status"));
+
+        verify(paymentService).payAsync(testUserId, pemilikUserId, amount);
+    }
+
+    @Test
+    void payAsync_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
+        PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
+        request.setFromUserId(testUserId);
+        request.setToUserId(pemilikUserId);
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
+
+        ResponseEntity<?> response = paymentRestController.payAsync(request, invalidAuthHeader);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Token tidak valid", apiResponse.getMessage());
+
+        verify(paymentService, never()).payAsync(any(UUID.class), any(UUID.class), any(BigDecimal.class));
+    }
+
+    @Test
+    void payAsync_UnhappyPath_DifferentFromUser_ShouldReturnForbidden() {
+        PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
+        request.setFromUserId(UUID.randomUUID());
+        request.setToUserId(pemilikUserId);
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+
+        ResponseEntity<?> response = paymentRestController.payAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Anda hanya dapat melakukan pembayaran dari akun Anda sendiri", apiResponse.getMessage());
+
+        verify(paymentService, never()).payAsync(any(UUID.class), any(UUID.class), any(BigDecimal.class));
+    }
+
+    @Test
+    void payAsync_UnhappyPath_InsufficientBalance_ShouldReturnBadRequest() {
+        PaymentDto.PaymentRequest request = new PaymentDto.PaymentRequest();
+        request.setFromUserId(testUserId);
+        request.setToUserId(pemilikUserId);
+        request.setAmount(amount);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        doThrow(new IllegalArgumentException("Saldo tidak mencukupi")).when(paymentService).payAsync(testUserId, pemilikUserId, amount);
+
+        ResponseEntity<?> response = paymentRestController.payAsync(request, validAuthHeader);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Saldo tidak mencukupi", apiResponse.getMessage());
+    }
 
     @Test
     void getBalance_HappyPath_ShouldReturnBalance() {
@@ -289,7 +440,6 @@ public class PaymentRestControllerTest {
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.getBalance(testUserId)).thenReturn(balance);
-
 
         ResponseEntity<?> response = paymentRestController.getBalance(validAuthHeader);
 
@@ -308,12 +458,9 @@ public class PaymentRestControllerTest {
 
     @Test
     void getBalance_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
-
         when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
 
-
         ResponseEntity<?> response = paymentRestController.getBalance(invalidAuthHeader);
-
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -324,11 +471,66 @@ public class PaymentRestControllerTest {
         verify(paymentService, never()).getBalance(any(UUID.class));
     }
 
+    @Test
+    void getBalanceAsync_HappyPath_ShouldReturnBalance() throws ExecutionException, InterruptedException {
+        BigDecimal balance = new BigDecimal("150000");
 
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.getBalanceAsync(testUserId)).thenReturn(CompletableFuture.completedFuture(balance));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getBalanceAsync(validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.isSuccess());
+        assertEquals("Saldo berhasil diambil secara asinkron", apiResponse.getMessage());
+
+        Map<String, Object> data = (Map<String, Object>) apiResponse.getData();
+        assertEquals(testUserId, data.get("userId"));
+        assertEquals(balance, data.get("balance"));
+
+        verify(paymentService).getBalanceAsync(testUserId);
+    }
+
+    @Test
+    void getBalanceAsync_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() throws ExecutionException, InterruptedException {
+        when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getBalanceAsync(invalidAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Token tidak valid", apiResponse.getMessage());
+
+        verify(paymentService, never()).getBalanceAsync(any(UUID.class));
+    }
+
+    @Test
+    void getBalanceAsync_UnhappyPath_ServiceException_ShouldReturnBadRequest() throws ExecutionException, InterruptedException {
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        CompletableFuture<BigDecimal> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Database error"));
+        when(paymentService.getBalanceAsync(testUserId)).thenReturn(failedFuture);
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getBalanceAsync(validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertTrue(apiResponse.getMessage().contains("Database error"));
+    }
 
     @Test
     void getTransactions_HappyPath_WithFilters_ShouldReturnTransactions() {
-
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now();
         String transactionType = TransactionType.PAYMENT.name();
@@ -346,11 +548,9 @@ public class PaymentRestControllerTest {
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.filterTransactions(eq(testUserId), eq(startDate), eq(endDate), eq(TransactionType.PAYMENT)))
-            .thenReturn(transactions);
-
+                .thenReturn(transactions);
 
         ResponseEntity<?> response = paymentRestController.getTransactions(startDate, endDate, transactionType, validAuthHeader);
-
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -367,17 +567,14 @@ public class PaymentRestControllerTest {
 
     @Test
     void getTransactions_HappyPath_NoFilters_ShouldReturnAllTransactions() {
-
         List<Payment> transactions = new ArrayList<>();
 
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.filterTransactions(eq(testUserId), isNull(), isNull(), isNull()))
-            .thenReturn(transactions);
-
+                .thenReturn(transactions);
 
         ResponseEntity<?> response = paymentRestController.getTransactions(null, null, null, validAuthHeader);
-
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -389,12 +586,9 @@ public class PaymentRestControllerTest {
 
     @Test
     void getTransactions_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() {
-
         when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
 
-
         ResponseEntity<?> response = paymentRestController.getTransactions(null, null, null, invalidAuthHeader);
-
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) response.getBody();
@@ -407,14 +601,13 @@ public class PaymentRestControllerTest {
 
     @Test
     void getTransactions_UnhappyPath_InvalidTransactionType_ShouldUseNullType() {
-
         String invalidTransactionType = "INVALID_TYPE";
         List<Payment> transactions = new ArrayList<>();
 
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.filterTransactions(eq(testUserId), isNull(), isNull(), isNull()))
-            .thenReturn(transactions);
+                .thenReturn(transactions);
 
         ResponseEntity<?> response = paymentRestController.getTransactions(null, null, invalidTransactionType, validAuthHeader);
 
@@ -425,14 +618,13 @@ public class PaymentRestControllerTest {
 
     @Test
     void getTransactions_UnhappyPath_ServiceException_ShouldReturnBadRequest() {
-
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now().minusDays(14);
 
         when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
         when(paymentService.filterTransactions(eq(testUserId), eq(startDate), eq(endDate), isNull()))
-            .thenThrow(new IllegalArgumentException("Tanggal akhir tidak boleh sebelum tanggal awal"));
+                .thenThrow(new IllegalArgumentException("Tanggal akhir tidak boleh sebelum tanggal awal"));
 
         ResponseEntity<?> response = paymentRestController.getTransactions(startDate, endDate, null, validAuthHeader);
 
@@ -441,5 +633,137 @@ public class PaymentRestControllerTest {
         assertNotNull(apiResponse);
         assertFalse(apiResponse.isSuccess());
         assertEquals("Tanggal akhir tidak boleh sebelum tanggal awal", apiResponse.getMessage());
+    }
+
+    @Test
+    void getTransactionsAsync_HappyPath_WithFilters_ShouldReturnTransactions() throws ExecutionException, InterruptedException {
+        LocalDate startDate = LocalDate.now().minusDays(7);
+        LocalDate endDate = LocalDate.now();
+        String transactionType = TransactionType.PAYMENT.name();
+
+        List<Payment> transactions = new ArrayList<>();
+        Payment payment = new Payment();
+        payment.setId(UUID.randomUUID());
+        payment.setFromUserId(testUserId);
+        payment.setToUserId(pemilikUserId);
+        payment.setAmount(amount);
+        payment.setType(TransactionType.PAYMENT);
+        payment.setTimestamp(LocalDateTime.now());
+        transactions.add(payment);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.filterTransactionsAsync(eq(testUserId), eq(startDate), eq(endDate), eq(TransactionType.PAYMENT)))
+                .thenReturn(CompletableFuture.completedFuture(transactions));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(startDate, endDate, transactionType, validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.isSuccess());
+        assertEquals("Transaksi berhasil diambil secara asinkron", apiResponse.getMessage());
+
+        Map<String, Object> data = (Map<String, Object>) apiResponse.getData();
+        assertEquals(testUserId, data.get("userId"));
+        assertEquals(transactions, data.get("transactions"));
+
+        verify(paymentService).filterTransactionsAsync(testUserId, startDate, endDate, TransactionType.PAYMENT);
+    }
+
+    @Test
+    void getTransactionsAsync_HappyPath_NoFilters_ShouldReturnAllTransactions() throws ExecutionException, InterruptedException {
+        List<Payment> transactions = new ArrayList<>();
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.filterTransactionsAsync(eq(testUserId), isNull(), isNull(), isNull()))
+                .thenReturn(CompletableFuture.completedFuture(transactions));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(null, null, null, validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.isSuccess());
+
+        verify(paymentService).filterTransactionsAsync(testUserId, null, null, null);
+    }
+
+    @Test
+    void getTransactionsAsync_UnhappyPath_InvalidToken_ShouldReturnUnauthorized() throws ExecutionException, InterruptedException {
+        when(authService.decodeToken(anyString())).thenThrow(new RuntimeException("Invalid token"));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(null, null, null, invalidAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Token tidak valid", apiResponse.getMessage());
+
+        verify(paymentService, never()).filterTransactionsAsync(any(), any(), any(), any());
+    }
+
+    @Test
+    void getTransactionsAsync_UnhappyPath_InvalidTransactionType_ShouldUseNullType() throws ExecutionException, InterruptedException {
+        String invalidTransactionType = "INVALID_TYPE";
+        List<Payment> transactions = new ArrayList<>();
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        when(paymentService.filterTransactionsAsync(eq(testUserId), isNull(), isNull(), isNull()))
+                .thenReturn(CompletableFuture.completedFuture(transactions));
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(null, null, invalidTransactionType, validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+
+        verify(paymentService).filterTransactionsAsync(testUserId, null, null, null);
+    }
+
+    @Test
+    void getTransactionsAsync_UnhappyPath_ServiceException_ShouldReturnBadRequest() throws ExecutionException, InterruptedException {
+        LocalDate startDate = LocalDate.now().minusDays(7);
+        LocalDate endDate = LocalDate.now().minusDays(14);
+
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        CompletableFuture<List<Payment>> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new IllegalArgumentException("Tanggal akhir tidak boleh sebelum tanggal awal"));
+        when(paymentService.filterTransactionsAsync(eq(testUserId), eq(startDate), eq(endDate), isNull()))
+                .thenReturn(failedFuture);
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(startDate, endDate, null, validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertEquals("Tanggal akhir tidak boleh sebelum tanggal awal", apiResponse.getMessage());
+    }
+
+    @Test
+    void getTransactionsAsync_UnhappyPath_GeneralException_ShouldReturnBadRequest() throws ExecutionException, InterruptedException {
+        when(authService.decodeToken(anyString())).thenReturn(testUserId.toString());
+        when(authService.findById(testUserId)).thenReturn(testUser);
+        CompletableFuture<List<Payment>> failedFuture = new CompletableFuture<>();
+        failedFuture.completeExceptionally(new RuntimeException("Database connection failed"));
+        when(paymentService.filterTransactionsAsync(eq(testUserId), isNull(), isNull(), isNull()))
+                .thenReturn(failedFuture);
+
+        CompletableFuture<ResponseEntity<?>> response = paymentRestController.getTransactionsAsync(null, null, null, validAuthHeader);
+        ResponseEntity<?> result = response.get();
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        AuthDto.ApiResponse apiResponse = (AuthDto.ApiResponse) result.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.isSuccess());
+        assertTrue(apiResponse.getMessage().contains("Database connection failed"));
     }
 }
