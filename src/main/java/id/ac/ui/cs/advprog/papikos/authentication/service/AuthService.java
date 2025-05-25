@@ -14,4 +14,6 @@ public interface AuthService {
     List<User> findAllPendingPemilikKos();
     User findById(UUID userId);
     String decodeToken(String token);
+    List<User> findAllPemilikKos();
 }
+
