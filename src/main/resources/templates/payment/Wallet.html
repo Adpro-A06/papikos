@@ -156,15 +156,16 @@
             text-transform: uppercase;
         }
 
+        /* Simplified transaction styling - same for all transaction types */
         .transaction-topup {
             border-left: 4px solid var(--success-color);
         }
 
         .transaction-payment {
-            border-left: 4px solid var(--primary-color);
+            border-left: 4px solid var(--danger-color);
         }
 
-        .transaction-payment-kos {
+        .transaction-income {
             border-left: 4px solid var(--success-color);
         }
 
@@ -183,11 +184,11 @@
         }
 
         .transaction-payment .transaction-icon {
-            background-color: rgba(78, 115, 223, 0.1);
-            color: var(--primary-color);
+            background-color: rgba(231, 74, 59, 0.1);
+            color: var(--danger-color);
         }
 
-        .transaction-payment-kos .transaction-icon {
+        .transaction-income .transaction-icon {
             background-color: rgba(28, 200, 138, 0.1);
             color: var(--success-color);
         }
@@ -222,13 +223,26 @@
         }
 
         .badge-payment {
-            background-color: var(--primary-color);
+            background-color: var(--danger-color);
             color: white;
         }
 
-        .badge-payment-kos {
+        .badge-income {
             background-color: var(--success-color);
             color: white;
+        }
+
+        /* Transaction details styling */
+        .detail-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item i {
+            width: 20px;
+            margin-right: 0.5rem;
+            color: var(--primary-color);
         }
 
         /* Add animation for new transactions */
@@ -361,6 +375,10 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold">Riwayat Transaksi</h6>
+                    <!-- Additional heading for pemilik kos -->
+                    <div th:if="${user.role.name() == 'PEMILIK_KOS'}" class="small text-primary">
+                        <i class="fas fa-info-circle me-1"></i> Pembayaran dari penyewa
+                    </div>
                 </div>
                 <div class="card-body">
                     <div th:if="${transactions.empty}" class="text-center py-5">
@@ -370,61 +388,61 @@
 
                     <div th:unless="${transactions.empty}">
                         <div class="transaction-list">
-                            <!-- Enhanced payment transactions from renters (in green) with more detailed information -->
                             <div th:each="transaction : ${transactions}"
                                  th:class="${transaction.type.name() == 'TOPUP' ? 'transaction-topup' :
-                                           (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'transaction-payment transaction-payment-kos' : 'transaction-payment')}"
+                                           (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'transaction-income' : 'transaction-payment')}"
                                  class="card mb-3">
                                 <div class="card-body d-flex align-items-center">
                                     <div class="transaction-icon me-3">
-                                        <i th:class="${transaction.type.name() == 'TOPUP' ? 'fas fa-arrow-down' : 'fas fa-arrow-up'}"></i>
+                                        <i th:class="${transaction.type.name() == 'TOPUP' ? 'fas fa-arrow-down' :
+                                                     (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'fas fa-arrow-down' : 'fas fa-arrow-up')}"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <div>
-                                                <!-- Show different badge and extra information for payments received by PEMILIK_KOS -->
                                                 <span class="badge"
                                                       th:classappend="${transaction.type.name() == 'TOPUP' ? 'badge-topup' :
-                                                                      (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'badge-payment-kos' : 'badge-payment')}"
-                                                      th:text="${transaction.type.name() == 'TOPUP' ? 'Top Up' : 'Pembayaran'}"></span>
+                                                                      (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'badge-income' : 'badge-payment')}"
+                                                      th:text="${transaction.type.name() == 'TOPUP' ? 'Top Up' :
+                                                               (transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS' ? 'Pendapatan' : 'Pembayaran')}"></span>
                                                 <span class="ms-2 text-secondary" th:text="${#temporals.format(transaction.timestamp, 'dd MMM yyyy, HH:mm')}"></span>
                                             </div>
+
+                                            <!-- Amount display - consistent styling -->
                                             <div th:if="${transaction.type.name() == 'TOPUP'}" class="h5 mb-0 text-success">
                                                 + Rp <span th:text="${transaction.amount}"></span>
                                             </div>
-                                            <!-- Special styling for payments received by PEMILIK_KOS -->
                                             <div th:if="${transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS'}" class="h5 mb-0 text-success">
                                                 + Rp <span th:text="${transaction.amount}"></span>
                                             </div>
-                                            <!-- Regular payment for PENYEWA -->
                                             <div th:if="${transaction.type.name() == 'PAYMENT' && user.role.name() == 'PENYEWA'}" class="h5 mb-0 text-danger">
                                                 - Rp <span th:text="${transaction.amount}"></span>
                                             </div>
                                         </div>
 
-                                        <!-- Enhanced information for payments received by PEMILIK_KOS -->
-                                        <div th:if="${transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS'}" class="payment-details mb-2">
-                                            <div class="fw-bold text-success">
-                                                <i class="fas fa-user me-1"></i> Pembayaran dari: <span th:text="${transaction.fromUserId != null ? 'Penyewa ID: ' + transaction.fromUserId : 'Penyewa'}">Penyewa</span>
-                                            </div>
-                                            <div class="text-secondary" th:if="${transaction.description != null && !transaction.description.isEmpty()}">
-                                                <i class="fas fa-info-circle me-1"></i> <span th:text="${transaction.description}">Deskripsi transaksi</span>
-                                            </div>
-                                            <div class="text-secondary" th:if="${transaction.roomId != null}">
-                                                <i class="fas fa-home me-1"></i> Kamar: <span th:text="${transaction.roomId}">ID Kamar</span>
-                                            </div>
-                                            <div class="text-secondary">
-                                                <i class="fas fa-calendar me-1"></i> Periode: <span th:text="${#temporals.format(transaction.timestamp, 'MMMM yyyy')}">Mei 2025</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Standard description for other transactions -->
-                                        <div th:unless="${transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS'}" class="text-secondary" th:text="${transaction.description}">
+                                        <!-- Transaction description - simplified and consistent -->
+                                        <div class="text-secondary mb-2" th:text="${transaction.description}">
                                             Deskripsi transaksi
                                         </div>
 
+                                        <!-- Additional details for payments received by PEMILIK_KOS -->
+                                        <div th:if="${transaction.type.name() == 'PAYMENT' && user.role.name() == 'PEMILIK_KOS'}" class="transaction-details mb-2 p-2 border-top">
+                                            <div class="detail-item" th:if="${transaction.fromUserId != null}">
+                                                <i class="fas fa-user"></i>
+                                                <span>Dari: <span th:text="${penyewaEmails != null && penyewaEmails.containsKey(transaction.fromUserId) ? penyewaEmails.get(transaction.fromUserId) : ('Penyewa ID ' + transaction.fromUserId)}"></span></span>
+                                            </div>
+                                            <div class="detail-item" th:if="${transaction.roomId != null}">
+                                                <i class="fas fa-home"></i>
+                                                <span>Kamar: <span th:text="${transaction.roomId}"></span></span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="fas fa-calendar"></i>
+                                                <span>Periode: <span th:text="${#temporals.format(transaction.timestamp, 'MMMM yyyy')}"></span></span>
+                                            </div>
+                                        </div>
+
                                         <div class="small text-muted">
-                                            ID: <span th:text="${transaction.id}"></span>
+                                            ID Transaksi: <span th:text="${transaction.id}"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -436,6 +454,7 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

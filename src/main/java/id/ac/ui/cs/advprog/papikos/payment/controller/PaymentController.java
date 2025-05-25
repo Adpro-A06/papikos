@@ -191,6 +191,25 @@ public class PaymentController {
         List<Payment> transactions = paymentService.filterTransactions(
                 user.getId(), startDate, endDate, type);
 
+        if (user.getRole() == Role.PEMILIK_KOS) {
+            java.util.Map<UUID, String> penyewaEmails = new java.util.HashMap<>();
+
+           for (Payment payment : transactions) {
+                if (payment.getType() == TransactionType.PAYMENT && payment.getFromUserId() != null) {
+                    try {
+                        User penyewa = authService.findById(payment.getFromUserId());
+                        if (penyewa != null) {
+                            penyewaEmails.put(payment.getFromUserId(), penyewa.getEmail());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+
+
+            model.addAttribute("penyewaEmails", penyewaEmails);
+        }
+
         BigDecimal balance = paymentService.getBalance(user.getId());
 
         model.addAttribute("transactions", transactions);
