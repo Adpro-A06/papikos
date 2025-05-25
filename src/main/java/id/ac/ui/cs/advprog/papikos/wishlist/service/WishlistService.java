@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WishlistService {
@@ -19,26 +20,47 @@ public class WishlistService {
     }
 
     public Wishlist createWishlist(Wishlist wishlist) {
-        if (!isValidWishlist(wishlist)) {
+        if (wishlist.getName() == null || wishlist.getName().trim().isEmpty()) {
             return null;
         }
 
-        
-        wishlist.setId(wishlistStorage.size() + 1);
+        // assign a new UUID as the wishlist ID
+        wishlist.setId(UUID.randomUUID());
 
-        
+        // remove duplicates in the initial kos list
         List<Kos> filteredKos = filterDuplicateKos(wishlist.getKosList());
         wishlist.setKosList(filteredKos);
 
         wishlistStorage.add(wishlist);
-
         notifier.notifyObservers(wishlist, "created");
-
         return wishlist;
     }
 
-    private boolean isValidWishlist(Wishlist wishlist) {
-        return wishlist.getName() != null && !wishlist.getName().trim().isEmpty();
+    public void addKosToWishlist(UUID wishlistId, String kosId) {
+        Wishlist wishlist = wishlistStorage.stream()
+            .filter(w -> w.getId().equals(wishlistId))
+            .findFirst()
+            .orElseThrow(() ->
+                new IllegalArgumentException("Wishlist not found: " + wishlistId)
+            );
+
+        UUID kosUuid = UUID.fromString(kosId);
+        boolean alreadyInList = wishlist.getKosList().stream()
+            .anyMatch(k -> k.getId().equals(kosUuid));
+
+        if (!alreadyInList) {
+            Kos newKos = new Kos();
+            newKos.setId(kosUuid);
+            wishlist.getKosList().add(newKos);
+            notifier.notifyObservers(wishlist, "kosAdded");
+        }
+    }
+
+    public Wishlist getUserWishlist(UUID userId) {
+        return wishlistStorage.stream()
+            .filter(w -> w.getUserId().equals(userId))
+            .findFirst()
+            .orElse(null);
     }
 
     private List<Kos> filterDuplicateKos(List<Kos> kosList) {
