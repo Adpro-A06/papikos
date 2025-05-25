@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface PenyewaanRepository extends JpaRepository<Penyewaan, String> {
@@ -25,4 +26,6 @@ public interface PenyewaanRepository extends JpaRepository<Penyewaan, String> {
     List<Penyewaan> findByKosAndStatus(Kos kos, StatusPenyewaan status);
     long countByKosAndStatus(Kos kos, StatusPenyewaan status);
     List<Penyewaan> findByStatusAndTanggalCheckInGreaterThan(StatusPenyewaan status, LocalDate date);
+    @Query("SELECT p FROM Penyewaan p JOIN FETCH p.kos WHERE p.kos.pemilik.id = :pemilikId")
+    List<Penyewaan> findAllByKosPemilikId(UUID pemilikId);
 }

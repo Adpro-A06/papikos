@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -59,36 +61,11 @@ public class PengelolaanServiceImpl implements PengelolaanService {
     }
 
     @Override
-    @Async("pengelolaanTaskExecutor")
+    @Transactional(readOnly = true)
     public CompletableFuture<List<Penyewaan>> findAllSewa(UUID pemilikId) {
-        return CompletableFuture.completedFuture(pengelolaanRepository.findAllSewaByPemilikId(pemilikId));
-    }
-
-    @Override
-    @Async("pengelolaanTaskExecutor")
-    public CompletableFuture<Void> acceptSewa(String penyewaanId, UUID pemilikId) {
-        logger.info("Mencoba menerima penyewaan dengan ID {} untuk pemilik {}", penyewaanId, pemilikId);
-        Penyewaan penyewaan = penyewaanRepository.findById(penyewaanId)
-                .orElseThrow(() -> {
-                    logger.error("Penyewaan dengan ID {} tidak ditemukan", penyewaanId);
-                    return new IllegalArgumentException("Penyewaan dengan ID " + penyewaanId + " tidak ditemukan");
-                });
-        if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
-            logger.warn("Penyewaan dengan ID {} tidak dimiliki oleh pemilik {}", penyewaanId, pemilikId);
-            throw new IllegalArgumentException("Penyewaan tidak dimiliki oleh pemilik ini");
-        }
-        if (penyewaan.getStatus() != StatusPenyewaan.PENDING) {
-            logger.warn("Penyewaan dengan ID {} tidak dalam status PENDING", penyewaanId);
-            throw new IllegalStateException("Penyewaan harus dalam status PENDING untuk diterima");
-        }
-        if (penyewaan.getKos().getJumlahTersedia() <= 0) {
-            logger.warn("Kos dengan ID {} tidak memiliki kamar tersedia", penyewaan.getKos().getId());
-            throw new IllegalStateException("Tidak ada kamar tersedia di kos ini");
-        }
-        penyewaan.setStatus(StatusPenyewaan.APPROVED);
-        penyewaanRepository.save(penyewaan);
-        logger.info("Penyewaan dengan ID {} berhasil diterima", penyewaanId);
-        return CompletableFuture.completedFuture(null);
+        return CompletableFuture.supplyAsync(() -> {
+            return penyewaanRepository.findAllByKosPemilikId(pemilikId);
+        });
     }
 
     @Override
@@ -114,4 +91,33 @@ public class PengelolaanServiceImpl implements PengelolaanService {
         logger.info("Jumlah kamar untuk kos {} berhasil diperbarui menjadi {}", kosId, newJumlah);
         return CompletableFuture.completedFuture(null);
     }
+
+    public CompletableFuture<Void> terimaSewa(String id, UUID pemilikId) {
+        return CompletableFuture.runAsync(() -> {
+            Penyewaan penyewaan = penyewaanRepository.findById(id)
+                    .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
+
+            if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
+                throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
+            }
+
+            penyewaan.setStatus(StatusPenyewaan.APPROVED);
+            penyewaanRepository.save(penyewaan);
+        });
+    }
+
+    public CompletableFuture<Void> rejectSewa(String id, UUID pemilikId) {
+        return CompletableFuture.runAsync(() -> {
+            Penyewaan penyewaan = penyewaanRepository.findById(id)
+                    .orElseThrow(() -> new PengelolaanRepository.PenyewaanNotFoundException("Penyewaan tidak ditemukan"));
+
+            if (!penyewaan.getKos().getPemilik().getId().equals(pemilikId)) {
+                throw new IllegalArgumentException("Anda tidak berhak mengubah penyewaan ini");
+            }
+
+            penyewaan.setStatus(StatusPenyewaan.REJECTED);
+            penyewaanRepository.save(penyewaan);
+        });
+    }
+
 }

@@ -196,6 +196,7 @@ public class PengelolaanController {
     public CompletableFuture<String> daftarSewa(HttpSession session, RedirectAttributes ra, Model model) {
         User user = getCurrentUser(session, ra);
         if (user == null) {
+            ra.addFlashAttribute("error", "Silakan login terlebih dahulu");
             return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
@@ -204,6 +205,7 @@ public class PengelolaanController {
             return CompletableFuture.completedFuture("redirect:/api/auth/login");
         }
 
+        model.addAttribute("user", user);
         return service.findAllSewa(user.getId())
                 .thenApply(allSewa -> {
                     List<Penyewaan> filteredSewa = allSewa.stream()
@@ -214,7 +216,7 @@ public class PengelolaanController {
                 })
                 .exceptionally(throwable -> {
                     ra.addFlashAttribute("error", "Gagal memuat daftar sewa: " + throwable.getMessage());
-                    return "redirect:/pemilik/daftarsewa";
+                    return "redirect:/pemilik/home";
                 });
     }
 
@@ -231,30 +233,23 @@ public class PengelolaanController {
         }
 
         try {
-            UUID.fromString(id); // Validasi format UUID
+            UUID.fromString(id);
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", "ID penyewaan tidak valid");
             return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
         }
 
-        return service.acceptSewa(id, user.getId())
+        return service.terimaSewa(id, user.getId())
                 .thenApply(v -> {
                     ra.addFlashAttribute("success", "Penyewaan berhasil diterima");
                     return "redirect:/pemilik/daftarsewa";
                 })
                 .exceptionally(throwable -> {
-                    if (throwable.getCause() instanceof IllegalArgumentException) {
-                        ra.addFlashAttribute("error", throwable.getCause().getMessage());
-                        return "redirect:/pemilik/daftarsewa";
-                    }
-                    if (throwable.getCause() instanceof IllegalStateException) {
-                        ra.addFlashAttribute("error", "Penyewaan tidak dalam status PENDING atau kamar tidak tersedia");
-                        return "redirect:/pemilik/daftarsewa";
-                    }
                     ra.addFlashAttribute("error", "Gagal menerima penyewaan: " + throwable.getMessage());
                     return "redirect:/pemilik/daftarsewa";
                 });
     }
+
 
     @PostMapping("/kurangi-jumlah-kos/{id}")
     public CompletableFuture<String> reduceKosJumlah(@PathVariable UUID id, @RequestParam int newJumlah, Model model, HttpSession session, RedirectAttributes ra) {
@@ -295,6 +290,37 @@ public class PengelolaanController {
                     return "redirect:/pemilik/daftarkos";
                 });
     }
+
+    @PostMapping("/tolak-sewa/{id}")
+    public CompletableFuture<String> rejectPenyewaan(@PathVariable String id, HttpSession session, RedirectAttributes ra, Model model) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        try {
+            UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "ID penyewaan tidak valid");
+            return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
+        }
+
+        return service.rejectSewa(id, user.getId())
+                .thenApply(v -> {
+                    ra.addFlashAttribute("success", "Penyewaan berhasil ditolak");
+                    return "redirect:/pemilik/daftarsewa";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal menolak penyewaan: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarsewa";
+                });
+    }
+
 
     private User getCurrentUser(HttpSession session, RedirectAttributes ra) {
         String token = (String) session.getAttribute("JWT_TOKEN");
