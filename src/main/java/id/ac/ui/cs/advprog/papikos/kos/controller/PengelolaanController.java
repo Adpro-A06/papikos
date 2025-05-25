@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
 import id.ac.ui.cs.advprog.papikos.kos.service.PengelolaanService;
 import jakarta.servlet.http.HttpSession;
@@ -187,6 +188,110 @@ public class PengelolaanController {
                         return "pengelolaan/error/KosNotFound";
                     }
                     ra.addFlashAttribute("error", "Gagal menghapus kos: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarkos";
+                });
+    }
+
+    @GetMapping("/daftarsewa")
+    public CompletableFuture<String> daftarSewa(HttpSession session, RedirectAttributes ra, Model model) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        return service.findAllSewa(user.getId())
+                .thenApply(allSewa -> {
+                    List<Penyewaan> filteredSewa = allSewa.stream()
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    model.addAttribute("allSewa", filteredSewa);
+                    return "pengelolaan/ListSewa";
+                })
+                .exceptionally(throwable -> {
+                    ra.addFlashAttribute("error", "Gagal memuat daftar sewa: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarsewa";
+                });
+    }
+
+    @PostMapping("/ajuan-sewa/{id}")
+    public CompletableFuture<String> acceptPenyewaan(@PathVariable String id, Model model, HttpSession session, RedirectAttributes ra) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        try {
+            UUID.fromString(id); // Validasi format UUID
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "ID penyewaan tidak valid");
+            return CompletableFuture.completedFuture("redirect:/pemilik/daftarsewa");
+        }
+
+        return service.acceptSewa(id, user.getId())
+                .thenApply(v -> {
+                    ra.addFlashAttribute("success", "Penyewaan berhasil diterima");
+                    return "redirect:/pemilik/daftarsewa";
+                })
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof IllegalArgumentException) {
+                        ra.addFlashAttribute("error", throwable.getCause().getMessage());
+                        return "redirect:/pemilik/daftarsewa";
+                    }
+                    if (throwable.getCause() instanceof IllegalStateException) {
+                        ra.addFlashAttribute("error", "Penyewaan tidak dalam status PENDING atau kamar tidak tersedia");
+                        return "redirect:/pemilik/daftarsewa";
+                    }
+                    ra.addFlashAttribute("error", "Gagal menerima penyewaan: " + throwable.getMessage());
+                    return "redirect:/pemilik/daftarsewa";
+                });
+    }
+
+    @PostMapping("/kurangi-jumlah-kos/{id}")
+    public CompletableFuture<String> reduceKosJumlah(@PathVariable UUID id, @RequestParam int newJumlah, Model model, HttpSession session, RedirectAttributes ra) {
+        User user = getCurrentUser(session, ra);
+        if (user == null) {
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (user.getRole() != Role.PEMILIK_KOS) {
+            ra.addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
+            return CompletableFuture.completedFuture("redirect:/api/auth/login");
+        }
+
+        if (newJumlah < 1) {
+            ra.addFlashAttribute("error", "Jumlah kamar minimal 1");
+            return CompletableFuture.completedFuture("redirect:/pemilik/daftarkos");
+        }
+
+        return service.reduceKosJumlah(id, user.getId(), newJumlah)
+                .thenApply(v -> {
+                    ra.addFlashAttribute("success", "Jumlah kamar kos berhasil diperbarui");
+                    return "redirect:/pemilik/daftarkos";
+                })
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof PengelolaanRepository.KosNotFoundException) {
+                        model.addAttribute("errorMessage", "Kos dengan ID " + id + " tidak ditemukan.");
+                        return "pengelolaan/error/KosNotFound";
+                    }
+                    if (throwable.getCause() instanceof IllegalArgumentException) {
+                        ra.addFlashAttribute("error", throwable.getCause().getMessage());
+                        return "redirect:/pemilik/daftarkos";
+                    }
+                    if (throwable.getCause() instanceof IllegalStateException) {
+                        ra.addFlashAttribute("error", "Jumlah kamar tidak boleh kurang dari penyewaan yang sudah disetujui");
+                        return "redirect:/pemilik/daftarkos";
+                    }
+                    ra.addFlashAttribute("error", "Gagal mengurangi jumlah kamar: " + throwable.getMessage());
                     return "redirect:/pemilik/daftarkos";
                 });
     }
