@@ -1,54 +1,87 @@
 package id.ac.ui.cs.advprog.papikos.chat.model;
-import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "messages")
+@Getter
+@Setter
 public class Message {
-    private Long id;
-    private Long senderId;
-    private Long chatroomId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = "sender_id", nullable = false)
+    private UUID senderId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chatroom_id", nullable = false)
+    @JsonIgnore // Prevent circular reference in JSON
+    private Chatroom chatroom;
+
+    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(name = "timestamp", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
 
-    public Message() {
+    @Column(name = "is_read")
+    private boolean isRead = false;
+
+    @Column(name = "read_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime readAt;
+
+    @Column(name = "is_edited")
+    private boolean isEdited = false;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
+    // Helper method untuk backward compatibility dan JSON serialization
+    public UUID getChatroomId() {
+        return chatroom != null ? chatroom.getId() : null;
     }
 
-    public Long getId() {
-        return id;
+    public void setChatroomId(UUID chatroomId) {
+        // This method is kept for backward compatibility
+        // but you should use setChatroom(Chatroom chatroom) instead
+        if (this.chatroom == null) {
+            this.chatroom = new Chatroom();
+        }
+        this.chatroom.setId(chatroomId);
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // isEdited flag methods
+    public boolean isEdited() {
+        return isEdited;
     }
 
-    public Long getSenderId() {
-        return senderId;
+    public void setEdited(boolean edited) {
+        isEdited = edited;
     }
 
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
+    // isDeleted flag methods
+    public boolean isDeleted() {
+        return isDeleted;
     }
 
-    public Long getChatroomId() {
-        return chatroomId;
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
-    public void setChatroomId(Long chatroomId) {
-        this.chatroomId = chatroomId;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
+    @PrePersist
+    protected void onCreate() {
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
     }
 }

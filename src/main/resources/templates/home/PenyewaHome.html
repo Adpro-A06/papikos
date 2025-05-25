@@ -361,19 +361,29 @@
                     </svg>
                     <span>Penyewaan Saya</span>
                 </a>
-                <div class="user-info">
-                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
-                        P</div>
-                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
-                </div>
+                <a th:href="@{/chatrooms/renter/{renterId}(renterId=${user.id})}" class="btn-nav">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10z"></path>
+                        <path d="M8 12h8"></path>
+                        <path d="M8 8h8"></path>
+                    </svg>
+                    <span>Daftar Chat</span>
+                </a>
                 <a th:href="@{/payment/wallet}" class="btn-nav">
                     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
                         <line x1="2" y1="10" x2="22" y2="10"></line>
                     </svg>
                     <span>Wallet</span>
                 </a>
+                <div class="user-info">
+                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
+                        P</div>
+                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
+                </div>
                 <form th:action="@{/api/auth/logout}" method="post">
                     <button type="submit" class="btn-logout">
                         <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -389,62 +399,61 @@
         </div>
     </header>
 
-    <main class="main-content">
-        <div class="welcome-banner">
-            <h2>Selamat Datang di PapiKos!</h2>
-            <p>Temukan kos yang sesuai dengan kebutuhan Anda dengan mudah.</p>
-        </div>
+<main class="main-content">
+    <div class="welcome-banner">
+        <h2>Selamat Datang di PapiKos!</h2>
+        <p>Temukan kos yang sesuai dengan kebutuhan Anda dengan mudah.</p>
+    </div>
 
-        <div class="search-container">
-            <form th:action="@{/kos/search}" method="get" class="search-form">
-                <input type="text" name="keyword" th:value="${keyword}"
-                    placeholder="Cari kos berdasarkan nama, alamat, atau deskripsi..." class="search-input">
-                <button type="submit" class="search-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path
+    <div class="search-container">
+        <form th:action="@{/kos/search}" method="get" class="search-form">
+            <input type="text" name="keyword" th:value="${keyword}"
+                   placeholder="Cari kos berdasarkan nama, alamat, atau deskripsi..." class="search-input">
+            <button type="submit" class="search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     viewBox="0 0 16 16">
+                    <path
                             d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                    </svg>
-                    Cari
-                </button>
-            </form>
+                </svg>
+                Cari
+            </button>
+        </form>
+    </div>
+
+    <h2 class="section-title">Kos Tersedia</h2>
+    <div class="kos-grid">
+        <div th:if="${kosList == null || kosList.empty}" class="no-kos">
+            <p>Tidak ada kos yang tersedia saat ini.</p>
         </div>
 
-        <h2 class="section-title">Kos Tersedia</h2>
-        <div class="kos-grid">
-            <div th:if="${kosList == null || kosList.empty}" class="no-kos">
-                <p>Tidak ada kos yang tersedia saat ini.</p>
-            </div>
-
-            <div th:if="${kosList != null && !kosList.empty}">
-                <div th:each="kos : ${kosList}" class="kos-card" th:if="${kos != null}">
-                    <div class="kos-image">
-                        <div class="placeholder-image">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
-                                viewBox="0 0 16 16">
-                                <path
+        <div th:if="${kosList != null && !kosList.empty}">
+            <div th:each="kos : ${kosList}" class="kos-card" th:if="${kos != null}">
+                <div class="kos-image">
+                    <div class="placeholder-image">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                             viewBox="0 0 16 16">
+                            <path
                                     d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
-                                <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
-                            </svg>
-                        </div>
+                            <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
+                        </svg>
                     </div>
-                    <div class="kos-details">
-                        <h3 th:text="${kos.nama}">Nama Kos</h3>
-                        <p class="kos-address" th:text="${kos.alamat}">Alamat Kos</p>
-                        <p class="kos-price">Rp <span
-                                th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
-                            /
-                            bulan</p>
-                        <p class="kos-availability">Tersedia: <span th:text="${kos.jumlah}">5</span> kamar</p>
-                        <div class="kos-actions">
-                            <a th:href="@{/kos/{id}(id=${kos.id})}" class="btn btn-detail">Lihat Detail</a>
-                        </div>
+                </div>
+                <div class="kos-details">
+                    <h3 th:text="${kos.nama}">Nama Kos</h3>
+                    <p class="kos-address" th:text="${kos.alamat}">Alamat Kos</p>
+                    <p class="kos-price">Rp <span
+                            th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
+                        /
+                        bulan</p>
+                    <p class="kos-availability">Tersedia: <span th:text="${kos.jumlah}">5</span> kamar</p>
+                    <div class="kos-actions">
+                        <a th:href="@{/kos/{id}(id=${kos.id})}" class="btn btn-detail">Lihat Detail</a>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 </body>
 
 </html>
-

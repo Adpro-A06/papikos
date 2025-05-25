@@ -338,6 +338,11 @@
             min-width: 200px;
         }
 
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
             .kos-image-gallery {
                 height: 250px;
@@ -372,111 +377,232 @@
 </head>
 
 <body>
-    <header class="header">
-        <div class="header-container">
-            <a href="/penyewa/home" class="logo">PapiKos</a>
-            <div class="header-title">Detail Kos</div>
-            <div class="user-menu">
-                <div class="user-info">
-                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
-                        P</div>
-                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
-                </div>
-                <form th:action="@{/api/auth/logout}" method="post">
-                    <button type="submit" class="btn-logout">
-                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        Logout
-                    </button>
-                </form>
+<header class="header">
+    <div class="header-container">
+        <a href="/penyewa/home" class="logo">PapiKos</a>
+        <div class="header-title">Detail Kos</div>
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
+                    P</div>
+                <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
             </div>
+            <form th:action="@{/api/auth/logout}" method="post">
+                <button type="submit" class="btn-logout">
+                    <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </button>
+            </form>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="main-content">
-        <div class="actions-container">
-            <a href="/penyewa/home" class="back-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                        d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
-                </svg>
-                Kembali ke pencarian
-            </a>
-        </div>
+<main class="main-content">
+    <div class="actions-container">
+        <a href="/penyewa/home" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                      d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+            </svg>
+            Kembali ke pencarian
+        </a>
+    </div>
 
-        <div class="kos-detail-container" th:if="${kos != null}">
-            <div class="kos-image-gallery">
-                <div class="placeholder-image">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path
+    <div class="kos-detail-container" th:if="${kos != null}">
+        <div class="kos-image-gallery">
+            <div class="placeholder-image">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor"
+                     viewBox="0 0 16 16">
+                    <path
                             d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
-                        <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
-                    </svg>
-                </div>
+                    <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="kos-info">
+            <h1 class="kos-name" th:text="${kos.nama}">Kos Melati</h1>
+            <div class="kos-address">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     viewBox="0 0 16 16">
+                    <path
+                            d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                </svg>
+                <span th:text="${kos.alamat}">Jl. Kenanga No. 10</span>
             </div>
 
-            <div class="kos-info">
-                <h1 class="kos-name" th:text="${kos.nama}">Kos Melati</h1>
-                <div class="kos-address">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path
-                            d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-                    </svg>
-                    <span th:text="${kos.alamat}">Jl. Kenanga No. 10</span>
-                </div>
-
-                <div class="kos-stats">
-                    <div class="kos-stat-item">
-                        <span class="stat-label">Harga</span>
-                        <span class="stat-value price-value">
+            <div class="kos-stats">
+                <div class="kos-stat-item">
+                    <span class="stat-label">Harga</span>
+                    <span class="stat-value price-value">
                             Rp <span
-                                th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
+                            th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
                             / bulan
                         </span>
-                    </div>
-                    <div class="kos-stat-item">
-                        <span class="stat-label">Kamar Tersedia</span>
-                        <span class="stat-value" th:text="${kos.jumlah}">5</span>
-                    </div>
-                    <div class="kos-stat-item">
-                        <span class="stat-label">Status</span>
-                        <span class="stat-value" th:text="${kos.status}">AVAILABLE</span>
-                    </div>
                 </div>
-
-                <div class="kos-description">
-                    <h2 class="description-title">Deskripsi</h2>
-                    <p class="description-text" th:text="${kos.deskripsi}">
-                        Kos nyaman dekat dengan kampus. Fasilitas lengkap dengan kamar mandi dalam, AC, WiFi, dan area
-                        parkir yang luas.
-                        Lingkungan aman dan tenang, cocok untuk mahasiswa maupun karyawan.
-                    </p>
+                <div class="kos-stat-item">
+                    <span class="stat-label">Kamar Tersedia</span>
+                    <span class="stat-value" th:text="${kos.jumlah}">5</span>
                 </div>
-
-                <div class="owner-info" th:if="${kos.pemilik != null}">
-                    <div class="owner-avatar"
-                        th:text="${kos.pemilik.email != null ? kos.pemilik.email.substring(0, 1).toUpperCase() : 'P'}">P
-                    </div>
-                    <div class="owner-details">
-                        <div class="owner-name" th:text="${kos.pemilik.email}">pemilik@example.com</div>
-                        <div class="owner-contact">Pemilik Kos</div>
-                    </div>
-                </div>
-
-                <div class="rent-action-container">
-                    <a th:href="@{/penyewaan/new/{kosId}(kosId=${kos.id})}" class="btn btn-rent-action">
-                        Ajukan Penyewaan
-                    </a>
+                <div class="kos-stat-item">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" th:text="${kos.status}">AVAILABLE</span>
                 </div>
             </div>
+
+            <div class="kos-description">
+                <h2 class="description-title">Deskripsi</h2>
+                <p class="description-text" th:text="${kos.deskripsi}">
+                    Kos nyaman dekat dengan kampus. Fasilitas lengkap dengan kamar mandi dalam, AC, WiFi, dan area
+                    parkir yang luas.
+                    Lingkungan aman dan tenang, cocok untuk mahasiswa maupun karyawan.
+                </p>
+            </div>
+
+            <div class="owner-info" th:if="${kos.pemilik != null}">
+                <div class="owner-avatar"
+                     th:text="${kos.pemilik.email != null ? kos.pemilik.email.substring(0, 1).toUpperCase() : 'P'}">P
+                </div>
+                <div class="owner-details">
+                    <div class="owner-name" th:text="${kos.pemilik.email}">pemilik@example.com</div>
+                    <div class="owner-contact">Pemilik Kos</div>
+                </div>
+            </div>
+
+            <div class="rent-action-container">
+                <a th:href="@{/penyewaan/new/{kosId}(kosId=${kos.id})}" class="btn btn-rent-action">
+                    Ajukan Penyewaan
+                </a>
+                <button type="button" id="chatButton" class="btn btn-rent-action btn-chat"
+                        th:data-kos-id="${kos.id}"
+                        th:data-renter-id="${user.id}"
+                        th:data-owner-id="${kos.pemilik.id}">
+                    Tanya Pemilik Kos
+                </button>
+            </div>
         </div>
-    </main>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatButton = document.getElementById('chatButton');
+
+        if (chatButton) {
+            chatButton.addEventListener('click', async function() {
+                const kosId = this.getAttribute('data-kos-id');
+                const renterId = this.getAttribute('data-renter-id');
+                const ownerId = this.getAttribute('data-owner-id');
+
+                // Validate that all required data is present
+                if (!kosId || !renterId || !ownerId) {
+                    alert('Data tidak lengkap. Silakan refresh halaman dan coba lagi.');
+                    return;
+                }
+
+                // Show loading state
+                this.classList.add('loading');
+                this.textContent = 'Membuat chat...';
+                this.disabled = true;
+
+                try {
+                    console.log('Creating chatroom with:', { kosId, renterId, ownerId });
+
+                    const response = await fetch(`/api/chatrooms/create/${kosId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            renterId: renterId,
+                            ownerId: ownerId,
+                            propertyId: kosId
+                        })
+                    });
+
+                    console.log('Response status:', response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Response data:', data);
+
+                        // Handle different response formats
+                        let chatroomId = null;
+
+                        // Check for different possible response structures
+                        if (data.chatroomId) {
+                            chatroomId = data.chatroomId;
+                        } else if (data.id) {
+                            chatroomId = data.id;
+                        } else if (data.chatRoomId) {
+                            chatroomId = data.chatRoomId;
+                        } else if (typeof data === 'object' && data.hasOwnProperty('id')) {
+                            chatroomId = data.id;
+                        }
+
+                        if (chatroomId) {
+                            // Success! Redirect to the new chatroom
+                            console.log('Redirecting to chatroom:', chatroomId);
+                            window.location.href = `/chatrooms/${chatroomId}`;
+                        } else {
+                            // If we can't find the chatroom ID but the response was OK,
+                            // it might still be successful - check for success message
+                            if (response.status === 201 || response.status === 200) {
+                                // Redirect to chat list instead
+                                window.location.href = '/penyewa/chatrooms';
+                            } else {
+                                throw new Error('Chatroom ID tidak ditemukan dalam response');
+                            }
+                        }
+                    } else {
+                        // Try to get error message from response
+                        let errorMessage = 'Gagal membuat chat. Silakan coba lagi.';
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.error) {
+                                errorMessage = errorData.error;
+                            }
+                        } catch (e) {
+                            // If response is not JSON, use response text
+                            try {
+                                const errorText = await response.text();
+                                if (errorText && errorText.trim()) {
+                                    errorMessage = errorText;
+                                }
+                            } catch (textError) {
+                                // Use default message
+                            }
+                        }
+                        throw new Error(errorMessage);
+                    }
+                } catch (error) {
+                    console.error('Error creating chat:', error);
+
+                    // Don't show error if it contains "success" (this handles your specific case)
+                    if (error.message && error.message.toLowerCase().includes('success')) {
+                        // Redirect to chat list on success
+                        window.location.href = '/penyewa/chatrooms';
+                    } else {
+                        alert('Gagal membuat chat: ' + error.message);
+                    }
+                } finally {
+                    // Reset button state
+                    this.classList.remove('loading');
+                    this.textContent = 'Tanya Pemilik Kos';
+                    this.disabled = false;
+                }
+            });
+        }
+    });
+</script>
 </body>
 
 </html>
