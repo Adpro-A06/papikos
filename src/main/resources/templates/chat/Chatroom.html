@@ -225,14 +225,19 @@
             font-size: 12px;
             opacity: 0.7;
             margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .message.sent .message-time {
             text-align: right;
+            justify-content: flex-end;
         }
 
         .message.received .message-time {
             text-align: left;
+            justify-content: flex-start;
         }
 
         .message-actions {
@@ -463,6 +468,63 @@
             color: var(--text-color);
         }
 
+        /* Date Header Styles */
+        .date-header {
+            text-align: center;
+            margin: 20px 0 15px 0;
+            position: relative;
+        }
+
+        .date-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border-color), transparent);
+        }
+
+        .date-header span {
+            background-color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: var(--dark-gray);
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Read Receipt Styles */
+        .read-receipt {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .read-receipt.read {
+            color: var(--success-green);
+        }
+
+        .read-receipt.unread {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message.received .read-receipt {
+            color: var(--dark-gray);
+        }
+
+        /* Edited Indicator */
+        .edited-indicator {
+            font-size: 11px;
+            font-style: italic;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 padding: 10px;
@@ -656,6 +718,32 @@
             }
         }
 
+        function createDateHeader(date) {
+            const dateHeaderDiv = document.createElement('div');
+            dateHeaderDiv.className = 'date-header';
+
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            let displayText;
+            if (date.toDateString() === today.toDateString()) {
+                displayText = 'Hari Ini';
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                displayText = 'Kemarin';
+            } else {
+                displayText = date.toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+
+            dateHeaderDiv.innerHTML = `<span>${displayText}</span>`;
+            return dateHeaderDiv;
+        }
+
         function displayMessages() {
             if (messages.length === 0) {
                 noMessagesText.style.display = 'block';
@@ -668,9 +756,29 @@
             // Sort messages by timestamp
             messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+            // Group messages by date
+            const messagesByDate = {};
             messages.forEach(message => {
-                const messageDiv = createMessageElement(message);
-                messagesContainer.appendChild(messageDiv);
+                const messageDate = new Date(message.timestamp);
+                const dateKey = messageDate.toDateString();
+
+                if (!messagesByDate[dateKey]) {
+                    messagesByDate[dateKey] = [];
+                }
+                messagesByDate[dateKey].push(message);
+            });
+
+            // Display messages with date headers
+            Object.keys(messagesByDate).forEach(dateKey => {
+                // Add date header
+                const dateHeader = createDateHeader(new Date(dateKey));
+                messagesContainer.appendChild(dateHeader);
+
+                // Add messages for this date
+                messagesByDate[dateKey].forEach(message => {
+                    const messageDiv = createMessageElement(message);
+                    messagesContainer.appendChild(messageDiv);
+                });
             });
 
             // Scroll to bottom
@@ -693,9 +801,29 @@
                     minute: '2-digit'
                 });
 
+                let readReceiptHtml = '';
+                if (isCurrentUser) {
+                    const isRead = message.isRead || false; // Assuming isRead field exists in your Message model
+                    readReceiptHtml = `
+                        <div class="read-receipt ${isRead ? 'read' : 'unread'}">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            ${isRead ? 'Dibaca' : 'Terkirim'}
+                        </div>
+                    `;
+                }
+
+                // Create edited indicator
+                const editedIndicator = message.isEdited ? '<span class="edited-indicator">Edited</span>' : '';
+
                 messageDiv.innerHTML = `
                     <div class="message-content">${escapeHtml(message.content)}</div>
-                    <div class="message-time">${messageTime}</div>
+                    <div class="message-time">
+                        ${messageTime}
+                        ${editedIndicator}
+                        ${readReceiptHtml}
+                    </div>
                     ${isCurrentUser ? `
                         <div class="message-actions">
                             <button class="message-action-btn edit-btn" onclick="startEdit('${message.id}', '${escapeHtml(message.content)}')">
@@ -842,6 +970,7 @@
                     const messageIndex = messages.findIndex(m => m.id === messageId);
                     if (messageIndex !== -1) {
                         messages[messageIndex] = updatedMessage;
+                        messages[messageIndex].isEdited = true;
                     }
 
                     // Update the message content in DOM immediately
@@ -850,6 +979,31 @@
 
                     messageDiv.classList.remove('edit-mode');
                     contentDiv.innerHTML = escapeHtml(newContent);
+
+                    const timeDiv = messageDiv.querySelector('.message-time');
+                    const messageTime = new Date(updatedMessage.timestamp).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const isCurrentUser = updatedMessage.senderId === currentUserId;
+                    let readReceiptHtml = '';
+                    if (isCurrentUser) {
+                        const isRead = updatedMessage.isRead || false;
+                        readReceiptHtml = `
+                            <div class="read-receipt ${isRead ? 'read' : 'unread'}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"></polyline>
+                                </svg>
+                                ${isRead ? 'Dibaca' : 'Terkirim'}
+                            </div>
+                        `;
+                    }
+                    timeDiv.innerHTML = `
+                        ${messageTime}
+                        <span class="edited-indicator">Edited</span>
+                        ${readReceiptHtml}
+                    `;
 
                     lastActionMessageId = messageId;
                     showNotification('Pesan berhasil diubah', 'success');
