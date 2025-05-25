@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -69,10 +67,13 @@ class PaymentServiceImplTest {
         otherWallet = new Wallet(otherUserId);
     }
 
+
     @Test
     void topUp_withValidAmount_shouldSucceed() {
+
         when(userRepository.existsById(userId)).thenReturn(true);
         when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
+
 
         paymentService.topUp(userId, topUpAmount);
 
@@ -131,29 +132,7 @@ class PaymentServiceImplTest {
         verify(paymentRepository, never()).save(any());
     }
 
-    @Test
-    void topUpAsync_withValidAmount_shouldSucceed() throws ExecutionException, InterruptedException {
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
 
-        CompletableFuture<Void> future = paymentService.topUpAsync(userId, topUpAmount);
-        future.get();
-
-        verify(walletRepository).save(any(Wallet.class));
-        verify(paymentRepository).save(any(Payment.class));
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void topUpAsync_withInvalidAmount_shouldCompleteExceptionally() {
-        BigDecimal negativeAmount = new BigDecimal("-100");
-
-        CompletableFuture<Void> future = paymentService.topUpAsync(userId, negativeAmount);
-
-        assertThrows(ExecutionException.class, future::get);
-        assertTrue(future.isCompletedExceptionally());
-    }
 
     @Test
     void pay_withSufficientFunds_shouldSucceed() {
@@ -171,6 +150,7 @@ class PaymentServiceImplTest {
         Payment savedPayment = paymentCaptor.getValue();
 
         assertEquals(initialBalance.subtract(paymentAmount), savedWallets.get(0).getBalance());
+
         assertEquals(paymentAmount, savedWallets.get(1).getBalance());
 
         assertEquals(userId, savedPayment.getFromUserId());
@@ -212,35 +192,6 @@ class PaymentServiceImplTest {
         verify(paymentRepository, never()).save(any());
     }
 
-    @Test
-    void payAsync_withSufficientFunds_shouldSucceed() throws ExecutionException, InterruptedException {
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(userRepository.existsById(otherUserId)).thenReturn(true);
-        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
-        when(walletRepository.findById(otherUserId)).thenReturn(Optional.of(otherWallet));
-
-        CompletableFuture<Void> future = paymentService.payAsync(userId, otherUserId, paymentAmount);
-        future.get();
-
-        verify(walletRepository, times(2)).save(any(Wallet.class));
-        verify(paymentRepository).save(any(Payment.class));
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void payAsync_withInsufficientFunds_shouldCompleteExceptionally() {
-        BigDecimal tooLargeAmount = new BigDecimal("200000");
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(userRepository.existsById(otherUserId)).thenReturn(true);
-        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
-        when(walletRepository.findById(otherUserId)).thenReturn(Optional.of(otherWallet));
-
-        CompletableFuture<Void> future = paymentService.payAsync(userId, otherUserId, tooLargeAmount);
-
-        assertThrows(ExecutionException.class, future::get);
-        assertTrue(future.isCompletedExceptionally());
-    }
 
     @Test
     void getBalance_withExistingWallet_shouldReturnBalance() {
@@ -273,28 +224,6 @@ class PaymentServiceImplTest {
         assertTrue(exception.getMessage().contains("tidak ditemukan"));
     }
 
-    @Test
-    void getBalanceAsync_withExistingWallet_shouldReturnBalance() throws ExecutionException, InterruptedException {
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
-
-        CompletableFuture<BigDecimal> future = paymentService.getBalanceAsync(userId);
-        BigDecimal balance = future.get();
-
-        assertEquals(initialBalance, balance);
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void getBalanceAsync_withNonExistentUser_shouldCompleteExceptionally() {
-        when(userRepository.existsById(userId)).thenReturn(false);
-
-        CompletableFuture<BigDecimal> future = paymentService.getBalanceAsync(userId);
-
-        assertThrows(ExecutionException.class, future::get);
-        assertTrue(future.isCompletedExceptionally());
-    }
 
     @Test
     void getUserTransactions_shouldReturnAllTransactions() {
@@ -306,31 +235,6 @@ class PaymentServiceImplTest {
         List<Payment> result = paymentService.getUserTransactions(userId);
 
         assertEquals(transactions, result);
-    }
-
-    @Test
-    void getUserTransactionsAsync_shouldReturnAllTransactions() throws ExecutionException, InterruptedException {
-        List<Payment> transactions = createTestTransactions();
-
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
-
-        CompletableFuture<List<Payment>> future = paymentService.getUserTransactionsAsync(userId);
-        List<Payment> result = future.get();
-
-        assertEquals(transactions, result);
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void getUserTransactionsAsync_withNonExistentUser_shouldCompleteExceptionally() {
-        when(userRepository.existsById(userId)).thenReturn(false);
-
-        CompletableFuture<List<Payment>> future = paymentService.getUserTransactionsAsync(userId);
-
-        assertThrows(ExecutionException.class, future::get);
-        assertTrue(future.isCompletedExceptionally());
     }
 
     @Test
@@ -384,53 +288,6 @@ class PaymentServiceImplTest {
 
         assertEquals(1, result.size());
         assertEquals(TransactionType.PAYMENT, result.get(0).getType());
-    }
-
-    @Test
-    void filterTransactionsAsync_withNoFilters_shouldReturnAllTransactions() throws ExecutionException, InterruptedException {
-        List<Payment> transactions = createTestTransactions();
-
-        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
-
-        CompletableFuture<List<Payment>> future = paymentService.filterTransactionsAsync(userId, null, null, null);
-        List<Payment> result = future.get();
-
-        assertEquals(3, result.size());
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void filterTransactionsAsync_byDateRange_shouldFilterCorrectly() throws ExecutionException, InterruptedException {
-        List<Payment> transactions = createTestTransactions();
-
-        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
-
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        LocalDate tomorrow = LocalDate.now().plusDays(1);
-
-        CompletableFuture<List<Payment>> future = paymentService.filterTransactionsAsync(userId, yesterday, tomorrow, null);
-        List<Payment> result = future.get();
-
-        assertEquals(1, result.size());
-        assertEquals(TransactionType.PAYMENT, result.get(0).getType());
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
-    }
-
-    @Test
-    void filterTransactionsAsync_byType_shouldFilterCorrectly() throws ExecutionException, InterruptedException {
-        List<Payment> transactions = createTestTransactions();
-
-        when(paymentRepository.findByFromUserIdOrToUserId(userId, userId)).thenReturn(transactions);
-
-        CompletableFuture<List<Payment>> future = paymentService.filterTransactionsAsync(userId, null, null, TransactionType.TOPUP);
-        List<Payment> result = future.get();
-
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(p -> p.getType() == TransactionType.TOPUP));
-        assertTrue(future.isDone());
-        assertFalse(future.isCompletedExceptionally());
     }
 
     private List<Payment> createTestTransactions() {

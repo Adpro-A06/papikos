@@ -17,11 +17,5 @@ public interface PaymentService {
     BigDecimal getBalance(UUID userId);
     List<Payment> getUserTransactions(UUID userId);
     List<Payment> filterTransactions(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type);
-
-    CompletableFuture<Void> topUpAsync(UUID userId, BigDecimal amount);
-    CompletableFuture<Void> payAsync(UUID fromUserId, UUID toUserId, BigDecimal amount);
-    CompletableFuture<BigDecimal> getBalanceAsync(UUID userId);
-    CompletableFuture<List<Payment>> getUserTransactionsAsync(UUID userId);
-    CompletableFuture<List<Payment>> filterTransactionsAsync(UUID userId, LocalDate startDate, LocalDate endDate, TransactionType type);
 }
 
