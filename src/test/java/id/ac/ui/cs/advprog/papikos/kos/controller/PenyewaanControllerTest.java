@@ -283,7 +283,7 @@ class PenyewaanControllerTest {
 
         assertEquals("redirect:/penyewaan/new/" + kosId, viewName);
         verify(penyewaanService).createPenyewaan(any(Penyewaan.class), eq(kosId), eq(penyewaUser));
-        verify(redirectAttributes).addFlashAttribute("error", "Test error");
+        verify(redirectAttributes).addFlashAttribute("error", "Gagal membuat penyewaan: Test error");
     }
 
     @Test
@@ -320,7 +320,7 @@ class PenyewaanControllerTest {
 
         String viewName = penyewaanController.editPenyewaanForm(penyewaanId, session, model, redirectAttributes);
         assertEquals("redirect:/penyewaan/", viewName);
-        verify(redirectAttributes).addFlashAttribute("error", "Penyewaan tidak ditemukan");
+        verify(redirectAttributes).addFlashAttribute("error", "Gagal memuat form edit: Penyewaan tidak ditemukan");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
@@ -450,7 +450,7 @@ class PenyewaanControllerTest {
 
         assertEquals("redirect:/penyewaan/" + penyewaanId + "/edit", viewName);
         verify(penyewaanService).updatePenyewaan(any(Penyewaan.class), eq(penyewaanId), eq(penyewaUser));
-        verify(redirectAttributes).addFlashAttribute("error", "Test error");
+        verify(redirectAttributes).addFlashAttribute("error", "Gagal memperbarui penyewaan: Test error");
     }
 
     @Test
@@ -487,7 +487,8 @@ class PenyewaanControllerTest {
 
         String viewName = penyewaanController.viewPenyewaan(penyewaanId, session, model, redirectAttributes);
         assertEquals("redirect:/penyewaan/", viewName);
-        verify(redirectAttributes).addFlashAttribute("error", "Penyewaan tidak ditemukan");
+        verify(redirectAttributes).addFlashAttribute("error",
+                "Gagal memuat detail penyewaan: Penyewaan tidak ditemukan");
         verify(penyewaanService).findByIdAndPenyewa(penyewaanId, penyewaUser);
     }
 
@@ -560,6 +561,6 @@ class PenyewaanControllerTest {
         String viewName = penyewaanController.cancelPenyewaan(penyewaanId, session, redirectAttributes);
         assertEquals("redirect:/penyewaan/" + penyewaanId, viewName);
         verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);
-        verify(redirectAttributes).addFlashAttribute("error", "Test error");
+        verify(redirectAttributes).addFlashAttribute("error", "Gagal membatalkan penyewaan: Test error");
     }
 }
