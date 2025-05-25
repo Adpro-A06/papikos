@@ -9,12 +9,14 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @Getter
     private UUID id;
