@@ -58,6 +58,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("me.paulschwarz:spring-dotenv:3.0.0")
 }
 
 tasks.register<Test>("unitTest") {

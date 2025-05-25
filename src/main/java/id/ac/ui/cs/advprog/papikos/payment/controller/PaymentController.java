@@ -84,6 +84,8 @@ public class PaymentController {
     @GetMapping("/pay")
     public String showPaymentForm(
             @RequestParam(required = false) UUID toUserId,
+            @RequestParam(required = false) BigDecimal amount,
+            @RequestParam(required = false) String description,
             HttpSession session,
             Model model,
             RedirectAttributes ra) {
@@ -104,8 +106,28 @@ public class PaymentController {
         model.addAttribute("fromUserId", user.getId());
         model.addAttribute("user", user);
 
+        // Get all pemilik kos (landlords) for dropdown selection
+        List<User> allPemilikKos = authService.findAllPemilikKos();
+        model.addAttribute("allPemilikKos", allPemilikKos);
+
+        // Pre-fill data if provided
         if (toUserId != null) {
             model.addAttribute("toUserId", toUserId);
+            // Get pemilik info for display
+            try {
+                User pemilik = authService.findById(toUserId);
+                model.addAttribute("pemilikEmail", pemilik.getEmail());
+            } catch (Exception e) {
+                // Handle error silently, will show generic message
+            }
+        }
+
+        if (amount != null) {
+            model.addAttribute("prefilledAmount", amount);
+        }
+
+        if (description != null) {
+            model.addAttribute("prefilledDescription", description);
         }
 
         return "payment/PaymentForm";
