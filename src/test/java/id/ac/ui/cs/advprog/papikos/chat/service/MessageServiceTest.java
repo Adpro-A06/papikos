@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,6 +85,39 @@ class MessageServiceTest {
     }
 
     @Test
+    void getMessagesByChatroomId_ShouldReturnEmptyList() {
+        when(messageRepository.findByChatroomIdOrderByTimestampDesc(chatroomId))
+                .thenReturn(Collections.emptyList());
+
+        List<Message> result = messageService.getMessagesByChatroomId(chatroomId);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(messageRepository).findByChatroomIdOrderByTimestampDesc(chatroomId);
+    }
+
+    @Test
+    void getMessagesByChatroomId_WithMultipleMessages_ShouldReturnAll() {
+        Message message1 = new Message();
+        message1.setId(UUID.randomUUID());
+        message1.setContent("First message");
+
+        Message message2 = new Message();
+        message2.setId(UUID.randomUUID());
+        message2.setContent("Second message");
+
+        List<Message> expectedMessages = Arrays.asList(message1, message2);
+        when(messageRepository.findByChatroomIdOrderByTimestampDesc(chatroomId))
+                .thenReturn(expectedMessages);
+
+        List<Message> result = messageService.getMessagesByChatroomId(chatroomId);
+
+        assertEquals(2, result.size());
+        assertEquals(message1, result.get(0));
+        assertEquals(message2, result.get(1));
+    }
+
+    @Test
     void sendMessage_ShouldFetchChatroom_DelegateToCommandService_AndReturnMessage() {
         when(chatroomService.getChatroomById(chatroomId)).thenReturn(mockChatroom);
         when(chatCommandService.sendMessage(eq(mockChatroom), eq(senderId), eq("hello")))
@@ -93,6 +127,9 @@ class MessageServiceTest {
 
         assertNotNull(result);
         assertEquals(mockMessage.getId(), result.getId());
+        assertEquals("hello", result.getContent());
+        assertEquals(senderId, result.getSenderId());
+
         verify(chatroomService).getChatroomById(chatroomId);
         verify(chatCommandService).sendMessage(mockChatroom, senderId, "hello");
         verify(messagingTemplate).convertAndSend(
@@ -102,17 +139,71 @@ class MessageServiceTest {
     }
 
     @Test
-    void editMessage_ShouldFetchChatroom_DelegateToCommandService_AndReturnMessage() {
+    void sendMessage_WithEmptyContent_ShouldWork() {
         when(chatroomService.getChatroomById(chatroomId)).thenReturn(mockChatroom);
-        when(chatCommandService.editMessage(eq(mockChatroom), eq(messageId), eq("upd")))
+        when(chatCommandService.sendMessage(eq(mockChatroom), eq(senderId), eq("")))
                 .thenReturn(mockMessage);
 
-        Message result = messageService.editMessage(chatroomId, messageId, "upd");
+        Message result = messageService.sendMessage(chatroomId, senderId, "");
+
+        assertNotNull(result);
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService).sendMessage(mockChatroom, senderId, "");
+        verify(messagingTemplate).convertAndSend(
+                eq("/topic/chatroom/" + chatroomId),
+                eq(mockMessage)
+        );
+    }
+
+    @Test
+    void sendMessage_WithNullContent_ShouldThrowException() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            messageService.sendMessage(chatroomId, senderId, null);
+        });
+
+        assertEquals("Message content cannot be null", exception.getMessage());
+
+        // Verify that no service calls were made after validation failure
+        verify(chatroomService, never()).getChatroomById(any());
+        verify(chatCommandService, never()).sendMessage(any(), any(), any());
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void editMessage_ShouldFetchChatroom_DelegateToCommandService_AndReturnMessage() {
+        mockMessage.setContent("updated content");
+        mockMessage.setEdited(true);
+
+        when(chatroomService.getChatroomById(chatroomId)).thenReturn(mockChatroom);
+        when(chatCommandService.editMessage(eq(mockChatroom), eq(messageId), eq("updated content")))
+                .thenReturn(mockMessage);
+
+        Message result = messageService.editMessage(chatroomId, messageId, "updated content");
 
         assertNotNull(result);
         assertEquals(mockMessage.getId(), result.getId());
+        assertEquals("updated content", result.getContent());
+        assertTrue(result.isEdited());
+
         verify(chatroomService).getChatroomById(chatroomId);
-        verify(chatCommandService).editMessage(mockChatroom, messageId, "upd");
+        verify(chatCommandService).editMessage(mockChatroom, messageId, "updated content");
+        verify(messagingTemplate).convertAndSend(
+                eq("/topic/chatroom/" + chatroomId + "/edit"),
+                eq(mockMessage)
+        );
+    }
+
+    @Test
+    void editMessage_WithNullContent_ShouldWork() {
+        when(chatroomService.getChatroomById(chatroomId)).thenReturn(mockChatroom);
+        when(chatCommandService.editMessage(eq(mockChatroom), eq(messageId), eq(null)))
+                .thenReturn(mockMessage);
+
+        Message result = messageService.editMessage(chatroomId, messageId, null);
+
+        assertNotNull(result);
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService).editMessage(mockChatroom, messageId, null);
         verify(messagingTemplate).convertAndSend(
                 eq("/topic/chatroom/" + chatroomId + "/edit"),
                 eq(mockMessage)
@@ -179,5 +270,78 @@ class MessageServiceTest {
         verify(chatroomService).getChatroomById(chatroomId);
         verify(chatCommandService).undoLastCommand(mockChatroom, messageId);
         verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void sendMessage_WhenChatroomNotFound_ShouldThrowException() {
+        when(chatroomService.getChatroomById(chatroomId))
+                .thenThrow(new RuntimeException("Chatroom not found"));
+
+        assertThrows(RuntimeException.class, () -> {
+            messageService.sendMessage(chatroomId, senderId, "hello");
+        });
+
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService, never()).sendMessage(any(), any(), any());
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void editMessage_WhenChatroomNotFound_ShouldThrowException() {
+        when(chatroomService.getChatroomById(chatroomId))
+                .thenThrow(new RuntimeException("Chatroom not found"));
+
+        assertThrows(RuntimeException.class, () -> {
+            messageService.editMessage(chatroomId, messageId, "updated");
+        });
+
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService, never()).editMessage(any(), any(), any());
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void deleteMessage_WhenChatroomNotFound_ShouldThrowException() {
+        when(chatroomService.getChatroomById(chatroomId))
+                .thenThrow(new RuntimeException("Chatroom not found"));
+
+        assertThrows(RuntimeException.class, () -> {
+            messageService.deleteMessage(chatroomId, messageId);
+        });
+
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService, never()).deleteMessage(any(), any());
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void undoLastAction_WhenChatroomNotFound_ShouldThrowException() {
+        when(chatroomService.getChatroomById(chatroomId))
+                .thenThrow(new RuntimeException("Chatroom not found"));
+
+        assertThrows(RuntimeException.class, () -> {
+            messageService.undoLastAction(chatroomId, messageId);
+        });
+
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService, never()).undoLastCommand(any(), any());
+        verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
+    }
+
+    @Test
+    void editMessage_WhenCommandServiceReturnsNull_ShouldHandleGracefully() {
+        when(chatroomService.getChatroomById(chatroomId)).thenReturn(mockChatroom);
+        when(chatCommandService.editMessage(eq(mockChatroom), eq(messageId), eq("updated")))
+                .thenReturn(null);
+
+        Message result = messageService.editMessage(chatroomId, messageId, "updated");
+
+        assertNull(result);
+        verify(chatroomService).getChatroomById(chatroomId);
+        verify(chatCommandService).editMessage(mockChatroom, messageId, "updated");
+        verify(messagingTemplate).convertAndSend(
+                eq("/topic/chatroom/" + chatroomId + "/edit"),
+                (Object) eq(null)
+        );
     }
 }

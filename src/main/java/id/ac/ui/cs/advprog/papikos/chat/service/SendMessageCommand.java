@@ -9,28 +9,32 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class SendMessageCommand implements Command {
-    private final Chatroom chatroom;
+    private Chatroom chatroom;
+    private UUID senderId;
+    private String content;
     @Getter
     private Message message;
-    private final MessageRepository messageRepository;
+    private MessageRepository messageRepository;
 
     public SendMessageCommand(Chatroom chatroom, UUID senderId, String content, MessageRepository messageRepository) {
         this.chatroom = chatroom;
+        this.senderId = senderId;
+        this.content = content;
         this.messageRepository = messageRepository;
-        this.message = new Message();
-        this.message.setSenderId(senderId);
-        this.message.setChatroomId(chatroom.getId());
-        this.message.setContent(content);
-        this.message.setTimestamp(LocalDateTime.now());
     }
 
     @Override
     public void execute() {
-        Message savedMessage = messageRepository.save(message);
-        this.message = savedMessage;
+        message = new Message();
+        message.setSenderId(senderId);
+        message.setContent(content);
+        message.setChatroomId(chatroom.getId());
+        message.setTimestamp(LocalDateTime.now());
 
-        if (!chatroom.getMessages().contains(savedMessage)) {
-            chatroom.addMessage(savedMessage);
+        messageRepository.save(message);
+
+        if (!chatroom.getMessages().contains(message)) {
+            chatroom.addMessage(message);
         }
     }
 

@@ -5,15 +5,22 @@ import id.ac.ui.cs.advprog.papikos.chat.model.Message;
 import id.ac.ui.cs.advprog.papikos.chat.repository.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class ChatCommandServiceTest {
+
+    @Mock
+    private MessageRepository messageRepository;
 
     private ChatCommandService chatCommandService;
     private Chatroom chatroom;
@@ -23,14 +30,11 @@ public class ChatCommandServiceTest {
     private UUID renterId;
     private UUID ownerId;
     private UUID messageId;
-    private MessageRepository messageRepository; // Mock the MessageRepository
 
     @BeforeEach
     void setup() {
-        // Mocking the MessageRepository
-        messageRepository = mock(MessageRepository.class);
+        MockitoAnnotations.openMocks(this);
 
-        // Create the service instance with mocked MessageRepository
         chatCommandService = new ChatCommandService(messageRepository);
 
         propertyId = UUID.randomUUID();
@@ -55,103 +59,272 @@ public class ChatCommandServiceTest {
         message.setTimestamp(LocalDateTime.now());
 
         chatroom.addMessage(message);
+    }
 
-        // Mock repository behavior - return the same object that was passed in, but with ID set
+    @Test
+    void testSendMessage() {
         when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
             Message messageToSave = invocation.getArgument(0);
-            // If the message doesn't have an ID, set one
             if (messageToSave.getId() == null) {
                 messageToSave.setId(UUID.randomUUID());
             }
             return messageToSave;
         });
-    }
 
-    @Test
-    void testSendMessage() {
-        // Test sending a new message
-        Message newMessage = chatCommandService.sendMessage(chatroom, ownerId, "Hello from owner");
+        Message result = chatCommandService.sendMessage(chatroom, ownerId, "Hello from owner");
 
-        // Check that the message was added to the chatroom
+        assertNotNull(result);
+        assertEquals("Hello from owner", result.getContent());
+        assertEquals(ownerId, result.getSenderId());
         assertEquals(2, chatroom.getMessages().size());
-        assertEquals(newMessage, chatroom.getMessages().get(1));
-        assertEquals("Hello from owner", newMessage.getContent());
-        assertEquals(ownerId, newMessage.getSenderId());
+
+        verify(messageRepository).save(any(Message.class));
     }
 
     @Test
     void testEditMessage() {
-        // Test editing the message
-        Message editedMessage = chatCommandService.editMessage(chatroom, message.getId(), "Edited message");
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+        when(messageRepository.save(message)).thenReturn(message);
 
-        // Verify that the message content was updated
+        String originalContent = message.getContent();
+        Message editedMessage = chatCommandService.editMessage(chatroom, messageId, "Edited message");
+
         assertEquals("Edited message", message.getContent());
+        assertTrue(message.isEdited());
         assertEquals(message, editedMessage);
+
+        verify(messageRepository).findById(messageId);
+        verify(messageRepository).save(message);
+    }
+
+    @Test
+    void testEditMessage_MessageNotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(messageRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        Message result = chatCommandService.editMessage(chatroom, nonExistentId, "Edited message");
+
+        assertNull(result);
+        verify(messageRepository).findById(nonExistentId);
+        verify(messageRepository, never()).save(any(Message.class));
     }
 
     @Test
     void testDeleteMessage() {
-        // Test deleting the message
-        boolean deleted = chatCommandService.deleteMessage(chatroom, message.getId());
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
 
-        // Check that the message was deleted
+        boolean deleted = chatCommandService.deleteMessage(chatroom, messageId);
+
         assertTrue(deleted);
         assertEquals(0, chatroom.getMessages().size());
+
+        verify(messageRepository).findById(messageId);
+        verify(messageRepository).deleteById(messageId);
     }
 
     @Test
-    void testDeleteNonExistentMessage() {
-        // Test trying to delete a non-existent message
-        boolean deleted = chatCommandService.deleteMessage(chatroom, UUID.randomUUID());
+    void testDeleteMessage_MessageNotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(messageRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        // Ensure it returns false
+        boolean deleted = chatCommandService.deleteMessage(chatroom, nonExistentId);
+
         assertFalse(deleted);
         assertEquals(1, chatroom.getMessages().size());
+
+        verify(messageRepository).findById(nonExistentId);
+        verify(messageRepository, never()).deleteById(any());
     }
 
     @Test
     void testUndoSendMessage() {
-        // Test undoing the sending of a message
+        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+            Message messageToSave = invocation.getArgument(0);
+            if (messageToSave.getId() == null) {
+                messageToSave.setId(UUID.randomUUID());
+            }
+            return messageToSave;
+        });
+
+        // Send a message
         Message newMessage = chatCommandService.sendMessage(chatroom, ownerId, "Message to undo");
         assertEquals(2, chatroom.getMessages().size());
 
+        // Undo the send
         boolean undone = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
 
-        // Ensure the message was undone
         assertTrue(undone);
+        assertEquals(1, chatroom.getMessages().size());
+        assertFalse(chatroom.getMessages().contains(newMessage));
+
+        verify(messageRepository).deleteById(newMessage.getId());
+    }
+
+    @Test
+    void testUndoEditMessage() {
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+        when(messageRepository.save(message)).thenReturn(message);
+
+        String originalContent = message.getContent();
+
+        // Edit the message
+        chatCommandService.editMessage(chatroom, messageId, "Temporary edit");
+        assertEquals("Temporary edit", message.getContent());
+        assertTrue(message.isEdited());
+
+        // Undo the edit
+        boolean undone = chatCommandService.undoLastCommand(chatroom, messageId);
+
+        assertTrue(undone);
+        assertEquals(originalContent, message.getContent());
+        assertFalse(message.isEdited());
+
+        verify(messageRepository, times(2)).save(message); // Once for edit, once for undo
+    }
+
+    @Test
+    void testUndoDeleteMessage() {
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+        when(messageRepository.save(message)).thenReturn(message);
+
+        // Delete the message
+        chatCommandService.deleteMessage(chatroom, messageId);
+        assertEquals(0, chatroom.getMessages().size());
+
+        // Undo the delete
+        boolean undone = chatCommandService.undoLastCommand(chatroom, messageId);
+
+        assertTrue(undone);
+        assertEquals(1, chatroom.getMessages().size());
+        assertEquals(message, chatroom.getMessages().get(0));
+
+        verify(messageRepository).save(message); // To restore the message
+    }
+
+    @Test
+    void testUndoWithEmptyCommandHistory() {
+        // Create a new service instance to ensure empty command history
+        ChatCommandService freshService = new ChatCommandService(messageRepository);
+
+        boolean undone = freshService.undoLastCommand(chatroom, messageId);
+
+        assertFalse(undone);
+        verifyNoInteractions(messageRepository);
+    }
+
+    @Test
+    void testMultipleCommandsAndUndo() {
+        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+            Message messageToSave = invocation.getArgument(0);
+            if (messageToSave.getId() == null) {
+                messageToSave.setId(UUID.randomUUID());
+            }
+            return messageToSave;
+        });
+        when(messageRepository.findById(any(UUID.class))).thenReturn(Optional.of(message));
+
+        // Send a message
+        Message newMessage = chatCommandService.sendMessage(chatroom, ownerId, "New message");
+        assertEquals(2, chatroom.getMessages().size());
+
+        // Edit the original message
+        chatCommandService.editMessage(chatroom, messageId, "Edited content");
+        assertEquals("Edited content", message.getContent());
+
+        // Undo last command (edit)
+        boolean firstUndo = chatCommandService.undoLastCommand(chatroom, messageId);
+        assertTrue(firstUndo);
+        assertEquals("Initial message", message.getContent());
+
+        // Undo previous command (send)
+        boolean secondUndo = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
+        assertTrue(secondUndo);
         assertEquals(1, chatroom.getMessages().size());
         assertFalse(chatroom.getMessages().contains(newMessage));
     }
 
     @Test
-    void testUndoEditMessage() {
-        // Save the original message content
-        String originalContent = message.getContent();
+    void testCommandHistoryMaintainsOrder() {
+        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+            Message messageToSave = invocation.getArgument(0);
+            if (messageToSave.getId() == null) {
+                messageToSave.setId(UUID.randomUUID());
+            }
+            return messageToSave;
+        });
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
 
-        // Edit the message content
-        chatCommandService.editMessage(chatroom, message.getId(), "Temporary edit");
-        assertEquals("Temporary edit", message.getContent());
+        // Perform multiple operations
+        Message msg1 = chatCommandService.sendMessage(chatroom, ownerId, "Message 1");
+        Message msg2 = chatCommandService.sendMessage(chatroom, ownerId, "Message 2");
+        chatCommandService.editMessage(chatroom, messageId, "Edited original");
 
-        // Undo the edit
-        boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
+        assertEquals(3, chatroom.getMessages().size());
+        assertEquals("Edited original", message.getContent());
 
-        // Ensure the content is reverted to the original
-        assertTrue(undone);
-        assertEquals(originalContent, message.getContent());
+        // Undo should reverse in LIFO order
+        // First undo: edit command
+        chatCommandService.undoLastCommand(chatroom, messageId);
+        assertEquals("Initial message", message.getContent());
+
+        // Second undo: send message 2
+        chatCommandService.undoLastCommand(chatroom, msg2.getId());
+        assertEquals(2, chatroom.getMessages().size());
+        assertFalse(chatroom.getMessages().contains(msg2));
+
+        // Third undo: send message 1
+        chatCommandService.undoLastCommand(chatroom, msg1.getId());
+        assertEquals(1, chatroom.getMessages().size());
+        assertFalse(chatroom.getMessages().contains(msg1));
     }
 
     @Test
-    void testUndoDeleteMessage() {
-        // Delete the message
-        chatCommandService.deleteMessage(chatroom, message.getId());
-        assertEquals(0, chatroom.getMessages().size());
+    void testSendMessageWithNullContent() {
+        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+            Message messageToSave = invocation.getArgument(0);
+            if (messageToSave.getId() == null) {
+                messageToSave.setId(UUID.randomUUID());
+            }
+            return messageToSave;
+        });
 
-        // Undo the delete operation
-        boolean undone = chatCommandService.undoLastCommand(chatroom, message.getId());
+        Message result = chatCommandService.sendMessage(chatroom, ownerId, null);
 
-        // Ensure the message was restored
-        assertTrue(undone);
-        assertEquals(1, chatroom.getMessages().size());
-        assertEquals(message, chatroom.getMessages().get(0));
+        assertNotNull(result);
+        assertNull(result.getContent());
+        assertEquals(ownerId, result.getSenderId());
+        assertEquals(2, chatroom.getMessages().size());
+    }
+
+    @Test
+    void testSendMessageWithEmptyContent() {
+        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+            Message messageToSave = invocation.getArgument(0);
+            if (messageToSave.getId() == null) {
+                messageToSave.setId(UUID.randomUUID());
+            }
+            return messageToSave;
+        });
+
+        Message result = chatCommandService.sendMessage(chatroom, ownerId, "");
+
+        assertNotNull(result);
+        assertEquals("", result.getContent());
+        assertEquals(ownerId, result.getSenderId());
+        assertEquals(2, chatroom.getMessages().size());
+    }
+
+    @Test
+    void testEditMessageWithNullContent() {
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+        when(messageRepository.save(message)).thenReturn(message);
+
+        Message result = chatCommandService.editMessage(chatroom, messageId, null);
+
+        assertNotNull(result);
+        assertNull(message.getContent());
+        assertTrue(message.isEdited());
+
+        verify(messageRepository).save(message);
     }
 }
