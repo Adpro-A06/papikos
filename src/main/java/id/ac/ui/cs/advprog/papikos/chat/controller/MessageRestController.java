@@ -78,7 +78,7 @@ public class MessageRestController {
 
     // Helper class for request body
     static class MessageRequest {
-        private UUID senderId;  // Change from Long to UUID
+        private UUID senderId;
         private String content;
 
         public UUID getSenderId() {

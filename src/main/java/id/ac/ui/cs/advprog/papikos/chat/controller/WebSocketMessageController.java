@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.controller;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
-import id.ac.ui.cs.advprog.papikos.chat.service.MessageService;
+import id.ac.ui.cs.advprog.papikos.chat.service.MessageServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -15,11 +15,11 @@ import java.util.UUID;
 @Controller
 public class WebSocketMessageController {
 
-    private final MessageService messageService;
+    private final MessageServiceImpl messageService;
     private final SimpMessagingTemplate messagingTemplate;
     private static final Logger logger = LoggerFactory.getLogger(WebSocketMessageController.class);
 
-    public WebSocketMessageController(MessageService messageService, SimpMessagingTemplate messagingTemplate) {
+    public WebSocketMessageController(MessageServiceImpl messageService, SimpMessagingTemplate messagingTemplate) {
         this.messageService = messageService;
         this.messagingTemplate = messagingTemplate;
     }
