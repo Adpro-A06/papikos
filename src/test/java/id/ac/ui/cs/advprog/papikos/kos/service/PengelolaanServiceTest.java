@@ -1,21 +1,32 @@
 package id.ac.ui.cs.advprog.papikos.kos.service;
 
+import id.ac.ui.cs.advprog.papikos.authentication.model.Role;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.Penyewaan;
+import id.ac.ui.cs.advprog.papikos.kos.model.penyewaan.StatusPenyewaan;
 import id.ac.ui.cs.advprog.papikos.kos.repository.PengelolaanRepository;
+import id.ac.ui.cs.advprog.papikos.kos.repository.PenyewaanRepository;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,11 +35,51 @@ public class PengelolaanServiceTest {
     @Mock
     private PengelolaanRepository pengelolaanRepository;
 
+    @Mock
+    private PenyewaanRepository penyewaanRepository;
+
     @InjectMocks
     private PengelolaanServiceImpl pengelolaanService;
 
     @Mock
     private User mockUser;
+
+    private String penyewaanId;
+    private Penyewaan penyewaan;
+    private Kos kos;
+    private User pemilik;
+    private User penyewa;
+
+    @BeforeEach
+    void setUp() {
+        penyewaanId = "penyewaan-123";
+
+        pemilik = new User("pemilik@example.com", "password456!", Role.PEMILIK_KOS);
+        penyewa = new User("penyewa@example.com", "password123!", Role.PENYEWA);
+
+        kos = new Kos();
+        kos.setId(UUID.randomUUID());
+        kos.setNama("Tulip");
+        kos.setJumlah(5);
+        kos.setAlamat("Jl. Mangga");
+        kos.setDeskripsi("Full furnish");
+        kos.setHarga(1500000);
+        kos.setStatus("AVAILABLE");
+        kos.setUrlFoto("https://example.com/kos.jpg");
+        kos.setPemilik(pemilik);
+
+        penyewaan = new Penyewaan();
+        penyewaan.setId(penyewaanId);
+        penyewaan.setKos(kos);
+        penyewaan.setPenyewa(penyewa);
+        penyewaan.setNamaLengkap("Antony");
+        penyewaan.setNomorTelepon("08123456789");
+        penyewaan.setStatus(StatusPenyewaan.PENDING);
+        penyewaan.setTanggalCheckIn(LocalDate.now().plusDays(7));
+        penyewaan.setDurasiSewa(3);
+        penyewaan.setTotalBiaya(4500000);
+        penyewaan.setWaktuPengajuan(LocalDateTime.now().minusDays(1));
+    }
 
     @Test
     void testCreateKos() {
@@ -43,7 +94,7 @@ public class PengelolaanServiceTest {
         kos.setPemilik(mockUser);
 
         Kos savedKos = new Kos();
-        savedKos.setId(UUID.randomUUID()); // Simulate JPA-generated ID
+        savedKos.setId(UUID.randomUUID());
         savedKos.setNama("Tulip");
         savedKos.setJumlah(20);
         savedKos.setAlamat("Jl. Mangga");
@@ -174,12 +225,12 @@ public class PengelolaanServiceTest {
         UUID nonExistentId = UUID.randomUUID();
 
         when(pengelolaanRepository.findByIdOrThrow(nonExistentId))
-                .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos dengan ID " + nonExistentId + " tidak ditemukan."));
+                .thenThrow(new PengelolaanRepository.KosNotFoundException(
+                        "Kos dengan ID " + nonExistentId + " tidak ditemukan."));
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.findById(nonExistentId).join()
-        );
+                () -> pengelolaanService.findById(nonExistentId).join());
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
         verify(pengelolaanRepository, times(1)).findByIdOrThrow(nonExistentId);
@@ -194,12 +245,12 @@ public class PengelolaanServiceTest {
         kos.setNama("Melati");
 
         when(pengelolaanRepository.update(any(Kos.class)))
-                .thenThrow(new PengelolaanRepository.KosNotFoundException("Kos dengan ID " + nonExistentId + " tidak ditemukan."));
+                .thenThrow(new PengelolaanRepository.KosNotFoundException(
+                        "Kos dengan ID " + nonExistentId + " tidak ditemukan."));
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.update(kos).join()
-        );
+                () -> pengelolaanService.update(kos).join());
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
         verify(pengelolaanRepository, times(1)).update(kos);
@@ -218,10 +269,118 @@ public class PengelolaanServiceTest {
 
         PengelolaanRepository.KosNotFoundException thrown = assertThrows(
                 PengelolaanRepository.KosNotFoundException.class,
-                () -> pengelolaanService.delete(kos).join()
-        );
+                () -> pengelolaanService.delete(kos).join());
 
         assertEquals("Kos dengan ID " + nonExistentId + " tidak ditemukan.", thrown.getMessage());
         verify(pengelolaanRepository, times(1)).delete(kos);
+    }
+
+    @Test
+    void testFindAllSewa() throws ExecutionException, InterruptedException {
+        List<Penyewaan> penyewaanList = Arrays.asList(penyewaan);
+        when(penyewaanRepository.findAllByKosPemilikId(pemilik.getId())).thenReturn(penyewaanList);
+        CompletableFuture<List<Penyewaan>> result = pengelolaanService.findAllSewa(pemilik.getId());
+        assertEquals(penyewaanList, result.get());
+        verify(penyewaanRepository).findAllByKosPemilikId(pemilik.getId());
+    }
+
+    @Test
+    void testTerimaSewaSuccess() throws ExecutionException, InterruptedException {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        CompletableFuture<Void> result = pengelolaanService.terimaSewa(penyewaanId, pemilik.getId());
+        result.get();
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verify(penyewaanRepository).save(any(Penyewaan.class));
+        verify(pengelolaanRepository).save(kos);
+    }
+
+    @Test
+    void testTolakSewaSuccess() throws ExecutionException, InterruptedException {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        CompletableFuture<Void> result = pengelolaanService.tolakSewa(penyewaanId, pemilik.getId());
+        result.get();
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verify(penyewaanRepository).save(any(Penyewaan.class));
+    }
+
+    @Test
+    void testTerimaSewaSyncSuccess() {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        pengelolaanService.terimaSewaSync(penyewaanId, pemilik.getId());
+        assertEquals(StatusPenyewaan.APPROVED, penyewaan.getStatus());
+        assertEquals(4, kos.getJumlah());
+        assertNotNull(penyewaan.getWaktuPerubahan());
+        verify(pengelolaanRepository).save(kos);
+        verify(penyewaanRepository).save(penyewaan);
+    }
+
+    @Test
+    void testTerimaSewaSyncWhenPenyewaanNotFound() {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId))
+                .thenReturn(Optional.empty());
+        assertThrows(PengelolaanRepository.PenyewaanNotFoundException.class,
+                () -> pengelolaanService.terimaSewaSync(penyewaanId, pemilik.getId()));
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verifyNoMoreInteractions(pengelolaanRepository);
+    }
+
+    @Test
+    void testTerimaSewaSyncWhenNotAuthorized() {
+        User differentPemilik = new User("other@example.com", "password789!", Role.PEMILIK_KOS);
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        assertThrows(IllegalArgumentException.class,
+                () -> pengelolaanService.terimaSewaSync(penyewaanId, differentPemilik.getId()));
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verifyNoMoreInteractions(pengelolaanRepository);
+    }
+
+    @Test
+    void testTerimaSewaSyncWhenNoRoomsAvailable() {
+        kos.setJumlah(0);
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        assertThrows(IllegalStateException.class,
+                () -> pengelolaanService.terimaSewaSync(penyewaanId, pemilik.getId()));
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verifyNoMoreInteractions(pengelolaanRepository);
+    }
+
+    @Test
+    void testTolakSewaSyncSuccess() {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        pengelolaanService.tolakSewaSync(penyewaanId, pemilik.getId());
+        assertEquals(StatusPenyewaan.REJECTED, penyewaan.getStatus());
+        assertNotNull(penyewaan.getWaktuPerubahan());
+        verify(penyewaanRepository).save(penyewaan);
+    }
+
+    @Test
+    void testTolakSewaSyncWhenPenyewaanNotFound() {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId))
+                .thenReturn(Optional.empty());
+        assertThrows(PengelolaanRepository.PenyewaanNotFoundException.class,
+                () -> pengelolaanService.tolakSewaSync(penyewaanId, pemilik.getId()));
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verifyNoMoreInteractions(penyewaanRepository);
+    }
+
+    @Test
+    void testTolakSewaSyncWhenNotAuthorized() {
+        User differentPemilik = new User("other@example.com", "password789!", Role.PEMILIK_KOS);
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        assertThrows(IllegalArgumentException.class,
+                () -> pengelolaanService.tolakSewaSync(penyewaanId, differentPemilik.getId()));
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verifyNoMoreInteractions(penyewaanRepository);
+    }
+
+    @Test
+    void testTolakSewaSyncWhenSaveThrowsException() {
+        when(penyewaanRepository.findByIdWithKos(penyewaanId)).thenReturn(Optional.of(penyewaan));
+        doThrow(new RuntimeException("Database error")).when(penyewaanRepository).save(any(Penyewaan.class));
+        assertThrows(RuntimeException.class,
+                () -> pengelolaanService.tolakSewaSync(penyewaanId, pemilik.getId()));
+        assertEquals(StatusPenyewaan.REJECTED, penyewaan.getStatus());
+        verify(penyewaanRepository).findByIdWithKos(penyewaanId);
+        verify(penyewaanRepository).save(penyewaan);
     }
 }
