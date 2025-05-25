@@ -5,8 +5,10 @@ import id.ac.ui.cs.advprog.papikos.payment.model.Payment;
 import id.ac.ui.cs.advprog.papikos.payment.model.PaymentStatus;
 import id.ac.ui.cs.advprog.papikos.payment.model.TransactionType;
 import id.ac.ui.cs.advprog.papikos.payment.model.Wallet;
+import id.ac.ui.cs.advprog.papikos.payment.monitoring.PaymentMetrics;
 import id.ac.ui.cs.advprog.papikos.payment.repository.IPaymentRepository;
 import id.ac.ui.cs.advprog.papikos.payment.repository.WalletRepository;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
@@ -38,6 +41,12 @@ class PaymentServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PaymentMetrics paymentMetrics;
+
+    @Mock
+    private Timer.Sample timerSample;
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -65,20 +74,26 @@ class PaymentServiceImplTest {
         userWallet.addBalance(initialBalance);
 
         otherWallet = new Wallet(otherUserId);
-    }
 
+        // Setup timer mock behavior - use lenient to avoid unnecessary stubbing warnings
+        lenient().when(paymentMetrics.startPaymentProcessingTimer()).thenReturn(timerSample);
+    }
 
     @Test
     void topUp_withValidAmount_shouldSucceed() {
-
         when(userRepository.existsById(userId)).thenReturn(true);
         when(walletRepository.findById(userId)).thenReturn(Optional.of(userWallet));
-
 
         paymentService.topUp(userId, topUpAmount);
 
         verify(walletRepository).save(walletCaptor.capture());
         verify(paymentRepository).save(paymentCaptor.capture());
+
+        // Verify metrics were called
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordTopUp(topUpAmount);
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordFailedPayment();
 
         Wallet savedWallet = walletCaptor.getValue();
         Payment savedPayment = paymentCaptor.getValue();
@@ -104,6 +119,12 @@ class PaymentServiceImplTest {
         assertEquals("Jumlah harus lebih besar dari nol", exception.getMessage());
         verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
 
     @Test
@@ -117,6 +138,12 @@ class PaymentServiceImplTest {
         assertEquals("Jumlah harus lebih besar dari nol", exception.getMessage());
         verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
 
     @Test
@@ -130,9 +157,13 @@ class PaymentServiceImplTest {
         assertTrue(exception.getMessage().contains("tidak ditemukan"));
         verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordTopUp(any());
     }
-
-
 
     @Test
     void pay_withSufficientFunds_shouldSucceed() {
@@ -146,11 +177,16 @@ class PaymentServiceImplTest {
         verify(walletRepository, times(2)).save(walletCaptor.capture());
         verify(paymentRepository).save(paymentCaptor.capture());
 
+        // Verify metrics were called
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordPayment(paymentAmount);
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordFailedPayment();
+
         List<Wallet> savedWallets = walletCaptor.getAllValues();
         Payment savedPayment = paymentCaptor.getValue();
 
         assertEquals(initialBalance.subtract(paymentAmount), savedWallets.get(0).getBalance());
-
         assertEquals(paymentAmount, savedWallets.get(1).getBalance());
 
         assertEquals(userId, savedPayment.getFromUserId());
@@ -176,6 +212,14 @@ class PaymentServiceImplTest {
         assertEquals("Saldo tidak mencukupi", exception.getMessage());
         verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
+
+        // Current service implementation calls recordFailedPayment() twice:
+        // 1. In the insufficient balance check (line 107)
+        // 2. In the catch block (line 134)
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics, times(2)).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordPayment(any());
     }
 
     @Test
@@ -190,8 +234,13 @@ class PaymentServiceImplTest {
         assertTrue(exception.getMessage().contains("tidak ditemukan"));
         verify(walletRepository, never()).save(any());
         verify(paymentRepository, never()).save(any());
-    }
 
+        // Timer should still be called but with failure metrics
+        verify(paymentMetrics).startPaymentProcessingTimer();
+        verify(paymentMetrics).recordFailedPayment();
+        verify(paymentMetrics).stopPaymentProcessingTimer(timerSample);
+        verify(paymentMetrics, never()).recordPayment(any());
+    }
 
     @Test
     void getBalance_withExistingWallet_shouldReturnBalance() {
@@ -201,6 +250,7 @@ class PaymentServiceImplTest {
         BigDecimal balance = paymentService.getBalance(userId);
 
         assertEquals(initialBalance, balance);
+        // getBalance doesn't use metrics, so no metrics verification needed
     }
 
     @Test
@@ -223,7 +273,6 @@ class PaymentServiceImplTest {
 
         assertTrue(exception.getMessage().contains("tidak ditemukan"));
     }
-
 
     @Test
     void getUserTransactions_shouldReturnAllTransactions() {
