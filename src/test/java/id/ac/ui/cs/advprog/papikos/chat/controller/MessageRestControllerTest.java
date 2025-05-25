@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.papikos.chat.controller;
 
 import id.ac.ui.cs.advprog.papikos.chat.model.Message;
-import id.ac.ui.cs.advprog.papikos.chat.service.MessageService;
+import id.ac.ui.cs.advprog.papikos.chat.service.MessageServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -21,12 +21,12 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class MessageControllerTest {
+public class MessageRestControllerTest {
 
     private MockMvc mockMvc;
 
     @Mock
-    private MessageService messageService;
+    private MessageServiceImpl messageService;
 
     @InjectMocks
     private MessageRestController messageController;
@@ -74,22 +74,27 @@ public class MessageControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"senderId\":\"" + senderId.toString() + "\",\"content\":\"Test message\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(messageId.toString())) // Expect messageId as UUID
-                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$.senderId").value(senderId.toString())) // Expect senderId as UUID
-                .andExpect(jsonPath("$.content").value("Test message"));    }
+                .andExpect(jsonPath("$.id").value(messageId.toString()))
+                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString()))
+                .andExpect(jsonPath("$.senderId").value(senderId.toString()))
+                .andExpect(jsonPath("$.content").value("Test message"));
+    }
 
     @Test
     void editMessage_ShouldReturnEditedMessage() throws Exception {
+        mockMessage.setContent("Edited message");
+        mockMessage.setEdited(true);
         when(messageService.editMessage(any(UUID.class), any(UUID.class), anyString())).thenReturn(mockMessage);
 
         mockMvc.perform(put("/api/chatrooms/{chatroomId}/messages/{messageId}", chatroomId.toString(), messageId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"Edited message\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(messageId.toString())) // Expect messageId as UUID
-                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString())) // Expect chatroomId as UUID
-                .andExpect(jsonPath("$.senderId").value(senderId.toString()));    }
+                .andExpect(jsonPath("$.id").value(messageId.toString()))
+                .andExpect(jsonPath("$.chatroomId").value(chatroomId.toString()))
+                .andExpect(jsonPath("$.senderId").value(senderId.toString()))
+                .andExpect(jsonPath("$.content").value("Edited message"));
+    }
 
     @Test
     void deleteMessage_ShouldReturnSuccess() throws Exception {
@@ -101,11 +106,29 @@ public class MessageControllerTest {
     }
 
     @Test
+    void deleteMessage_ShouldReturnFailure() throws Exception {
+        when(messageService.deleteMessage(any(UUID.class), any(UUID.class))).thenReturn(false);
+
+        mockMvc.perform(delete("/api/chatrooms/{chatroomId}/messages/{messageId}", chatroomId.toString(), messageId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
     void undoLastAction_ShouldReturnSuccess() throws Exception {
         when(messageService.undoLastAction(any(UUID.class), any(UUID.class))).thenReturn(true);
 
         mockMvc.perform(post("/api/chatrooms/{chatroomId}/messages/{messageId}/undo", chatroomId.toString(), messageId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void undoLastAction_ShouldReturnFailure() throws Exception {
+        when(messageService.undoLastAction(any(UUID.class), any(UUID.class))).thenReturn(false);
+
+        mockMvc.perform(post("/api/chatrooms/{chatroomId}/messages/{messageId}/undo", chatroomId.toString(), messageId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }
