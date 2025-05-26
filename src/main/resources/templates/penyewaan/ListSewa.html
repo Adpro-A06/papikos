@@ -626,6 +626,11 @@
                         th:data-name="${penyewaan.kos != null ? penyewaan.kos.nama : 'Kos tidak tersedia'}">
                         Batalkan
                     </a>
+                <a th:if="${penyewaan.status.name() == 'PENDING'}"
+                       th:href="@{/payment/pay}"
+                       class="btn btn-sm">
+                        Bayar
+                    </a>
                 </div>
             </div>
         </div>
