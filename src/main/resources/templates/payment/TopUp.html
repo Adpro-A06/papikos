@@ -275,10 +275,9 @@
 <!-- Header with simplified navigation -->
 <header class="header">
     <div class="header-container">
-        <a href="/" class="logo">Papikos</a>
+        <a href="/" class="logo">Papikos</a><a th:href="${user.role.name() == 'PENYEWA' ? '/penyewa/home' : (user.role.name() == 'PEMILIK_KOS' ? '/pemilik/home' : '/')}" class="logo">Papikos</a>
         <div class="nav-links">
-            <a href="/">Beranda</a>
-            <a href="/payment/wallet">Wallet</a>
+            <a>Wallet</a>
         </div>
         <div class="user-menu">
             <div class="user-info">
@@ -287,9 +286,11 @@
                 </div>
                 <span class="user-name" th:text="${user.email}">Pengguna</span>
             </div>
-            <a href="/api/auth/logout" class="btn-logout">
-                <i class="fas fa-sign-out-alt"></i> Keluar
-            </a>
+            </a><form th:action="@{/api/auth/logout}" method="post" class="m-0">
+            <button type="submit" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
         </div>
     </div>
 </header>
