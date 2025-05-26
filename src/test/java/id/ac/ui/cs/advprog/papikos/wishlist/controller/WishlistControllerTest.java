@@ -9,7 +9,7 @@ import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistSubject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*; 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-@WebMvcTest({WishlistController.class, WishlistRestController.class})
+@WebMvcTest({ WishlistController.class, WishlistRestController.class })
 public class WishlistControllerTest {
 
     @Autowired
@@ -36,11 +36,11 @@ public class WishlistControllerTest {
     @SuppressWarnings("removal")
     @MockBean
     private WishlistService wishlistService;
-    
+
     @SuppressWarnings("removal")
     @MockBean
     private AuthService authService;
-    
+
     @SuppressWarnings("removal")
     @MockBean
     private WishlistSubject wishlistSubject;
@@ -52,26 +52,20 @@ public class WishlistControllerTest {
 
     @BeforeEach
     public void setUp() {
-        // Setup mock user - create mock instead of setting properties
         userId = UUID.randomUUID();
         mockUser = mock(User.class);
         when(mockUser.getId()).thenReturn(userId);
         when(mockUser.getEmail()).thenReturn("test@example.com");
-        
-        // Setup valid wishlist
+
         validWishlist = new Wishlist("My Test Wishlist", userId.toString());
         validWishlist.setId(1);
     }
 
-    
-    
     @Test
     public void testWishlistPage_WithValidUser() throws Exception {
-        // Setup session with JWT token
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "valid-token");
-        
-        // Mock service calls
+
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.getUserWishlist(userId)).thenReturn(Arrays.asList(validWishlist));
@@ -101,7 +95,7 @@ public class WishlistControllerTest {
     public void testWishlistPage_EmptyWishlist() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "valid-token");
-        
+
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.getUserWishlist(userId)).thenReturn(new ArrayList<>());
@@ -119,7 +113,7 @@ public class WishlistControllerTest {
     public void testWishlistPageAlternative() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "valid-token");
-        
+
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.getUserWishlist(userId)).thenReturn(new ArrayList<>());
@@ -135,15 +129,13 @@ public class WishlistControllerTest {
     public void testWishlistPage_InvalidToken() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "invalid-token");
-        
+
         when(authService.decodeToken("invalid-token")).thenThrow(new RuntimeException("Invalid token"));
 
         mockMvc.perform(get("/wishlist").session(session))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/api/auth/login"));
     }
-
-    
 
     @Test
     public void testAddToWishlist_Valid() throws Exception {
@@ -156,9 +148,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Berhasil ditambahkan ke wishlist"))
@@ -178,9 +170,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Kos sudah ada di wishlist"));
@@ -194,9 +186,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": -1}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("kosId must be a positive number"));
@@ -210,9 +202,9 @@ public class WishlistControllerTest {
         String requestBody = "{}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("kosId is required"));
@@ -225,9 +217,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer invalid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Token tidak valid"));
@@ -243,9 +235,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/remove")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Berhasil dihapus dari wishlist"))
@@ -265,9 +257,9 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/toggle")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.added").value(true))
@@ -281,7 +273,7 @@ public class WishlistControllerTest {
         when(wishlistService.getUserWishlist(userId)).thenReturn(Arrays.asList(validWishlist));
 
         mockMvc.perform(get("/api/v1/wishlist/user")
-                        .header("Authorization", "Bearer valid-token"))
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Wishlist berhasil diambil"))
@@ -296,7 +288,7 @@ public class WishlistControllerTest {
         when(wishlistService.getUserWishlistKosIdsAsLong(userId)).thenReturn(Arrays.asList(1L, 2L));
 
         mockMvc.perform(get("/api/v1/wishlist/user-ids")
-                        .header("Authorization", "Bearer valid-token"))
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Wishlist IDs berhasil diambil"))
@@ -314,18 +306,15 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 1}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false));
-    } 
+    }
 
-    
-    
     @Test
     public void testCreateWishlistWithKos_ValidInput() throws Exception {
-        // Test through API call since method is private
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.isInWishlist(userId, 123L)).thenReturn(false);
@@ -335,85 +324,79 @@ public class WishlistControllerTest {
         String requestBody = "{\"kosId\": 123}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
-        
-        // Verify that createWishlistWithKos was called indirectly
+
         verify(wishlistService).addToWishlist(any(Wishlist.class));
     }
 
     @Test
     public void testParseKosId_ValidIntegerInput() throws Exception {
-        // Test through API call since parseKosId method is private
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.isInWishlist(userId, 123L)).thenReturn(false);
         when(wishlistService.addToWishlist(any(Wishlist.class))).thenReturn(validWishlist);
 
-        String requestBody = "{\"kosId\": 123}"; // Integer format
+        String requestBody = "{\"kosId\": 123}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testParseKosId_ValidStringInput() throws Exception {
-        // Test through API call since parseKosId method is private
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.isInWishlist(userId, 456L)).thenReturn(false);
         when(wishlistService.addToWishlist(any(Wishlist.class))).thenReturn(validWishlist);
 
-        String requestBody = "{\"kosId\": \"456\"}"; // String format
+        String requestBody = "{\"kosId\": \"456\"}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testParseKosId_InvalidStringInput() throws Exception {
-        // Test through API call since parseKosId method is private
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
 
-        String requestBody = "{\"kosId\": \"invalid\"}"; // Invalid string
+        String requestBody = "{\"kosId\": \"invalid\"}";
 
         mockMvc.perform(post("/api/v1/wishlist/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .header("Authorization", "Bearer valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
     public void testExtractTokenFromHeader_ValidHeader() throws Exception {
-        // Test through API call since extractTokenFromHeader method is private
         when(authService.decodeToken("valid-token-here")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.getUserWishlist(userId)).thenReturn(Arrays.asList(validWishlist));
 
         mockMvc.perform(get("/api/v1/wishlist/user")
-                        .header("Authorization", "Bearer valid-token-here"))
+                .header("Authorization", "Bearer valid-token-here"))
                 .andExpect(status().isOk());
-        
+
         verify(authService).decodeToken("valid-token-here");
     }
 
     @Test
     public void testExtractTokenFromHeader_InvalidHeader() throws Exception {
-        // Test through API call since extractTokenFromHeader method is private
         mockMvc.perform(get("/api/v1/wishlist/user")
-                        .header("Authorization", "Invalid header"))
+                .header("Authorization", "Invalid header"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Token tidak valid"));
@@ -421,17 +404,15 @@ public class WishlistControllerTest {
 
     @Test
     public void testExtractTokenFromHeader_MissingHeader() throws Exception {
-    // Test missing Authorization header
         mockMvc.perform(get("/api/v1/wishlist/user"))
-            .andExpect(status().is4xxClientError()); 
+                .andExpect(status().is4xxClientError());
     }
-
 
     @Test
     public void testWishlistController_ErrorHandling() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "valid-token");
-        
+
         when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
         when(authService.findById(userId)).thenReturn(mockUser);
         when(wishlistService.getUserWishlist(userId)).thenThrow(new RuntimeException("DB Error"));
@@ -443,14 +424,12 @@ public class WishlistControllerTest {
 
     @Test
     public void testWishlistController_SessionEdgeCases() throws Exception {
-        // Test dengan session yang ada tapi token kosong
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "");
 
         mockMvc.perform(get("/wishlist").session(session))
                 .andExpect(status().is3xxRedirection());
-                
-        // Test dengan session null value
+
         MockHttpSession session2 = new MockHttpSession();
         session2.setAttribute("userId", userId.toString());
 
@@ -462,12 +441,104 @@ public class WishlistControllerTest {
     public void testWishlistController_AuthServiceNullReturn() throws Exception {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("JWT_TOKEN", "valid-token");
-        
+
         when(authService.decodeToken("valid-token")).thenReturn("");
-        
+
         mockMvc.perform(get("/wishlist").session(session))
                 .andExpect(status().is3xxRedirection());
     }
 
-    
+    @Test
+    public void testToggleWishlistLoggedIn() throws Exception {
+        UUID kosId = UUID.randomUUID();
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "valid-token");
+
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        doNothing().when(wishlistService).toggleWishlist(userId, kosId);
+
+        mockMvc.perform(get("/wishlist/toggle/{kosId}", kosId.toString())
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/penyewa/home"));
+
+        verify(wishlistService).toggleWishlist(userId, kosId);
+    }
+
+    @Test
+    public void testToggleWishlistNotLoggedIn() throws Exception {
+        UUID kosId = UUID.randomUUID();
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(get("/wishlist/toggle/{kosId}", kosId.toString())
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/api/auth/login"))
+                .andExpect(flash().attributeExists("error"));
+
+        verify(wishlistService, never()).toggleWishlist(any(), any());
+    }
+
+    @Test
+    public void testClearWishlistLoggedIn() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "valid-token");
+
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        doNothing().when(wishlistService).clearUserWishlist(userId);
+
+        mockMvc.perform(post("/wishlist/clear")
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/wishlist"))
+                .andExpect(flash().attribute("success", "Wishlist berhasil dikosongkan."));
+
+        verify(wishlistService).clearUserWishlist(userId);
+    }
+
+    @Test
+    public void testClearWishlistNotLoggedIn() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(post("/wishlist/clear")
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/api/auth/login"))
+                .andExpect(flash().attributeExists("error"));
+
+        verify(wishlistService, never()).clearUserWishlist(any());
+    }
+
+    @Test
+    public void testToggleWishlistInvalidToken() throws Exception {
+        UUID kosId = UUID.randomUUID();
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "invalid-token");
+
+        when(authService.decodeToken("invalid-token")).thenThrow(new RuntimeException("Invalid token"));
+
+        mockMvc.perform(get("/wishlist/toggle/{kosId}", kosId.toString())
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/api/auth/login"));
+
+        verify(wishlistService, never()).toggleWishlist(any(), any());
+    }
+
+    @Test
+    public void testClearWishlistInvalidToken() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "invalid-token");
+
+        when(authService.decodeToken("invalid-token")).thenThrow(new RuntimeException("Invalid token"));
+
+        mockMvc.perform(post("/wishlist/clear")
+                .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/api/auth/login"));
+
+        verify(wishlistService, never()).clearUserWishlist(any());
+    }
 }

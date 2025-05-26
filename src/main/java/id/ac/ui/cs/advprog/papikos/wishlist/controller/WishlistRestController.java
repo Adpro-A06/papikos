@@ -324,11 +324,4 @@ public class WishlistRestController {
        }
        return null;
    }
-
-   private Long convertUUIDToLong(UUID uuid) {
-       if (uuid == null) {
-           throw new IllegalArgumentException("UUID cannot be null");
-       }
-       return Math.abs(uuid.hashCode()) % Long.MAX_VALUE;
-   }
 }
