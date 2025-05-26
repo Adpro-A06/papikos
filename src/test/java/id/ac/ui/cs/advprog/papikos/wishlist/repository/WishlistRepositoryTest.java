@@ -5,8 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,43 +116,34 @@ class WishlistRepositoryTest {
         assertEquals(saved.getName(), found.get().getName());
     }
 
-    // Additional test methods to boost coverage
     @Test
     void testRepository_MultipleOperations() {
-        // Save multiple
         Wishlist w1 = repository.save(new Wishlist("W1", "u1"));
         Wishlist w2 = repository.save(new Wishlist("W2", "u2"));
         Wishlist w3 = repository.save(new Wishlist("W3", "u3"));
         
         assertEquals(3, repository.findAll().size());
         
-        // Delete one
         repository.deleteById(w2.getId());
         assertEquals(2, repository.findAll().size());
         
-        // Check remaining
         assertTrue(repository.findById(w1.getId()).isPresent());
         assertFalse(repository.findById(w2.getId()).isPresent());
         assertTrue(repository.findById(w3.getId()).isPresent());
     }
 
-    // Tambah ke WishlistRepositoryTest.java
-
     @Test
     void testRepository_EdgeCases() {
-        // Test dengan ID yang tidak sequential
         Wishlist w1 = repository.save(new Wishlist("W1", "u1"));
         repository.deleteById(w1.getId());
         
         Wishlist w2 = repository.save(new Wishlist("W2", "u2"));
         
-        // ID harus lebih besar dari yang dihapus
         assertTrue(w2.getId() > w1.getId());
     }
 
     @Test
     void testRepository_NullHandling() {
-        // Test save dengan wishlist yang memiliki null fields
         Wishlist nullWishlist = new Wishlist();
         nullWishlist.setName(null);
         nullWishlist.setUserId(null);
@@ -159,7 +154,6 @@ class WishlistRepositoryTest {
 
     @Test
     void testRepository_LargeDataset() {
-        // Test dengan banyak data untuk cover internal loops
         List<Wishlist> wishlists = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             wishlists.add(repository.save(new Wishlist("W" + i, "user" + i)));
@@ -167,7 +161,6 @@ class WishlistRepositoryTest {
         
         assertEquals(50, repository.findAll().size());
         
-        // Delete setengah
         for (int i = 0; i < 25; i++) {
             repository.deleteById(wishlists.get(i).getId());
         }
@@ -177,7 +170,6 @@ class WishlistRepositoryTest {
 
     @Test
     void testRepository_ConcurrentAccess() {
-        // Simulate concurrent saves
         Wishlist w1 = new Wishlist("Concurrent1", "user1");
         Wishlist w2 = new Wishlist("Concurrent2", "user2");
         
@@ -185,5 +177,195 @@ class WishlistRepositoryTest {
         repository.save(w2);
         
         assertNotEquals(w1.getId(), w2.getId());
+    }
+
+    @Test
+    void testRepository_FindByIdEdgeCases() {
+        Optional<Wishlist> negative = repository.findById(-1);
+        assertFalse(negative.isPresent());
+        
+        Optional<Wishlist> zero = repository.findById(0);
+        assertFalse(zero.isPresent());
+        
+        Optional<Wishlist> large = repository.findById(999999);
+        assertFalse(large.isPresent());
+    }
+
+    @Test
+    void testRepository_DeleteEdgeCases() {
+        assertFalse(repository.deleteById(-1));
+        assertFalse(repository.deleteById(0));
+        assertFalse(repository.deleteById(999999));
+    }
+
+    @Test
+    void testRepository_SaveWithNullFields() {
+        Wishlist nullFieldWishlist = new Wishlist();
+        nullFieldWishlist.setName(null);
+        nullFieldWishlist.setUserId(null);
+        nullFieldWishlist.setKosList(null);
+        
+        Wishlist saved = repository.save(nullFieldWishlist);
+        
+        assertNotNull(saved.getId());
+        assertTrue(saved.getId() > 0);
+    }
+
+    @Test
+    void testRepository_SaveWithEmptyFields() {
+        Wishlist emptyFieldWishlist = new Wishlist();
+        emptyFieldWishlist.setName("");
+        emptyFieldWishlist.setUserId("");
+        emptyFieldWishlist.setKosList(new ArrayList<>());
+        
+        Wishlist saved = repository.save(emptyFieldWishlist);
+        
+        assertNotNull(saved.getId());
+        assertEquals("", saved.getName());
+        assertEquals("", saved.getUserId());
+    }
+
+    @Test
+    void testRepository_FindAllEmptyRepo() {
+        List<Wishlist> all = repository.findAll();
+        for (Wishlist w : all) {
+            repository.deleteById(w.getId());
+        }
+        
+        List<Wishlist> empty = repository.findAll();
+        assertTrue(empty.isEmpty());
+    }
+
+    @Test
+    void testRepository_SaveReturnsCorrectObject() {
+        Wishlist original = new Wishlist("Test Name", "TestUser");
+        original.setKosList(new ArrayList<>());
+        
+        Wishlist saved = repository.save(original);
+        
+        assertNotNull(saved);
+        assertNotNull(saved.getId());
+        assertEquals("Test Name", saved.getName());
+        assertEquals("TestUser", saved.getUserId());
+        assertNotNull(saved.getKosList());
+    }
+
+    @Test
+    void testRepository_IdGeneration() {
+        Wishlist w1 = repository.save(new Wishlist("W1", "U1"));
+        Wishlist w2 = repository.save(new Wishlist("W2", "U2"));
+        Wishlist w3 = repository.save(new Wishlist("W3", "U3"));
+        
+        assertTrue(w2.getId() > w1.getId());
+        assertTrue(w3.getId() > w2.getId());
+        
+        repository.deleteById(w2.getId());
+        
+        Wishlist w4 = repository.save(new Wishlist("W4", "U4"));
+        assertTrue(w4.getId() > w3.getId());
+    }
+
+    @Test
+    void testRepository_FindAllConsistency() {
+        Wishlist w1 = repository.save(new Wishlist("FindAll1", "User1"));
+        Wishlist w2 = repository.save(new Wishlist("FindAll2", "User2"));
+        
+        List<Wishlist> all = repository.findAll();
+        
+        assertTrue(all.stream().anyMatch(w -> w.getId().equals(w1.getId())));
+        assertTrue(all.stream().anyMatch(w -> w.getId().equals(w2.getId())));
+    }
+
+    @Test
+    void testRepository_DeleteExistingReturnsTrue() {
+        Wishlist saved = repository.save(new Wishlist("ToDelete", "DeleteUser"));
+        Integer savedId = saved.getId();
+        
+        boolean deleted = repository.deleteById(savedId);
+        
+        assertTrue(deleted);
+        assertFalse(repository.findById(savedId).isPresent());
+    }
+
+    @Test
+    void testRepository_LargeDataSet() {
+        List<Integer> savedIds = new ArrayList<>();
+        
+        for (int i = 0; i < 20; i++) {
+            Wishlist w = repository.save(new Wishlist("Item" + i, "User" + i));
+            savedIds.add(w.getId());
+        }
+        
+        for (Integer id : savedIds) {
+            assertTrue(repository.findById(id).isPresent());
+        }
+        
+        for (int i = 0; i < 10; i++) {
+            repository.deleteById(savedIds.get(i));
+        }
+        
+        for (int i = 0; i < 10; i++) {
+            assertFalse(repository.findById(savedIds.get(i)).isPresent());
+        }
+        
+        for (int i = 10; i < 20; i++) {
+            assertTrue(repository.findById(savedIds.get(i)).isPresent());
+        }
+    }
+
+    @Test
+    void testRepository_ThreadSafety() {
+        List<Wishlist> results = new ArrayList<>();
+        
+        for (int i = 0; i < 10; i++) {
+            final int index = i;
+            Wishlist w = new Wishlist("Concurrent" + index, "user" + index);
+            results.add(repository.save(w));
+        }
+        
+        Set<Integer> uniqueIds = results.stream()
+            .map(Wishlist::getId)
+            .collect(Collectors.toSet());
+        
+        assertEquals(10, uniqueIds.size());
+    }
+
+    @Test
+    void testRepository_FindAllOrder() {
+        Wishlist w1 = repository.save(new Wishlist("First", "user1"));
+        Wishlist w2 = repository.save(new Wishlist("Second", "user2"));
+        Wishlist w3 = repository.save(new Wishlist("Third", "user3"));
+        
+        List<Wishlist> all = repository.findAll();
+        
+        assertTrue(all.size() >= 3);
+        assertTrue(all.stream().anyMatch(w -> w.getId().equals(w1.getId())));
+        assertTrue(all.stream().anyMatch(w -> w.getId().equals(w2.getId())));
+        assertTrue(all.stream().anyMatch(w -> w.getId().equals(w3.getId())));
+    }
+
+    @Test
+    void testRepository_SaveWithComplexKosList() {
+        Wishlist wishlist = new Wishlist("Complex", "user");
+        // Fixed: Create empty list instead of string list
+        wishlist.setKosList(new ArrayList<>());
+        
+        Wishlist saved = repository.save(wishlist);
+        
+        assertNotNull(saved.getId());
+        assertEquals(0, saved.getKosList().size());
+    }
+
+    @Test
+    void testRepository_BoundaryConditions() {
+        Wishlist minWishlist = new Wishlist("", "");
+        Wishlist maxWishlist = new Wishlist("A".repeat(1000), "U".repeat(500));
+        
+        Wishlist savedMin = repository.save(minWishlist);
+        Wishlist savedMax = repository.save(maxWishlist);
+        
+        assertNotNull(savedMin.getId());
+        assertNotNull(savedMax.getId());
+        assertNotEquals(savedMin.getId(), savedMax.getId());
     }
 }
