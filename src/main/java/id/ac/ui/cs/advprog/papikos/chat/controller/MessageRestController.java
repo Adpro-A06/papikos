@@ -76,7 +76,6 @@ public class MessageRestController {
         return ResponseEntity.ok(response);
     }
 
-    // Helper class for request body
     static class MessageRequest {
         private UUID senderId;
         private String content;

@@ -308,7 +308,6 @@ public class PaymentControllerTest {
 
     @Test
     void topUp_whenUserNotPenyewa_shouldRedirectToHome() {
-        // Test for non-PENYEWA role attempting top-up
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn(pemilikKosId.toString());
         when(authService.findById(pemilikKosId)).thenReturn(pemilikKosUser);
@@ -324,7 +323,6 @@ public class PaymentControllerTest {
 
     @Test
     void showPaymentForm_whenUserNotPenyewa_shouldRedirectToHome() {
-        // Test for non-PENYEWA role accessing payment form
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn(pemilikKosId.toString());
         when(authService.findById(pemilikKosId)).thenReturn(pemilikKosUser);
@@ -337,7 +335,6 @@ public class PaymentControllerTest {
 
     @Test
     void showPaymentForm_whenPemilikNotFound_shouldHandleException() {
-        // Test exception handling when finding pemilik
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
@@ -348,13 +345,11 @@ public class PaymentControllerTest {
         String viewName = paymentController.showPaymentForm(pemilikKosId, null, null, session, model, redirectAttributes);
 
         assertEquals("payment/PaymentForm", viewName);
-        // Verify that the exception was caught and handled gracefully
         verify(model, never()).addAttribute(eq("pemilikEmail"), any());
     }
 
     @Test
     void pay_whenUserNotPenyewa_shouldRedirectToHome() {
-        // Test for non-PENYEWA role attempting payment
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn(pemilikKosId.toString());
         when(authService.findById(pemilikKosId)).thenReturn(pemilikKosUser);
@@ -370,7 +365,6 @@ public class PaymentControllerTest {
 
     @Test
     void showWallet_whenUserNotLoggedIn_shouldRedirectToLogin() {
-        // Test wallet access without authentication
         when(session.getAttribute("JWT_TOKEN")).thenReturn(null);
 
         String viewName = paymentController.showWallet(null, null, null, session, model, redirectAttributes);
@@ -381,7 +375,6 @@ public class PaymentControllerTest {
 
     @Test
     void showWallet_withInvalidTransactionType_shouldIgnoreType() {
-        // Test with invalid transaction type string
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn(testUserId.toString());
         when(authService.findById(testUserId)).thenReturn(testUser);
@@ -395,7 +388,6 @@ public class PaymentControllerTest {
         String viewName = paymentController.showWallet(null, null, invalidType, session, model, redirectAttributes);
 
         assertEquals("payment/Wallet", viewName);
-        // Should call filterTransactions with null type since invalid type was provided
         verify(paymentService).filterTransactions(testUserId, null, null, null);
     }
 
@@ -403,7 +395,6 @@ public class PaymentControllerTest {
 
     @Test
     void getCurrentUser_withInvalidToken_shouldReturnNull() {
-        // Test token decoding failure
         when(session.getAttribute("JWT_TOKEN")).thenReturn("invalid-token");
         when(authService.decodeToken("invalid-token")).thenThrow(new RuntimeException("Invalid token"));
 
@@ -415,7 +406,6 @@ public class PaymentControllerTest {
 
     @Test
     void getCurrentUser_withInvalidUUID_shouldReturnNull() {
-        // Test invalid UUID in token
         when(session.getAttribute("JWT_TOKEN")).thenReturn("valid-token");
         when(authService.decodeToken("valid-token")).thenReturn("invalid-uuid");
 

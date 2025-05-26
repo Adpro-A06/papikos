@@ -146,11 +146,9 @@ public class ChatCommandServiceTest {
             return messageToSave;
         });
 
-        // Send a message
         Message newMessage = chatCommandService.sendMessage(chatroom, ownerId, "Message to undo");
         assertEquals(2, chatroom.getMessages().size());
 
-        // Undo the send
         boolean undone = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
 
         assertTrue(undone);
@@ -167,19 +165,17 @@ public class ChatCommandServiceTest {
 
         String originalContent = message.getContent();
 
-        // Edit the message
         chatCommandService.editMessage(chatroom, messageId, "Temporary edit");
         assertEquals("Temporary edit", message.getContent());
         assertTrue(message.isEdited());
 
-        // Undo the edit
         boolean undone = chatCommandService.undoLastCommand(chatroom, messageId);
 
         assertTrue(undone);
         assertEquals(originalContent, message.getContent());
         assertFalse(message.isEdited());
 
-        verify(messageRepository, times(2)).save(message); // Once for edit, once for undo
+        verify(messageRepository, times(2)).save(message);
     }
 
     @Test
@@ -187,23 +183,20 @@ public class ChatCommandServiceTest {
         when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
         when(messageRepository.save(message)).thenReturn(message);
 
-        // Delete the message
         chatCommandService.deleteMessage(chatroom, messageId);
         assertEquals(0, chatroom.getMessages().size());
 
-        // Undo the delete
         boolean undone = chatCommandService.undoLastCommand(chatroom, messageId);
 
         assertTrue(undone);
         assertEquals(1, chatroom.getMessages().size());
         assertEquals(message, chatroom.getMessages().get(0));
 
-        verify(messageRepository).save(message); // To restore the message
+        verify(messageRepository).save(message);
     }
 
     @Test
     void testUndoWithEmptyCommandHistory() {
-        // Create a new service instance to ensure empty command history
         ChatCommandService freshService = new ChatCommandService(messageRepository);
 
         boolean undone = freshService.undoLastCommand(chatroom, messageId);
@@ -223,20 +216,16 @@ public class ChatCommandServiceTest {
         });
         when(messageRepository.findById(any(UUID.class))).thenReturn(Optional.of(message));
 
-        // Send a message
         Message newMessage = chatCommandService.sendMessage(chatroom, ownerId, "New message");
         assertEquals(2, chatroom.getMessages().size());
 
-        // Edit the original message
         chatCommandService.editMessage(chatroom, messageId, "Edited content");
         assertEquals("Edited content", message.getContent());
 
-        // Undo last command (edit)
         boolean firstUndo = chatCommandService.undoLastCommand(chatroom, messageId);
         assertTrue(firstUndo);
         assertEquals("Initial message", message.getContent());
 
-        // Undo previous command (send)
         boolean secondUndo = chatCommandService.undoLastCommand(chatroom, newMessage.getId());
         assertTrue(secondUndo);
         assertEquals(1, chatroom.getMessages().size());
@@ -254,7 +243,6 @@ public class ChatCommandServiceTest {
         });
         when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
 
-        // Perform multiple operations
         Message msg1 = chatCommandService.sendMessage(chatroom, ownerId, "Message 1");
         Message msg2 = chatCommandService.sendMessage(chatroom, ownerId, "Message 2");
         chatCommandService.editMessage(chatroom, messageId, "Edited original");
@@ -262,17 +250,13 @@ public class ChatCommandServiceTest {
         assertEquals(3, chatroom.getMessages().size());
         assertEquals("Edited original", message.getContent());
 
-        // Undo should reverse in LIFO order
-        // First undo: edit command
         chatCommandService.undoLastCommand(chatroom, messageId);
         assertEquals("Initial message", message.getContent());
 
-        // Second undo: send message 2
         chatCommandService.undoLastCommand(chatroom, msg2.getId());
         assertEquals(2, chatroom.getMessages().size());
         assertFalse(chatroom.getMessages().contains(msg2));
 
-        // Third undo: send message 1
         chatCommandService.undoLastCommand(chatroom, msg1.getId());
         assertEquals(1, chatroom.getMessages().size());
         assertFalse(chatroom.getMessages().contains(msg1));

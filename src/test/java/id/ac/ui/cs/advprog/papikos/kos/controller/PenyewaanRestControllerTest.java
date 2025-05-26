@@ -791,7 +791,6 @@ class PenyewaanRestControllerTest {
         assertEquals("error", body.get("status"));
         assertEquals("Unexpected database error during cancellation", body.get("message"));
 
-        // Verify service interactions
         verify(authService).decodeToken(validToken);
         verify(authService).findById(penyewaUser.getId());
         verify(penyewaanService).cancelPenyewaan(penyewaanId, penyewaUser);

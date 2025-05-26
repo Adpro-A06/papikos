@@ -59,7 +59,6 @@ public class WishlistNotifierTest {
 
     @Test
     public void testNoNotificationWhenObserverNotRegistered() {
-        // Clear semua observer
         WishlistNotifier emptyNotifier = WishlistNotifier.getInstance();
         emptyNotifier.clearObservers();
 

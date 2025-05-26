@@ -44,7 +44,7 @@ class ChatroomRepositoryTest {
         chatroom.setCreatedAt(LocalDateTime.now());
 
         savedChatroom = entityManager.persistAndFlush(chatroom);
-        entityManager.clear(); // Clear persistence context to ensure fresh queries
+        entityManager.clear();
     }
 
     @Test
@@ -88,12 +88,11 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByIdWithMessages() {
-        // Create and persist messages directly linked to the chatroom
         Message message1 = new Message();
         message1.setSenderId(renterId);
         message1.setContent("First message");
         message1.setTimestamp(LocalDateTime.now().minusMinutes(5));
-        // Set the chatroom relationship properly
+
         savedChatroom.addMessage(message1);
         entityManager.persistAndFlush(message1);
 
@@ -101,7 +100,7 @@ class ChatroomRepositoryTest {
         message2.setSenderId(ownerId);
         message2.setContent("Second message");
         message2.setTimestamp(LocalDateTime.now());
-        // Set the chatroom relationship properly
+   
         savedChatroom.addMessage(message2);
         entityManager.persistAndFlush(message2);
 
@@ -113,7 +112,6 @@ class ChatroomRepositoryTest {
         Chatroom chatroom = result.get();
         assertEquals(2, chatroom.getMessages().size());
 
-        // Messages should be ordered by timestamp ASC based on the query
         List<Message> messages = chatroom.getMessages();
         assertEquals("First message", messages.get(0).getContent());
         assertEquals("Second message", messages.get(1).getContent());
@@ -121,12 +119,11 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByRenterIdWithMessages() {
-        // Create and persist message
         Message message = new Message();
         message.setSenderId(renterId);
         message.setContent("Test message");
         message.setTimestamp(LocalDateTime.now());
-        // Set the chatroom relationship properly
+
         savedChatroom.addMessage(message);
         entityManager.persistAndFlush(message);
         entityManager.clear();
@@ -136,7 +133,6 @@ class ChatroomRepositoryTest {
         assertEquals(1, result.size());
         Chatroom chatroom = result.get(0);
         assertEquals(renterId, chatroom.getRenterId());
-        // The messages should be loaded due to the FETCH JOIN in the query
         assertNotNull(chatroom.getMessages());
         assertEquals(1, chatroom.getMessages().size());
         assertEquals("Test message", chatroom.getMessages().get(0).getContent());
@@ -144,12 +140,11 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByOwnerIdWithMessages() {
-        // Create and persist message
         Message message = new Message();
         message.setSenderId(ownerId);
         message.setContent("Owner message");
         message.setTimestamp(LocalDateTime.now());
-        // Set the chatroom relationship properly
+
         savedChatroom.addMessage(message);
         entityManager.persistAndFlush(message);
         entityManager.clear();
@@ -159,7 +154,6 @@ class ChatroomRepositoryTest {
         assertEquals(1, result.size());
         Chatroom chatroom = result.get(0);
         assertEquals(ownerId, chatroom.getOwnerId());
-        // The messages should be loaded due to the FETCH JOIN in the query
         assertNotNull(chatroom.getMessages());
         assertEquals(1, chatroom.getMessages().size());
         assertEquals("Owner message", chatroom.getMessages().get(0).getContent());
@@ -183,7 +177,6 @@ class ChatroomRepositoryTest {
 
     @Test
     void testOrderingByCreatedAtDesc() {
-        // Create another chatroom with different created time
         Chatroom olderChatroom = new Chatroom();
         olderChatroom.setRenterId(renterId);
         olderChatroom.setOwnerId(UUID.randomUUID());
@@ -195,13 +188,11 @@ class ChatroomRepositoryTest {
         List<Chatroom> result = chatroomRepository.findByRenterId(renterId);
 
         assertEquals(2, result.size());
-        // Should be ordered by createdAt DESC (newest first)
         assertTrue(result.get(0).getCreatedAt().isAfter(result.get(1).getCreatedAt()));
     }
 
     @Test
     void testFindByIdWithMessages_EmptyMessages() {
-        // Test chatroom without messages
         Optional<Chatroom> result = chatroomRepository.findByIdWithMessages(savedChatroom.getId());
 
         assertTrue(result.isPresent());
@@ -212,7 +203,6 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByRenterIdWithMessages_NoMessages() {
-        // Test without adding any messages
         entityManager.clear();
 
         List<Chatroom> result = chatroomRepository.findByRenterIdWithMessages(renterId);
@@ -226,7 +216,6 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByOwnerIdWithMessages_NoMessages() {
-        // Test without adding any messages
         entityManager.clear();
 
         List<Chatroom> result = chatroomRepository.findByOwnerIdWithMessages(ownerId);
@@ -240,7 +229,6 @@ class ChatroomRepositoryTest {
 
     @Test
     void testFindByRenterIdAndOwnerIdAndPropertyId_WithMultipleChatrooms() {
-        // Create additional chatrooms with different combinations
         Chatroom chatroom2 = new Chatroom();
         chatroom2.setRenterId(renterId);
         chatroom2.setOwnerId(UUID.randomUUID());
@@ -256,8 +244,6 @@ class ChatroomRepositoryTest {
         entityManager.persistAndFlush(chatroom3);
 
         entityManager.clear();
-
-        // Should still find only the specific combination
         Optional<Chatroom> result = chatroomRepository
                 .findByRenterIdAndOwnerIdAndPropertyId(renterId, ownerId, propertyId);
 

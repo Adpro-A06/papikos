@@ -19,7 +19,6 @@ public class PengelolaanRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        // Clear the repository data before each test
         pengelolaanRepository.deleteAll();
     }
 

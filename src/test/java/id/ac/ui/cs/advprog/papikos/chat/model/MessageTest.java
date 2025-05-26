@@ -125,8 +125,6 @@ public class MessageTest {
     void testPrePersist() {
         Message newMessage = new Message();
         assertNull(newMessage.getTimestamp());
-
-        // Call the PrePersist method manually for testing
         newMessage.onCreate();
 
         assertNotNull(newMessage.getTimestamp());

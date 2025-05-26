@@ -472,7 +472,7 @@
     function confirmDelete(button) {
         const id = button.getAttribute('data-id');
         const name = button.getAttribute('data-name');
-        console.log('DEBUG: Deleting Kos with ID = ' + id); // Debug log
+        console.log('DEBUG: Deleting Kos with ID = ' + id);
         document.getElementById('deleteMessage').textContent = `Apakah Anda yakin ingin menghapus kos "${name}"?`;
         document.getElementById('deleteForm').action = `/pemilik/delete/${id}`;
         document.getElementById('deleteModal').classList.remove('modal-hidden');

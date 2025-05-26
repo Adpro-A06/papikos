@@ -53,8 +53,6 @@ public class ChatroomController {
         }
 
         List<Chatroom> chatrooms = chatroomService.getChatroomsByRenterId(renterId);
-
-        // Prepare chatroom data with names
         Map<String, Object> chatroomData = prepareChatroomData(chatrooms);
 
         model.addAttribute("chatrooms", chatrooms);
@@ -80,8 +78,6 @@ public class ChatroomController {
         }
 
         List<Chatroom> chatrooms = chatroomService.getChatroomsByOwnerId(ownerId);
-
-        // Prepare chatroom data with names
         Map<String, Object> chatroomData = prepareChatroomData(chatrooms);
 
         model.addAttribute("chatrooms", chatrooms);
@@ -109,7 +105,6 @@ public class ChatroomController {
         try {
             Chatroom chatroom = chatroomService.getChatroomById(id);
 
-            // Get user names
             String renterName = getUserEmailById(chatroom.getRenterId());
             String ownerName = getUserEmailById(chatroom.getOwnerId());
             String propertyName = getPropertyNameById(chatroom.getPropertyId());
@@ -135,15 +130,12 @@ public class ChatroomController {
         Map<String, String> propertyNames = new HashMap<>();
 
         for (Chatroom chatroom : chatrooms) {
-            // Cache user names
             if (!userNames.containsKey(chatroom.getRenterId().toString())) {
                 userNames.put(chatroom.getRenterId().toString(), getUserEmailById(chatroom.getRenterId()));
             }
             if (!userNames.containsKey(chatroom.getOwnerId().toString())) {
                 userNames.put(chatroom.getOwnerId().toString(), getUserEmailById(chatroom.getOwnerId()));
             }
-
-            // Cache property names
             if (!propertyNames.containsKey(chatroom.getPropertyId().toString())) {
                 propertyNames.put(chatroom.getPropertyId().toString(), getPropertyNameById(chatroom.getPropertyId()));
             }
@@ -169,7 +161,6 @@ public class ChatroomController {
             Optional<Kos> kosOptional = kosService.findById(propertyId);
             if (kosOptional.isPresent()) {
                 Kos kos = kosOptional.get();
-                // Menggunakan field 'nama' dari model Kos
                 return kos.getNama();
             }
             return "Unknown Property";
