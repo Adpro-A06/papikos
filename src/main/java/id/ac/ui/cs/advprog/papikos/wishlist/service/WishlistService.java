@@ -47,7 +47,7 @@ public class WishlistService {
                             if (k.getId() == null)
                                 return false;
                             UUID kosUuid = k.getId();
-                            Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
+                            Long kosLongId = Math.abs(kosUuid.getMostSignificantBits()) % Long.MAX_VALUE;
                             return kosLongId.equals(kosId);
                         }));
     }
@@ -74,11 +74,10 @@ public class WishlistService {
     public boolean removeFromWishlist(UUID userId, Long kosId) {
         return wishlistStorage.removeIf(w -> w.getUserId().equals(userId.toString()) &&
                 w.getKosList().stream().anyMatch(k -> {
-
                     if (k.getId() == null)
                         return false;
                     UUID kosUuid = k.getId();
-                    Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
+                    Long kosLongId = Math.abs(kosUuid.getMostSignificantBits()) % Long.MAX_VALUE;
                     return kosLongId.equals(kosId);
                 }));
     }
@@ -107,7 +106,7 @@ public class WishlistService {
                 .filter(kos -> kos.getId() != null)
                 .map(kos -> {
                     UUID kosUuid = kos.getId();
-                    return Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
+                    return Math.abs(kosUuid.getMostSignificantBits()) % Long.MAX_VALUE;
                 })
                 .collect(Collectors.toList());
     }
