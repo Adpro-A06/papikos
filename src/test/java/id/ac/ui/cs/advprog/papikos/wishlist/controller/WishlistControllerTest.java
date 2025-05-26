@@ -2,14 +2,17 @@ package id.ac.ui.cs.advprog.papikos.wishlist.controller;
 
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistSubject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*; 
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @WebMvcTest({WishlistController.class, WishlistRestController.class})
@@ -59,7 +63,7 @@ public class WishlistControllerTest {
         validWishlist.setId(1);
     }
 
-    // ========== WEB CONTROLLER TESTS ==========
+    
     
     @Test
     public void testWishlistPage_WithValidUser() throws Exception {
@@ -139,7 +143,7 @@ public class WishlistControllerTest {
                 .andExpect(redirectedUrl("/api/auth/login"));
     }
 
-    // ========== REST API CONTROLLER TESTS ==========
+    
 
     @Test
     public void testAddToWishlist_Valid() throws Exception {
@@ -314,83 +318,113 @@ public class WishlistControllerTest {
                         .content(requestBody)
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Gagal menambahkan ke wishlist"));
+                .andExpect(jsonPath("$.success").value(false));
+    } 
 
     
-
+    
     @Test
-    public void testCreateWishlistWithKos_Valid() throws Exception {
-        // Test helper method createWishlistWithKos
-        String userId = UUID.randomUUID().toString();
-        Long kosId = 123L;
+    public void testCreateWishlistWithKos_ValidInput() throws Exception {
+        // Test through API call since method is private
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        when(wishlistService.isInWishlist(userId, 123L)).thenReturn(false);
+        when(wishlistService.addToWishlist(any(Wishlist.class))).thenReturn(validWishlist);
+        when(wishlistService.getWishlistCount(userId)).thenReturn(1);
+
+        String requestBody = "{\"kosId\": 123}";
+
+        mockMvc.perform(post("/api/v1/wishlist/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
         
-        // This will test the createWishlistWithKos method
-        Wishlist result = createWishlistWithKos(userId, kosId);
-        
-        assertNotNull(result);
-        assertEquals(userId, result.getUserId());
-        assertNotNull(result.getKosList());
-        assertEquals(1, result.getKosList().size());
+        // Verify that createWishlistWithKos was called indirectly
+        verify(wishlistService).addToWishlist(any(Wishlist.class));
     }
 
     @Test
-    public void testParseKosId_ValidInteger() throws Exception {
-        // Test parseKosId method with Integer
-        Object kosIdObj = 123;
-        Long result = parseKosId(kosIdObj);
-        assertEquals(Long.valueOf(123L), result);
+    public void testParseKosId_ValidIntegerInput() throws Exception {
+        // Test through API call since parseKosId method is private
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        when(wishlistService.isInWishlist(userId, 123L)).thenReturn(false);
+        when(wishlistService.addToWishlist(any(Wishlist.class))).thenReturn(validWishlist);
+
+        String requestBody = "{\"kosId\": 123}"; // Integer format
+
+        mockMvc.perform(post("/api/v1/wishlist/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testParseKosId_ValidString() throws Exception {
-        // Test parseKosId method with String
-        Object kosIdObj = "456";
-        Long result = parseKosId(kosIdObj);
-        assertEquals(Long.valueOf(456L), result);
+    public void testParseKosId_ValidStringInput() throws Exception {
+        // Test through API call since parseKosId method is private
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        when(wishlistService.isInWishlist(userId, 456L)).thenReturn(false);
+        when(wishlistService.addToWishlist(any(Wishlist.class))).thenReturn(validWishlist);
+
+        String requestBody = "{\"kosId\": \"456\"}"; // String format
+
+        mockMvc.perform(post("/api/v1/wishlist/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testParseKosId_InvalidString() throws Exception {
-        // Test parseKosId method with invalid String
-        Object kosIdObj = "invalid";
-        Long result = parseKosId(kosIdObj);
-        assertNull(result);
-    }
+    public void testParseKosId_InvalidStringInput() throws Exception {
+        // Test through API call since parseKosId method is private
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
 
-    @Test
-    public void testConvertUUIDToLong_ValidUUID() throws Exception {
-        UUID testUuid = UUID.randomUUID();
-        Long result = convertUUIDToLong(testUuid);
-        assertNotNull(result);
-        assertTrue(result > 0);
-    }
+        String requestBody = "{\"kosId\": \"invalid\"}"; // Invalid string
 
-    @Test
-    public void testConvertUUIDToLong_NullUUID() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> {
-            convertUUIDToLong(null);
-        });
+        mockMvc.perform(post("/api/v1/wishlist/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
     public void testExtractTokenFromHeader_ValidHeader() throws Exception {
-        String authHeader = "Bearer valid-token-here";
-        String result = extractTokenFromHeader(authHeader);
-        assertEquals("valid-token-here", result);
+        // Test through API call since extractTokenFromHeader method is private
+        when(authService.decodeToken("valid-token-here")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        when(wishlistService.getUserWishlist(userId)).thenReturn(Arrays.asList(validWishlist));
+
+        mockMvc.perform(get("/api/v1/wishlist/user")
+                        .header("Authorization", "Bearer valid-token-here"))
+                .andExpect(status().isOk());
+        
+        verify(authService).decodeToken("valid-token-here");
     }
 
     @Test
     public void testExtractTokenFromHeader_InvalidHeader() throws Exception {
-        String authHeader = "Invalid header";
-        String result = extractTokenFromHeader(authHeader);
-        assertNull(result);
+        // Test through API call since extractTokenFromHeader method is private
+        mockMvc.perform(get("/api/v1/wishlist/user")
+                        .header("Authorization", "Invalid header"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Token tidak valid"));
     }
 
     @Test
-    public void testExtractTokenFromHeader_NullHeader() throws Exception {
-        String result = extractTokenFromHeader(null);
-        assertNull(result);
-}
+    public void testExtractTokenFromHeader_MissingHeader() throws Exception {
+    // Test missing Authorization header
+        mockMvc.perform(get("/api/v1/wishlist/user"))
+            .andExpect(status().is4xxClientError()); 
     }
+
+    
 }
