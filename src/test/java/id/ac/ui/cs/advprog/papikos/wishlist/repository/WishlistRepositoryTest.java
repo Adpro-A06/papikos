@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,17 +42,17 @@ class WishlistRepositoryTest {
     void testFindById_Exists() {
         Wishlist saved = repository.save(testWishlist);
         
-        Wishlist found = repository.findById(saved.getId());
+        Optional<Wishlist> found = repository.findById(saved.getId());
         
-        assertNotNull(found);
-        assertEquals(saved.getId(), found.getId());
+        assertTrue(found.isPresent());
+        assertEquals(saved.getId(), found.get().getId());
     }
 
     @Test
     void testFindById_NotExists() {
-        Wishlist found = repository.findById(999);
+        Optional<Wishlist> found = repository.findById(999); 
         
-        assertNull(found);
+        assertFalse(found.isPresent()); 
     }
 
     @Test
@@ -61,7 +62,7 @@ class WishlistRepositoryTest {
         boolean deleted = repository.deleteById(saved.getId());
         
         assertTrue(deleted);
-        assertNull(repository.findById(saved.getId()));
+        assertFalse(repository.findById(saved.getId()).isPresent()); 
     }
 
     @Test
@@ -93,9 +94,39 @@ class WishlistRepositoryTest {
     }
 
     @Test
-    void testSaveNullWishlist() {
-        assertThrows(Exception.class, () -> {
-            repository.save(null);
-        });
+    void testFindById_EmptyOptional() {
+        Optional<Wishlist> notFound = repository.findById(999);
+        
+        assertTrue(notFound.isEmpty());
+    }
+
+    @Test
+    void testFindById_ValidOptional() {
+        Wishlist saved = repository.save(testWishlist);
+        
+        Optional<Wishlist> found = repository.findById(saved.getId());
+        
+        assertTrue(found.isPresent());
+        assertEquals(saved.getName(), found.get().getName());
+    }
+
+    // Additional test methods to boost coverage
+    @Test
+    void testRepository_MultipleOperations() {
+        // Save multiple
+        Wishlist w1 = repository.save(new Wishlist("W1", "u1"));
+        Wishlist w2 = repository.save(new Wishlist("W2", "u2"));
+        Wishlist w3 = repository.save(new Wishlist("W3", "u3"));
+        
+        assertEquals(3, repository.findAll().size());
+        
+        // Delete one
+        repository.deleteById(w2.getId());
+        assertEquals(2, repository.findAll().size());
+        
+        // Check remaining
+        assertTrue(repository.findById(w1.getId()).isPresent());
+        assertFalse(repository.findById(w2.getId()).isPresent());
+        assertTrue(repository.findById(w3.getId()).isPresent());
     }
 }
