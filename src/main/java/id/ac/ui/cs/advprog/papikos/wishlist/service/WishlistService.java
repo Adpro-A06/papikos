@@ -24,10 +24,9 @@ public class WishlistService {
         if (!isValidWishlist(wishlist)) {
             return null;
         }
-        
+
         wishlist.setId(wishlistStorage.size() + 1);
-        
-        
+
         List<Kos> kosList = wishlist.getKosList();
         if (kosList != null) {
             List<Kos> filteredKos = filterDuplicateKos(kosList);
@@ -43,28 +42,27 @@ public class WishlistService {
 
     public boolean isInWishlist(UUID userId, Long kosId) {
         return wishlistStorage.stream()
-                .anyMatch(w -> w.getUserId().equals(userId.toString()) && 
-                         w.getKosList().stream().anyMatch(k -> {
-                             // Fix: Add null check
-                             if (k.getId() == null) return false;
-                             UUID kosUuid = k.getId();
-                             Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
-                             return kosLongId.equals(kosId);
-                         }));
+                .anyMatch(w -> w.getUserId().equals(userId.toString()) &&
+                        w.getKosList().stream().anyMatch(k -> {
+                            if (k.getId() == null)
+                                return false;
+                            UUID kosUuid = k.getId();
+                            Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
+                            return kosLongId.equals(kosId);
+                        }));
     }
 
     public Wishlist addToWishlist(Wishlist wishlist) {
-        
+
         if (wishlist.getKosList() == null) {
             wishlist.setKosList(new ArrayList<>());
         }
-        
+
         boolean exists = wishlistStorage.stream()
-                .anyMatch(w -> w.getUserId().equals(wishlist.getUserId()) && 
-                         w.getKosList().stream().anyMatch(k -> 
-                             wishlist.getKosList().stream().anyMatch(newK -> 
-                                 k.getId() != null && newK.getId() != null && k.getId().equals(newK.getId()))));
-        
+                .anyMatch(w -> w.getUserId().equals(wishlist.getUserId()) &&
+                        w.getKosList().stream().anyMatch(k -> wishlist.getKosList().stream().anyMatch(
+                                newK -> k.getId() != null && newK.getId() != null && k.getId().equals(newK.getId()))));
+
         if (!exists) {
             wishlist.setId(wishlistStorage.size() + 1);
             wishlistStorage.add(wishlist);
@@ -74,15 +72,15 @@ public class WishlistService {
     }
 
     public boolean removeFromWishlist(UUID userId, Long kosId) {
-        return wishlistStorage.removeIf(w -> 
-            w.getUserId().equals(userId.toString()) && 
-            w.getKosList().stream().anyMatch(k -> {
-                
-                if (k.getId() == null) return false;
-                UUID kosUuid = k.getId();
-                Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
-                return kosLongId.equals(kosId);
-            }));
+        return wishlistStorage.removeIf(w -> w.getUserId().equals(userId.toString()) &&
+                w.getKosList().stream().anyMatch(k -> {
+
+                    if (k.getId() == null)
+                        return false;
+                    UUID kosUuid = k.getId();
+                    Long kosLongId = Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
+                    return kosLongId.equals(kosId);
+                }));
     }
 
     public int getWishlistCount(UUID userId) {
@@ -106,7 +104,7 @@ public class WishlistService {
         return wishlistStorage.stream()
                 .filter(w -> w.getUserId().equals(userId.toString()))
                 .flatMap(w -> w.getKosList().stream())
-                .filter(kos -> kos.getId() != null) // Fix: Add null filter
+                .filter(kos -> kos.getId() != null)
                 .map(kos -> {
                     UUID kosUuid = kos.getId();
                     return Math.abs(kosUuid.hashCode()) % Long.MAX_VALUE;
@@ -114,17 +112,47 @@ public class WishlistService {
                 .collect(Collectors.toList());
     }
 
+    public void toggleWishlist(UUID userId, UUID kosId) {
+        Wishlist userWishlist = wishlistStorage.stream()
+                .filter(w -> w.getUserId().equals(userId.toString()))
+                .findFirst()
+                .orElse(null);
+
+        if (userWishlist == null) {
+            userWishlist = new Wishlist();
+            userWishlist.setUserId(userId.toString());
+            userWishlist.setKosList(new ArrayList<>());
+            userWishlist.setName("Wishlist " + userId);
+            userWishlist.setId(wishlistStorage.size() + 1);
+            wishlistStorage.add(userWishlist);
+        }
+
+        boolean exists = userWishlist.getKosList().stream()
+                .anyMatch(k -> k.getId() != null && k.getId().equals(kosId));
+
+        if (exists) {
+            userWishlist.getKosList().removeIf(k -> k.getId() != null && k.getId().equals(kosId));
+            notifier.notifyObservers(userWishlist, "removed");
+        } else {
+            Kos kos = new Kos();
+            kos.setId(kosId);
+            userWishlist.getKosList().add(kos);
+            notifier.notifyObservers(userWishlist, "added");
+        }
+    }
+
     private boolean isValidWishlist(Wishlist wishlist) {
-        
+
         return wishlist != null && wishlist.getName() != null && !wishlist.getName().trim().isEmpty();
     }
 
     private List<Kos> filterDuplicateKos(List<Kos> kosList) {
-        if (kosList == null) return new ArrayList<>(); // Fix: Handle null input
-        
+        if (kosList == null)
+            return new ArrayList<>();
+
         List<Kos> uniqueKos = new ArrayList<>();
         for (Kos kos : kosList) {
-            
+
             if (kos != null && !uniqueKos.contains(kos)) {
                 uniqueKos.add(kos);
             }

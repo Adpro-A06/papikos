@@ -54,7 +54,6 @@ public class WishlistRestController {
                return ResponseEntity.ok(new AuthDto.ApiResponse(false, "Kos sudah ada di wishlist"));
            }
 
-           // Create Wishlist with proper Kos object
            String userId = user.getId().toString();
            Wishlist wishlist = createWishlistWithKos(userId, kosId);
            Wishlist savedWishlist = wishlistService.addToWishlist(wishlist);
@@ -106,7 +105,6 @@ public class WishlistRestController {
            boolean removed = wishlistService.removeFromWishlist(user.getId(), kosId);
 
            if (removed) {
-               // Create Wishlist for notification
                String userId = user.getId().toString();
                Wishlist removedWishlist = createWishlistWithKos(userId, kosId);
                wishlistSubject.notifyObservers(removedWishlist, "removed");
@@ -193,7 +191,6 @@ public class WishlistRestController {
 
            wishlistService.clearUserWishlist(user.getId());
 
-           // Create empty wishlist for notification
            String userId = user.getId().toString();
            Wishlist clearedWishlist = new Wishlist("Cleared Wishlist", userId);
            wishlistSubject.notifyObservers(clearedWishlist, "cleared");
@@ -257,7 +254,6 @@ public class WishlistRestController {
        }
    }
 
-   // Helper method to create Wishlist with Kos object - IMPROVED NULL SAFETY
    private Wishlist createWishlistWithKos(String userId, Long kosId) {
        if (userId == null || userId.trim().isEmpty()) {
            throw new IllegalArgumentException("UserId cannot be null or empty");
@@ -265,17 +261,13 @@ public class WishlistRestController {
        if (kosId == null || kosId <= 0) {
            throw new IllegalArgumentException("KosId must be a positive number");
        }
-       
-       // Create Kos object with converted UUID
+
        Kos kos = new Kos();
-       // Convert Long kosId to UUID (simple conversion for compatibility)
        UUID kosUuid = new UUID(kosId, kosId);
        kos.setId(kosUuid);
-       
-       // Create wishlist with proper name
+
        Wishlist wishlist = new Wishlist("User Wishlist", userId);
-       
-       // Set kosList
+ 
        List<Kos> kosList = new ArrayList<>();
        kosList.add(kos);
        wishlist.setKosList(kosList);

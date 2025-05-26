@@ -595,7 +595,6 @@
     </header>
 
     <main class="main-content">
-        <!-- Flash messages -->
         <div th:if="${success}" class="alert alert-success">
             <span th:text="${success}">Success message</span>
         </div>
@@ -630,7 +629,6 @@
             </div>
         </div>
 
-        <!-- Statistics -->
         <div class="wishlist-stats">
             <div class="stat-card">
                 <div class="stat-number" th:text="${wishlistCount ?: 0}">0</div>
@@ -646,7 +644,6 @@
             </div>
         </div>
 
-        <!-- Actions -->
         <div class="wishlist-actions">
             <div class="filter-section">
                 <form th:action="@{/wishlist}" method="get" class="search-form">
@@ -674,7 +671,6 @@
             </div>
         </div>
 
-        <!-- Wishlist Content -->
         <div th:if="${wishlistItems != null && !wishlistItems.empty}" class="kos-grid">
             <div th:each="item : ${wishlistItems}" class="kos-card">
                 <div class="kos-image">
@@ -689,27 +685,27 @@
                     <div class="date-added" th:text="${#temporals.format(item.dateAdded, 'dd MMM yyyy')}">12 Jan 2025</div>
                 </div>
                 <div class="kos-details">
-                    <h3 th:text="${item.kos.nama}">Nama Kos</h3>
+                    <h3 th:text="${item.nama}">Nama Kos</h3>
                     <p class="kos-address">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span th:text="${item.kos.alamat}">Alamat Kos</span>
+                        <span th:text="${item.alamat}">Alamat Kos</span>
                     </p>
                     <p class="kos-price">Rp <span
-                            th:text="${#numbers.formatDecimal(item.kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
+                            th:text="${#numbers.formatDecimal(item.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
                         / bulan</p>
-                    <p class="kos-availability" th:if="${item.kos.jumlah > 0}">
-                        ✓ Tersedia: <span th:text="${item.kos.jumlah}">5</span> kamar
+                    <p class="kos-availability" th:if="${item.jumlah > 0}">
+                        ✓ Tersedia: <span th:text="${item.jumlah}">5</span> kamar
                     </p>
-                    <p class="kos-availability" th:if="${item.kos.jumlah == 0}" style="color: var(--heart-color);">
+                    <p class="kos-availability" th:if="${item.jumlah == 0}" style="color: var(--heart-color);">
                         ✗ Kamar tidak tersedia
                     </p>
                     <div class="kos-actions">
-                        <a th:href="@{/kos/{id}(id=${item.kos.id})}" class="btn btn-detail">Lihat Detail</a>
-                        <form th:action="@{/wishlist/remove/{kosId}(kosId=${item.kos.id})}" method="post" style="display: inline;">
+                        <a th:href="@{/kos/{id}(id=${item.id})}" class="btn btn-detail">Lihat Detail</a>
+                        <form th:action="@{/wishlist/remove/{kosId}(kosId=${item.id})}" method="post" style="display: inline;">
                             <button type="submit" class="btn btn-remove" title="Hapus dari wishlist"
                                     onclick="return confirm('Hapus kos ini dari wishlist?')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -725,7 +721,6 @@
             </div>
         </div>
 
-        <!-- Empty State -->
         <div th:if="${wishlistItems == null || wishlistItems.empty}" class="empty-wishlist">
             <div class="empty-icon">♡</div>
             <h2 class="empty-title">Wishlist Masih Kosong</h2>
@@ -742,7 +737,6 @@
             </a>
         </div>
 
-        <!-- Pagination -->
         <div th:if="${totalPages > 1}" class="pagination">
             <a th:if="${currentPage > 0}" 
                th:href="@{/wishlist(page=${currentPage - 1}, sort=${sort}, search=${search})}">❮ Sebelumnya</a>
