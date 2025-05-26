@@ -162,8 +162,6 @@ class MessageServiceTest {
         });
 
         assertEquals("Message content cannot be null", exception.getMessage());
-
-        // Verify that no service calls were made after validation failure
         verify(chatroomService, never()).getChatroomById(any());
         verify(chatCommandService, never()).sendMessage(any(), any(), any());
         verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());

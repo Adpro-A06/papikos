@@ -21,7 +21,6 @@ public class PaymentMetrics {
     public PaymentMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
 
-        // Initialize counters for different payment operations
         this.topUpCounter = Counter.builder("papikos.payment.topup.count")
                 .description("Number of top-up operations")
                 .register(meterRegistry);

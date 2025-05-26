@@ -1,4 +1,3 @@
-// WebSocket Chat Client
 class ChatWebSocket {
     constructor(chatroomId, currentUserId) {
         this.chatroomId = chatroomId;
@@ -13,7 +12,6 @@ class ChatWebSocket {
         const socket = new SockJS('/ws');
         this.stompClient = Stomp.over(socket);
 
-        // Disable debug logging
         this.stompClient.debug = null;
 
         const self = this;
@@ -22,25 +20,21 @@ class ChatWebSocket {
             console.log('Connected to WebSocket: ' + frame);
             self.connected = true;
 
-            // Subscribe to new messages
             self.stompClient.subscribe('/topic/chatroom/' + self.chatroomId, function(message) {
                 const newMessage = JSON.parse(message.body);
                 self.handleNewMessage(newMessage);
             });
 
-            // Subscribe to message edits
             self.stompClient.subscribe('/topic/chatroom/' + self.chatroomId + '/edit', function(message) {
                 const editedMessage = JSON.parse(message.body);
                 self.handleMessageEdit(editedMessage);
             });
 
-            // Subscribe to message deletions
             self.stompClient.subscribe('/topic/chatroom/' + self.chatroomId + '/delete', function(message) {
                 const messageId = JSON.parse(message.body);
                 self.handleMessageDelete(messageId);
             });
 
-            // Subscribe to reload events (for undo operations)
             self.stompClient.subscribe('/topic/chatroom/' + self.chatroomId + '/reload', function(message) {
                 self.reloadMessages();
             });
@@ -48,7 +42,6 @@ class ChatWebSocket {
         }, function(error) {
             console.error('WebSocket connection error: ', error);
             self.connected = false;
-            // Retry connection after 5 seconds
             setTimeout(() => self.connect(), 5000);
         });
     }
@@ -71,32 +64,24 @@ class ChatWebSocket {
             this.stompClient.send('/app/chat/' + this.chatroomId + '/send', {}, JSON.stringify(message));
         } else {
             console.error('WebSocket not connected');
-            // Fallback to REST API
             this.sendMessageViaRest(content);
         }
     }
 
     handleNewMessage(message) {
-        // Add message to chat UI
         this.appendMessageToChat(message);
-
-        // Scroll to bottom
         this.scrollToBottom();
-
-        // Show notification if message is from another user
         if (message.senderId !== this.currentUserId) {
             this.showNotification('New message received');
         }
     }
 
     handleMessageEdit(message) {
-        // Update existing message in UI
         const messageElement = document.querySelector(`[data-message-id="${message.id}"]`);
         if (messageElement) {
             const contentElement = messageElement.querySelector('.message-content');
             if (contentElement) {
                 contentElement.textContent = message.content;
-                // Add edited indicator
                 let editedIndicator = messageElement.querySelector('.edited-indicator');
                 if (!editedIndicator) {
                     editedIndicator = document.createElement('span');
@@ -109,7 +94,6 @@ class ChatWebSocket {
     }
 
     handleMessageDelete(messageId) {
-        // Remove message from UI
         const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
         if (messageElement) {
             messageElement.remove();
@@ -120,7 +104,6 @@ class ChatWebSocket {
         const messagesContainer = document.getElementById('messages-container');
         if (!messagesContainer) return;
 
-        // Check if message already exists
         if (document.querySelector(`[data-message-id="${message.id}"]`)) {
             return;
         }
@@ -150,14 +133,12 @@ class ChatWebSocket {
     }
 
     showNotification(message) {
-        // Simple notification - you can enhance this
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Chat', { body: message });
         }
     }
 
     reloadMessages() {
-        // Reload all messages from server
         fetch(`/api/chatrooms/${this.chatroomId}/messages`)
             .then(response => response.json())
             .then(messages => {
@@ -174,7 +155,6 @@ class ChatWebSocket {
     }
 
     sendMessageViaRest(content) {
-        // Fallback method using REST API
         fetch(`/api/chatrooms/${this.chatroomId}/messages`, {
             method: 'POST',
             headers: {
@@ -187,7 +167,6 @@ class ChatWebSocket {
         })
             .then(response => response.json())
             .then(message => {
-                // Message will be broadcast via WebSocket from server
                 console.log('Message sent via REST API');
             })
             .catch(error => {
@@ -202,16 +181,13 @@ class ChatWebSocket {
     }
 }
 
-// Initialize WebSocket when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Get chatroom ID and current user ID from the page
     const chatroomId = document.getElementById('chatroom-id')?.value;
     const currentUserId = document.getElementById('current-user-id')?.value;
 
     if (chatroomId && currentUserId) {
         window.chatWebSocket = new ChatWebSocket(chatroomId, currentUserId);
 
-        // Handle message form submission
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
 
@@ -226,14 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
     }
 });
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', function() {
     if (window.chatWebSocket) {
         window.chatWebSocket.disconnect();

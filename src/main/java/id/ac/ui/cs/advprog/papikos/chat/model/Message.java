@@ -23,7 +23,7 @@ public class Message {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chatroom_id", nullable = false)
-    @JsonIgnore // Prevent circular reference in JSON
+    @JsonIgnore
     private Chatroom chatroom;
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
@@ -46,21 +46,17 @@ public class Message {
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
 
-    // Helper method untuk backward compatibility dan JSON serialization
     public UUID getChatroomId() {
         return chatroom != null ? chatroom.getId() : null;
     }
 
     public void setChatroomId(UUID chatroomId) {
-        // This method is kept for backward compatibility
-        // but you should use setChatroom(Chatroom chatroom) instead
         if (this.chatroom == null) {
             this.chatroom = new Chatroom();
         }
         this.chatroom.setId(chatroomId);
     }
 
-    // isEdited flag methods
     public boolean isEdited() {
         return isEdited;
     }
@@ -69,7 +65,6 @@ public class Message {
         isEdited = edited;
     }
 
-    // isDeleted flag methods
     public boolean isDeleted() {
         return isDeleted;
     }

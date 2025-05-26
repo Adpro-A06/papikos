@@ -28,7 +28,6 @@ public class AuthServiceImplTest {
 
     @Test
     public void testRegisterPenyewa() {
-        // Arrange
         String email = "penyewa@example.com";
         String password = "P@ssword123";
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
@@ -295,8 +294,7 @@ public class AuthServiceImplTest {
         
         User pendingPemilik2 = new User("pending2@example.com", "P@ssword123", Role.PEMILIK_KOS);
         pendingPemilik2.setApproved(false);
-        
-        // For example only, not happening in real action
+ 
         User pendingPenyewa = new User("penyewa@example.com", "P@ssword123", Role.PENYEWA);
         pendingPenyewa.setApproved(false);
         

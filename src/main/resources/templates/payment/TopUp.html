@@ -275,10 +275,9 @@
 <!-- Header with simplified navigation -->
 <header class="header">
     <div class="header-container">
-        <a href="/" class="logo">Papikos</a>
+        <a th:href="${user.role.name() == 'PENYEWA' ? '/penyewa/home' : (user.role.name() == 'PEMILIK_KOS' ? '/pemilik/home' : '/')}" class="logo">Papikos</a>
         <div class="nav-links">
-            <a href="/">Beranda</a>
-            <a href="/payment/wallet">Wallet</a>
+            <a>TopUp</a>
         </div>
         <div class="user-menu">
             <div class="user-info">
@@ -287,9 +286,11 @@
                 </div>
                 <span class="user-name" th:text="${user.email}">Pengguna</span>
             </div>
-            <a href="/api/auth/logout" class="btn-logout">
-                <i class="fas fa-sign-out-alt"></i> Keluar
-            </a>
+            </a><form th:action="@{/api/auth/logout}" method="post" class="m-0">
+            <button type="submit" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
         </div>
     </div>
 </header>
@@ -422,7 +423,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle amount button clicks
         const amountBtns = document.querySelectorAll('.amount-btn');
         const amountInput = document.getElementById('amount');
         const form = document.getElementById('topupForm');
@@ -431,40 +431,30 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const paymentOptions = document.querySelectorAll('.payment-method-option');
 
-        // Format number to Indonesian currency format
         function formatCurrency(number) {
             return new Intl.NumberFormat('id-ID').format(number);
         }
 
-        // Handle amount button clicks
         amountBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                // Remove active class from all buttons
                 amountBtns.forEach(b => b.classList.remove('active', 'btn-primary'));
                 amountBtns.forEach(b => b.classList.add('btn-outline-primary'));
 
-                // Add active class to clicked button
                 this.classList.remove('btn-outline-primary');
                 this.classList.add('active', 'btn-primary');
 
-                // Set amount value
                 amountInput.value = this.dataset.amount;
 
-                // Validate input
                 validateAmount();
             });
         });
 
-        // Format amount input on blur
         amountInput.addEventListener('blur', function() {
             if (this.value && !isNaN(this.value)) {
-                // Don't change the actual value, just display formatted
                 const formattedVal = formatCurrency(this.value);
-                // Could add visual formatted display here if needed
             }
         });
 
-        // Validate amount input
         function validateAmount() {
             const value = parseInt(amountInput.value);
             if (isNaN(value) || value < 10000) {
@@ -476,57 +466,44 @@
             }
         }
 
-        // Input validation
         amountInput.addEventListener('input', validateAmount);
 
-        // Handle payment method selection
         paymentOptions.forEach(option => {
             option.addEventListener('click', function() {
                 const radioInput = this.querySelector('input[type="radio"]');
                 radioInput.checked = true;
 
-                // Update active class
                 paymentOptions.forEach(o => o.classList.remove('active'));
                 this.classList.add('active');
             });
         });
 
-        // Form submission
         form.addEventListener('submit', function(e) {
             if (!validateAmount()) {
                 e.preventDefault();
                 return false;
             }
 
-            // Show loading state
             submitBtn.disabled = true;
             submitText.textContent = 'Memproses...';
             loadingSpinner.classList.remove('d-none');
 
-            // Store the amount in session storage for display in wallet page
             const amount = parseInt(amountInput.value);
             if (!isNaN(amount)) {
                 sessionStorage.setItem('topupAmount', amount);
                 sessionStorage.setItem('topupSuccess', 'true');
                 sessionStorage.setItem('topupTime', new Date().toISOString());
             }
-
-            // Form is valid, submit will continue
-            // Server-side will redirect to wallet.html after processing
             return true;
         });
 
-        // Initialize the page
-        // Check if default value was already selected
         if (amountInput.value) {
-            // Find button matching the amount and click it
             const matchingBtn = Array.from(amountBtns).find(btn => btn.dataset.amount === amountInput.value);
             if (matchingBtn) {
                 matchingBtn.click();
             }
         }
 
-        // Initialize payment method selection
         const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
         document.querySelector(`.payment-method-option[data-method="${selectedMethod}"]`).classList.add('active');
     });

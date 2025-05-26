@@ -174,10 +174,9 @@
 <!-- Header with simplified navigation -->
 <header class="header">
     <div class="header-container">
-        <a href="/" class="logo">Papikos</a>
+        <a th:href="${user.role.name() == 'PENYEWA' ? '/penyewa/home' : (user.role.name() == 'PEMILIK_KOS' ? '/pemilik/home' : '/')}" class="logo">Papikos</a>
         <div class="nav-links">
-            <a href="/">Beranda</a>
-            <a href="/payment/wallet">Wallet</a>
+            <a>Payment Form</a>
         </div>
         <div class="user-menu">
             <div class="user-info">
@@ -186,9 +185,11 @@
                 </div>
                 <span class="user-name" th:text="${user.email}">Pengguna</span>
             </div>
-            <a href="/api/auth/logout" class="btn-logout">
-                <i class="fas fa-sign-out-alt"></i> Keluar
-            </a>
+            </a><form th:action="@{/api/auth/logout}" method="post" class="m-0">
+            <button type="submit" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
         </div>
     </div>
 </header>
@@ -394,14 +395,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Form elements
         const paymentForm = document.querySelector('form');
         const pemilikDropdown = document.getElementById('toUserId');
         const amountInput = document.getElementById('amount');
         const descriptionInput = document.getElementById('description');
         const btnBayar = document.getElementById('btnBayar');
 
-        // Modal elements
         const konfirmasiModal = new bootstrap.Modal(document.getElementById('konfirmasiModal'));
         const modalPemilikInitial = document.getElementById('modalPemilikInitial');
         const modalPemilikEmailDisplay = document.getElementById('modalPemilikEmailDisplay');
@@ -409,74 +408,58 @@
         const modalDescription = document.getElementById('modalDescription');
         const btnKonfirmasiPembayaran = document.getElementById('btnKonfirmasiPembayaran');
 
-        // Card info elements
         const pemilikInfo = document.getElementById('pemilikInfo');
         const pemilikInitial = document.getElementById('pemilikInitial');
         const pemilikEmailDisplay = document.getElementById('pemilikEmailDisplay');
 
-        // Handle amount button clicks
         const amountBtns = document.querySelectorAll('.amount-btn');
         if (amountBtns.length > 0) {
             amountBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    // Remove active class from all buttons
                     amountBtns.forEach(b => b.classList.remove('active', 'btn-primary'));
                     amountBtns.forEach(b => b.classList.add('btn-outline-primary'));
 
-                    // Add active class to clicked button
                     this.classList.remove('btn-outline-primary');
                     this.classList.add('active', 'btn-primary');
 
-                    // Set amount value
                     amountInput.value = this.dataset.amount;
                 });
             });
         }
 
-        // Handle Pemilik Kos selection
         if (pemilikDropdown) {
             pemilikDropdown.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
                 if (selectedOption.value) {
                     const email = selectedOption.getAttribute('data-email');
-
-                    // Show pemilik info card
                     pemilikInfo.classList.remove('d-none');
 
-                    // Set initial from first letter of email
                     if (email) {
                         pemilikInitial.textContent = email.charAt(0).toUpperCase();
                         pemilikEmailDisplay.textContent = email;
                     }
                 } else {
-                    // Hide pemilik info if no selection
                     pemilikInfo.classList.add('d-none');
                 }
             });
         }
 
-        // Show confirmation modal when "Bayar Sekarang" button is clicked
         btnBayar.addEventListener('click', function() {
-            // Get selected pemilik kos email
             let email = '';
             if (pemilikDropdown && pemilikDropdown.selectedIndex > 0) {
                 email = pemilikDropdown.options[pemilikDropdown.selectedIndex].getAttribute('data-email');
             } else {
-                // If pre-filled, get from recipient info
                 const recipientInfo = document.querySelector('.recipient-info span');
                 if (recipientInfo) {
                     email = recipientInfo.textContent;
                 }
             }
 
-            // Form validation
             if (!paymentForm.checkValidity()) {
-                // Trigger browser validation
                 paymentForm.reportValidity();
                 return;
             }
 
-            // Format rupiah amount
             const amount = parseFloat(amountInput.value);
             const formattedAmount = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -485,19 +468,15 @@
                 maximumFractionDigits: 0
             }).format(amount);
 
-            // Set modal content
             modalPemilikInitial.textContent = email.charAt(0).toUpperCase();
             modalPemilikEmailDisplay.textContent = email;
             modalAmount.textContent = formattedAmount;
             modalDescription.textContent = descriptionInput.value || '-';
 
-            // Show modal
             konfirmasiModal.show();
         });
 
-        // Handle confirmed payment
         btnKonfirmasiPembayaran.addEventListener('click', function() {
-            // Submit form
             paymentForm.submit();
         });
     });

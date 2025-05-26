@@ -58,17 +58,16 @@ public class CommandTest {
         verify(messageRepository).save(any(Message.class));
         assertEquals(1, chatroom.getMessages().size());
         assertNotNull(command.getMessage());
-        assertEquals("Test content", command.getMessage().getContent()); // Check if content is properly set
+        assertEquals("Test content", command.getMessage().getContent());
         assertEquals(senderId, command.getMessage().getSenderId());
     }
 
 
     @Test
     void sendMessageCommand_Undo_ShouldRemoveMessageFromChatroomAndRepository() {
-        // Mock the save method to simulate ID generation
         when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
             Message msg = invocation.getArgument(0);
-            msg.setId(messageId); // Simulate ID being set by the repository
+            msg.setId(messageId);
             return msg;
         });
 
@@ -115,7 +114,7 @@ public class CommandTest {
 
         assertEquals(originalContent, message.getContent());
         assertFalse(message.isEdited());
-        verify(messageRepository, times(2)).save(message); // Once for execute, once for undo
+        verify(messageRepository, times(2)).save(message);
     }
 
     @Test
@@ -175,7 +174,6 @@ public class CommandTest {
     void deleteMessageCommand_UndoWithoutExecute_ShouldHandleGracefully() {
         DeleteMessageCommand command = new DeleteMessageCommand(chatroom, messageId, messageRepository);
 
-        // Call undo without execute
         command.undo();
 
         verify(messageRepository, never()).save(any(Message.class));

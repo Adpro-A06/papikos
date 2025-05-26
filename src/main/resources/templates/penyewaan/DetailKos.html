@@ -499,13 +499,11 @@
                 const renterId = this.getAttribute('data-renter-id');
                 const ownerId = this.getAttribute('data-owner-id');
 
-                // Validate that all required data is present
                 if (!kosId || !renterId || !ownerId) {
                     alert('Data tidak lengkap. Silakan refresh halaman dan coba lagi.');
                     return;
                 }
 
-                // Show loading state
                 this.classList.add('loading');
                 this.textContent = 'Membuat chat...';
                 this.disabled = true;
@@ -532,10 +530,8 @@
                         const data = await response.json();
                         console.log('Response data:', data);
 
-                        // Handle different response formats
                         let chatroomId = null;
 
-                        // Check for different possible response structures
                         if (data.chatroomId) {
                             chatroomId = data.chatroomId;
                         } else if (data.id) {
@@ -547,21 +543,16 @@
                         }
 
                         if (chatroomId) {
-                            // Success! Redirect to the new chatroom
                             console.log('Redirecting to chatroom:', chatroomId);
                             window.location.href = `/chatrooms/${chatroomId}`;
                         } else {
-                            // If we can't find the chatroom ID but the response was OK,
-                            // it might still be successful - check for success message
                             if (response.status === 201 || response.status === 200) {
-                                // Redirect to chat list instead
                                 window.location.href = '/penyewa/chatrooms';
                             } else {
                                 throw new Error('Chatroom ID tidak ditemukan dalam response');
                             }
                         }
                     } else {
-                        // Try to get error message from response
                         let errorMessage = 'Gagal membuat chat. Silakan coba lagi.';
                         try {
                             const errorData = await response.json();
@@ -571,30 +562,24 @@
                                 errorMessage = errorData.error;
                             }
                         } catch (e) {
-                            // If response is not JSON, use response text
                             try {
                                 const errorText = await response.text();
                                 if (errorText && errorText.trim()) {
                                     errorMessage = errorText;
                                 }
                             } catch (textError) {
-                                // Use default message
                             }
                         }
                         throw new Error(errorMessage);
                     }
                 } catch (error) {
                     console.error('Error creating chat:', error);
-
-                    // Don't show error if it contains "success" (this handles your specific case)
                     if (error.message && error.message.toLowerCase().includes('success')) {
-                        // Redirect to chat list on success
                         window.location.href = '/penyewa/chatrooms';
                     } else {
                         alert('Gagal membuat chat: ' + error.message);
                     }
                 } finally {
-                    // Reset button state
                     this.classList.remove('loading');
                     this.textContent = 'Tanya Pemilik Kos';
                     this.disabled = false;

@@ -75,11 +75,9 @@ public class WebSocketMessageControllerTest {
         when(messageService.sendMessage(chatroomId, senderId, "Test message"))
                 .thenThrow(new RuntimeException("Service error"));
 
-        // Should not throw exception
         webSocketMessageController.sendMessage(chatroomId, chatMessage);
 
         verify(messageService).sendMessage(chatroomId, senderId, "Test message");
-        // Should not broadcast if there's an error
         verify(messagingTemplate, never()).convertAndSend(anyString(), (Object) any());
     }
 
