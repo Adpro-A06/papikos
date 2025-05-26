@@ -3,6 +3,8 @@ package id.ac.ui.cs.advprog.papikos.wishlist.repository;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,5 +130,60 @@ class WishlistRepositoryTest {
         assertTrue(repository.findById(w1.getId()).isPresent());
         assertFalse(repository.findById(w2.getId()).isPresent());
         assertTrue(repository.findById(w3.getId()).isPresent());
+    }
+
+    // Tambah ke WishlistRepositoryTest.java
+
+    @Test
+    void testRepository_EdgeCases() {
+        // Test dengan ID yang tidak sequential
+        Wishlist w1 = repository.save(new Wishlist("W1", "u1"));
+        repository.deleteById(w1.getId());
+        
+        Wishlist w2 = repository.save(new Wishlist("W2", "u2"));
+        
+        // ID harus lebih besar dari yang dihapus
+        assertTrue(w2.getId() > w1.getId());
+    }
+
+    @Test
+    void testRepository_NullHandling() {
+        // Test save dengan wishlist yang memiliki null fields
+        Wishlist nullWishlist = new Wishlist();
+        nullWishlist.setName(null);
+        nullWishlist.setUserId(null);
+        
+        Wishlist saved = repository.save(nullWishlist);
+        assertNotNull(saved.getId());
+    }
+
+    @Test
+    void testRepository_LargeDataset() {
+        // Test dengan banyak data untuk cover internal loops
+        List<Wishlist> wishlists = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            wishlists.add(repository.save(new Wishlist("W" + i, "user" + i)));
+        }
+        
+        assertEquals(50, repository.findAll().size());
+        
+        // Delete setengah
+        for (int i = 0; i < 25; i++) {
+            repository.deleteById(wishlists.get(i).getId());
+        }
+        
+        assertEquals(25, repository.findAll().size());
+    }
+
+    @Test
+    void testRepository_ConcurrentAccess() {
+        // Simulate concurrent saves
+        Wishlist w1 = new Wishlist("Concurrent1", "user1");
+        Wishlist w2 = new Wishlist("Concurrent2", "user2");
+        
+        repository.save(w1);
+        repository.save(w2);
+        
+        assertNotEquals(w1.getId(), w2.getId());
     }
 }

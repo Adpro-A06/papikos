@@ -426,5 +426,48 @@ public class WishlistControllerTest {
             .andExpect(status().is4xxClientError()); 
     }
 
+
+    @Test
+    public void testWishlistController_ErrorHandling() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "valid-token");
+        
+        when(authService.decodeToken("valid-token")).thenReturn(userId.toString());
+        when(authService.findById(userId)).thenReturn(mockUser);
+        when(wishlistService.getUserWishlist(userId)).thenThrow(new RuntimeException("DB Error"));
+
+        mockMvc.perform(get("/wishlist").session(session))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("error"));
+    }
+
+    @Test
+    public void testWishlistController_SessionEdgeCases() throws Exception {
+        // Test dengan session yang ada tapi token kosong
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "");
+
+        mockMvc.perform(get("/wishlist").session(session))
+                .andExpect(status().is3xxRedirection());
+                
+        // Test dengan session null value
+        MockHttpSession session2 = new MockHttpSession();
+        session2.setAttribute("userId", userId.toString());
+
+        mockMvc.perform(get("/wishlist").session(session2))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    public void testWishlistController_AuthServiceNullReturn() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("JWT_TOKEN", "valid-token");
+        
+        when(authService.decodeToken("valid-token")).thenReturn("");
+        
+        mockMvc.perform(get("/wishlist").session(session))
+                .andExpect(status().is3xxRedirection());
+    }
+
     
 }
