@@ -174,9 +174,9 @@
 <!-- Header with simplified navigation -->
 <header class="header">
     <div class="header-container">
-        <a href="/" class="logo">Papikos</a><a th:href="${user.role.name() == 'PENYEWA' ? '/penyewa/home' : (user.role.name() == 'PEMILIK_KOS' ? '/pemilik/home' : '/')}" class="logo">Papikos</a>
+        <a th:href="${user.role.name() == 'PENYEWA' ? '/penyewa/home' : (user.role.name() == 'PEMILIK_KOS' ? '/pemilik/home' : '/')}" class="logo">Papikos</a>
         <div class="nav-links">
-            <a>Wallet</a>
+            <a>Payment Form</a>
         </div>
         <div class="user-menu">
             <div class="user-info">
