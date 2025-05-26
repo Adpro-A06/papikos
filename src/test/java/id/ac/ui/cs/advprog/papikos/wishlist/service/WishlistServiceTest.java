@@ -102,9 +102,8 @@ class WishlistServiceTest {
         wishlist.setKosList(Arrays.asList(kos));
         wishlistService.createWishlist(wishlist);
 
-        Long kosId = Math.abs(kos.getId().hashCode()) % Long.MAX_VALUE;
+        Long kosId = Math.abs(kos.getId().getMostSignificantBits()) % Long.MAX_VALUE;
         boolean result = wishlistService.isInWishlist(userId, kosId);
-
         assertTrue(result);
     }
 
@@ -184,9 +183,8 @@ class WishlistServiceTest {
         wishlist.setKosList(Arrays.asList(kos));
         wishlistService.createWishlist(wishlist);
 
-        Long kosId = Math.abs(kos.getId().hashCode()) % Long.MAX_VALUE;
+        Long kosId = Math.abs(kos.getId().getMostSignificantBits()) % Long.MAX_VALUE;
         boolean result = wishlistService.removeFromWishlist(userId, kosId);
-
         assertTrue(result);
     }
 
@@ -288,6 +286,8 @@ class WishlistServiceTest {
         List<Long> result = wishlistService.getUserWishlistKosIdsAsLong(userId);
 
         assertEquals(1, result.size());
+        Long expectedKosId = Math.abs(kos.getId().getMostSignificantBits()) % Long.MAX_VALUE;
+        assertEquals(expectedKosId, result.get(0));
     }
 
     @Test
