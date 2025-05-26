@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.papikos.wishlist.controller;
 import id.ac.ui.cs.advprog.papikos.authentication.dto.AuthDto;
 import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
+import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.wishlist.model.Wishlist;
 import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 import id.ac.ui.cs.advprog.papikos.wishlist.observer.WishlistSubject;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +54,9 @@ public class WishlistRestController {
                return ResponseEntity.ok(new AuthDto.ApiResponse(false, "Kos sudah ada di wishlist"));
            }
 
-
-           Long userId = convertUUIDToLong(user.getId());
-           Wishlist wishlist = new Wishlist(userId, kosId);
-
+           // Create Wishlist with proper Kos object
+           String userId = user.getId().toString();
+           Wishlist wishlist = createWishlistWithKos(userId, kosId);
            Wishlist savedWishlist = wishlistService.addToWishlist(wishlist);
 
            if (savedWishlist != null) {
@@ -105,10 +106,9 @@ public class WishlistRestController {
            boolean removed = wishlistService.removeFromWishlist(user.getId(), kosId);
 
            if (removed) {
-
-               Long userId = convertUUIDToLong(user.getId());
-               Wishlist removedWishlist = new Wishlist(userId, kosId);
-
+               // Create Wishlist for notification
+               String userId = user.getId().toString();
+               Wishlist removedWishlist = createWishlistWithKos(userId, kosId);
                wishlistSubject.notifyObservers(removedWishlist, "removed");
 
                Map<String, Object> data = new HashMap<>();
@@ -151,9 +151,7 @@ public class WishlistRestController {
                        .body(new AuthDto.ApiResponse(false, "kosId must be a positive number"));
            }
 
-
-           Long userId = convertUUIDToLong(user.getId());
-
+           String userId = user.getId().toString();
            boolean inWishlist = wishlistService.isInWishlist(user.getId(), kosId);
 
            Map<String, Object> data = new HashMap<>();
@@ -162,13 +160,12 @@ public class WishlistRestController {
 
            if (inWishlist) {
                wishlistService.removeFromWishlist(user.getId(), kosId);
-
-               wishlistSubject.notifyObservers(new Wishlist(userId, kosId), "removed");
+               Wishlist removedWishlist = createWishlistWithKos(userId, kosId);
+               wishlistSubject.notifyObservers(removedWishlist, "removed");
                data.put("added", false);
                data.put("action", "removed");
            } else {
-               Wishlist wishlist = new Wishlist(userId, kosId);
-
+               Wishlist wishlist = createWishlistWithKos(userId, kosId);
                wishlistService.addToWishlist(wishlist);
                wishlistSubject.notifyObservers(wishlist, "added");
                data.put("added", true);
@@ -196,10 +193,9 @@ public class WishlistRestController {
 
            wishlistService.clearUserWishlist(user.getId());
 
-
-           Long userId = convertUUIDToLong(user.getId());
-           Wishlist clearedWishlist = new Wishlist(userId, (Long) null);
-
+           // Create empty wishlist for notification
+           String userId = user.getId().toString();
+           Wishlist clearedWishlist = new Wishlist("Cleared Wishlist", userId);
            wishlistSubject.notifyObservers(clearedWishlist, "cleared");
 
            Map<String, Object> data = new HashMap<>();
@@ -259,6 +255,25 @@ public class WishlistRestController {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                    .body(new AuthDto.ApiResponse(false, "Gagal mengambil wishlist IDs"));
        }
+   }
+
+   // Helper method to create Wishlist with Kos object
+   private Wishlist createWishlistWithKos(String userId, Long kosId) {
+       // Create Kos object with converted UUID
+       Kos kos = new Kos();
+       // Convert Long kosId to UUID (simple conversion for compatibility)
+       UUID kosUuid = new UUID(kosId, kosId);
+       kos.setId(kosUuid);
+       
+       // Create wishlist with proper name
+       Wishlist wishlist = new Wishlist("User Wishlist", userId);
+       
+       // Set kosList
+       List<Kos> kosList = new ArrayList<>();
+       kosList.add(kos);
+       wishlist.setKosList(kosList);
+       
+       return wishlist;
    }
 
    private User getCurrentUser(String authHeader) {
