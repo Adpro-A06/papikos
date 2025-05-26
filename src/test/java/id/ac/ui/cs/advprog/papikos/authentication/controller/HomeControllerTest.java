@@ -15,6 +15,7 @@ import id.ac.ui.cs.advprog.papikos.authentication.model.User;
 import id.ac.ui.cs.advprog.papikos.authentication.service.AuthService;
 import id.ac.ui.cs.advprog.papikos.kos.model.Kos;
 import id.ac.ui.cs.advprog.papikos.kos.service.KosService;
+import id.ac.ui.cs.advprog.papikos.wishlist.service.WishlistService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ public class HomeControllerTest {
     @Mock
     private KosService kosService; 
 
+    @Mock
+    private WishlistService wishlistService;
+
     @InjectMocks
     private HomeController homeController;
 
@@ -55,7 +59,7 @@ public class HomeControllerTest {
 
     @BeforeEach
     public void setup() {
-        homeController = new HomeController(authService, kosService);
+        homeController = new HomeController(authService, kosService, wishlistService);
         mockMvc = MockMvcBuilders.standaloneSetup(homeController).build();
         session = new MockHttpSession();
  
