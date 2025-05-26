@@ -62,7 +62,6 @@ public class ChatroomRestController {
                     kosId
             );
 
-            // Create response yang sesuai dengan yang diharapkan JavaScript
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("chatroomId", chatroom.getId().toString());

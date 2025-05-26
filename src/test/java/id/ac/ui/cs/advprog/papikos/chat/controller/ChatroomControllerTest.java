@@ -70,13 +70,11 @@ class ChatroomControllerTest {
         jwtToken = "mock-jwt-token";
 
         renterUser = new User("renter@example.com", "Password123!", Role.PENYEWA);
-        // Use reflection to set the ID since it's generated in constructor
         try {
             var idField = User.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(renterUser, renterId);
         } catch (Exception e) {
-            // Fallback - create user manually if reflection fails
         }
 
         ownerUser = new User("owner@example.com", "Password123!", Role.PEMILIK_KOS);
@@ -85,7 +83,6 @@ class ChatroomControllerTest {
             idField.setAccessible(true);
             idField.set(ownerUser, ownerId);
         } catch (Exception e) {
-            // Fallback
         }
 
         adminUser = new User("admin@example.com", "Password123!", Role.ADMIN);
@@ -94,7 +91,6 @@ class ChatroomControllerTest {
             idField.setAccessible(true);
             idField.set(adminUser, adminId);
         } catch (Exception e) {
-            // Fallback
         }
 
         chatroom = new Chatroom();
@@ -109,7 +105,6 @@ class ChatroomControllerTest {
         kos.setNama("Test Kos");
     }
 
-    // Tests for getChatroomsByRenterId
     @Test
     void getChatroomsByRenterId_WithValidRenter_ShouldReturnChatroomList() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -163,7 +158,6 @@ class ChatroomControllerTest {
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
     }
 
-    // Tests for getChatroomsByOwnerId
     @Test
     void getChatroomsByOwnerId_WithValidOwner_ShouldReturnChatroomList() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -216,7 +210,6 @@ class ChatroomControllerTest {
         verify(redirectAttributes).addFlashAttribute("error", "Anda tidak memiliki akses ke halaman ini");
     }
 
-    // Tests for viewChatroomDetail
     @Test
     void viewChatroomDetail_WithValidRenter_ShouldReturnChatroomView() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -290,7 +283,6 @@ class ChatroomControllerTest {
         verify(redirectAttributes).addFlashAttribute("error", "Chatroom tidak ditemukan");
     }
 
-    // Tests for authentication edge cases
     @Test
     void getCurrentUser_WithInvalidToken_ShouldReturnNull() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -303,19 +295,6 @@ class ChatroomControllerTest {
         verify(session).removeAttribute("JWT_TOKEN");
     }
 
-//    @Test
-//    void getCurrentUser_WithNullUser_ShouldReturnNull() {
-//        when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
-//        when(authService.decodeToken(jwtToken)).thenReturn(renterId.toString());
-//        when(authService.findById(renterId)).thenReturn(null);
-//
-//        String result = chatroomController.getChatroomsByRenterId(renterId, session, model, redirectAttributes);
-//
-//        assertEquals("redirect:/api/auth/login", result);
-//        verify(redirectAttributes).addFlashAttribute("error", "Sesi login Anda telah berakhir. Silakan login kembali.");
-//    }
-
-    // Tests for helper methods behavior
     @Test
     void getUserEmailById_WithValidUser_ShouldReturnEmailPrefix() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -374,41 +353,6 @@ class ChatroomControllerTest {
         verify(authService).findById(ownerId);
     }
 
-//    @Test
-//    void prepareChatroomData_WithMultipleChatrooms_ShouldCacheUserAndPropertyNames() {
-//        Chatroom chatroom2 = new Chatroom();
-//        chatroom2.setId(UUID.randomUUID());
-//        chatroom2.setRenterId(renterId); // Same renter
-//        chatroom2.setOwnerId(UUID.randomUUID()); // Different owner
-//        chatroom2.setPropertyId(UUID.randomUUID()); // Different property
-//
-//        User differentOwner = new User("owner2@example.com", "Password123!", Role.PEMILIK_KOS);
-//        Kos differentKos = new Kos();
-//        differentKos.setId(chatroom2.getPropertyId());
-//        differentKos.setNama("Different Kos");
-//
-//        when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
-//        when(authService.decodeToken(jwtToken)).thenReturn(renterId.toString());
-//        when(authService.findById(renterId)).thenReturn(renterUser);
-//        when(chatroomService.getChatroomsByRenterId(renterId)).thenReturn(Arrays.asList(chatroom, chatroom2));
-//        when(authService.findById(ownerId)).thenReturn(ownerUser);
-//        when(authService.findById(chatroom2.getOwnerId())).thenReturn(differentOwner);
-//        when(kosService.findById(propertyId)).thenReturn(Optional.of(kos));
-//        when(kosService.findById(chatroom2.getPropertyId())).thenReturn(Optional.of(differentKos));
-//
-//        String result = chatroomController.getChatroomsByRenterId(renterId, session, model, redirectAttributes);
-//
-//        assertEquals("chat/ChatroomList", result);
-//        // Verify that current user (renter) is called for authentication
-//        verify(authService, times(1)).findById(renterId);
-//        // Verify different owners are called for chatroom data preparation
-//        verify(authService).findById(ownerId);
-//        verify(authService).findById(chatroom2.getOwnerId());
-//        // Verify different properties are called
-//        verify(kosService).findById(propertyId);
-//        verify(kosService).findById(chatroom2.getPropertyId());
-//    }
-
     @Test
     void viewChatroomDetail_WithPropertyNotFoundException_ShouldStillWork() {
         when(session.getAttribute("JWT_TOKEN")).thenReturn(jwtToken);
@@ -424,7 +368,6 @@ class ChatroomControllerTest {
         verify(model).addAttribute("chatroom", chatroom);
         verify(model).addAttribute("renterName", "renter");
         verify(model).addAttribute("ownerName", "owner");
-        // Should return a fallback property name when service throws exception
         verify(model).addAttribute(eq("propertyName"), argThat(name ->
                 name.toString().startsWith("Property-") && name.toString().length() > 9));
         verify(model).addAttribute("user", renterUser);

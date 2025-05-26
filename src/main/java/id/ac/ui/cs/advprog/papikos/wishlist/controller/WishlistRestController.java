@@ -52,8 +52,10 @@ public class WishlistRestController {
                return ResponseEntity.ok(new AuthDto.ApiResponse(false, "Kos sudah ada di wishlist"));
            }
 
+
            Long userId = convertUUIDToLong(user.getId());
            Wishlist wishlist = new Wishlist(userId, kosId);
+
            Wishlist savedWishlist = wishlistService.addToWishlist(wishlist);
 
            if (savedWishlist != null) {
@@ -103,8 +105,10 @@ public class WishlistRestController {
            boolean removed = wishlistService.removeFromWishlist(user.getId(), kosId);
 
            if (removed) {
+
                Long userId = convertUUIDToLong(user.getId());
                Wishlist removedWishlist = new Wishlist(userId, kosId);
+
                wishlistSubject.notifyObservers(removedWishlist, "removed");
 
                Map<String, Object> data = new HashMap<>();
@@ -147,7 +151,9 @@ public class WishlistRestController {
                        .body(new AuthDto.ApiResponse(false, "kosId must be a positive number"));
            }
 
+
            Long userId = convertUUIDToLong(user.getId());
+
            boolean inWishlist = wishlistService.isInWishlist(user.getId(), kosId);
 
            Map<String, Object> data = new HashMap<>();
@@ -156,11 +162,13 @@ public class WishlistRestController {
 
            if (inWishlist) {
                wishlistService.removeFromWishlist(user.getId(), kosId);
+
                wishlistSubject.notifyObservers(new Wishlist(userId, kosId), "removed");
                data.put("added", false);
                data.put("action", "removed");
            } else {
                Wishlist wishlist = new Wishlist(userId, kosId);
+
                wishlistService.addToWishlist(wishlist);
                wishlistSubject.notifyObservers(wishlist, "added");
                data.put("added", true);
@@ -188,8 +196,10 @@ public class WishlistRestController {
 
            wishlistService.clearUserWishlist(user.getId());
 
+
            Long userId = convertUUIDToLong(user.getId());
            Wishlist clearedWishlist = new Wishlist(userId, (Long) null);
+
            wishlistSubject.notifyObservers(clearedWishlist, "cleared");
 
            Map<String, Object> data = new HashMap<>();

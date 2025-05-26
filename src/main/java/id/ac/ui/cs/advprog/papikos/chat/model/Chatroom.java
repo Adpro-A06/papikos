@@ -37,7 +37,7 @@ public class Chatroom {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "chatroom", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference // Prevent circular reference
+    @JsonManagedReference
     private List<Message> messages = new ArrayList<>();
 
     public void addMessage(Message message) {

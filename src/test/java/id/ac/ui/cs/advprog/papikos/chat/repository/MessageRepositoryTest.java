@@ -35,7 +35,6 @@ class MessageRepositoryTest {
         senderId = UUID.randomUUID();
         otherUserId = UUID.randomUUID();
 
-        // Create and persist chatroom
         chatroom = new Chatroom();
         chatroom.setRenterId(senderId);
         chatroom.setOwnerId(otherUserId);
@@ -43,12 +42,11 @@ class MessageRepositoryTest {
         chatroom.setCreatedAt(LocalDateTime.now());
         chatroom = entityManager.persistAndFlush(chatroom);
 
-        // Create and persist messages with explicit read status
         Message message1 = new Message();
         message1.setSenderId(senderId);
         message1.setContent("Hello!");
         message1.setTimestamp(LocalDateTime.of(2023, 1, 1, 10, 0));
-        message1.setRead(true); // Explicitly set as read
+        message1.setRead(true);
         chatroom.addMessage(message1);
         entityManager.persistAndFlush(message1);
 
@@ -56,7 +54,7 @@ class MessageRepositoryTest {
         message2.setSenderId(otherUserId);
         message2.setContent("Hi there!");
         message2.setTimestamp(LocalDateTime.of(2023, 1, 1, 11, 0));
-        message2.setRead(true); // Explicitly set as read
+        message2.setRead(true);
         chatroom.addMessage(message2);
         entityManager.persistAndFlush(message2);
 
@@ -68,7 +66,6 @@ class MessageRepositoryTest {
         List<Message> result = messageRepository.findByChatroomId(chatroom.getId());
 
         assertEquals(2, result.size());
-        // Should be ordered by timestamp ASC
         assertEquals("Hello!", result.get(0).getContent());
         assertEquals("Hi there!", result.get(1).getContent());
     }
@@ -78,14 +75,12 @@ class MessageRepositoryTest {
         List<Message> result = messageRepository.findByChatroomIdOrderByTimestampDesc(chatroom.getId());
 
         assertEquals(2, result.size());
-        // Should be ordered by timestamp DESC
         assertEquals("Hi there!", result.get(0).getContent());
         assertEquals("Hello!", result.get(1).getContent());
     }
 
     @Test
     void testFindActiveByChatroomId() {
-        // Add a deleted message
         Message deletedMessage = new Message();
         deletedMessage.setSenderId(senderId);
         deletedMessage.setContent("Deleted message");
@@ -98,22 +93,20 @@ class MessageRepositoryTest {
 
         List<Message> result = messageRepository.findActiveByChatroomId(chatroom.getId());
 
-        assertEquals(2, result.size()); // Should not include deleted message
+        assertEquals(2, result.size());
         assertEquals("Hello!", result.get(0).getContent());
         assertEquals("Hi there!", result.get(1).getContent());
     }
 
     @Test
     void testCountUnreadMessagesByChatroomIdAndUserId() {
-        // First, clean up existing messages to start fresh
         entityManager.clear();
 
-        // Create unread messages from other user
         Message unreadMessage1 = new Message();
         unreadMessage1.setSenderId(otherUserId);
         unreadMessage1.setContent("Unread 1");
         unreadMessage1.setTimestamp(LocalDateTime.now());
-        unreadMessage1.setRead(false); // Explicitly unread
+        unreadMessage1.setRead(false);
         chatroom.addMessage(unreadMessage1);
         entityManager.persistAndFlush(unreadMessage1);
 
@@ -121,31 +114,28 @@ class MessageRepositoryTest {
         unreadMessage2.setSenderId(otherUserId);
         unreadMessage2.setContent("Unread 2");
         unreadMessage2.setTimestamp(LocalDateTime.now().plusMinutes(1));
-        unreadMessage2.setRead(false); // Explicitly unread
+        unreadMessage2.setRead(false);
         chatroom.addMessage(unreadMessage2);
         entityManager.persistAndFlush(unreadMessage2);
 
-        // Create read message from other user
         Message readMessage = new Message();
         readMessage.setSenderId(otherUserId);
         readMessage.setContent("Read message");
         readMessage.setTimestamp(LocalDateTime.now().plusMinutes(2));
-        readMessage.setRead(true); // Explicitly read
+        readMessage.setRead(true);
         chatroom.addMessage(readMessage);
         entityManager.persistAndFlush(readMessage);
 
-        // Create message from current user (should not count)
         Message ownMessage = new Message();
         ownMessage.setSenderId(senderId);
         ownMessage.setContent("Own message");
         ownMessage.setTimestamp(LocalDateTime.now().plusMinutes(3));
-        ownMessage.setRead(false); // Even if unread, shouldn't count since it's from senderId
+        ownMessage.setRead(false);
         chatroom.addMessage(ownMessage);
         entityManager.persistAndFlush(ownMessage);
 
         entityManager.clear();
 
-        // Debug: Check total messages
         List<Message> allMessages = messageRepository.findByChatroomId(chatroom.getId());
         System.out.println("Total messages in chatroom: " + allMessages.size());
         for (Message msg : allMessages) {
@@ -159,7 +149,7 @@ class MessageRepositoryTest {
                 chatroom.getId(), senderId);
 
         System.out.println("Unread count result: " + unreadCount);
-        assertEquals(2, unreadCount); // Only unread messages from other users
+        assertEquals(2, unreadCount);
     }
 
     @Test
@@ -172,7 +162,6 @@ class MessageRepositoryTest {
 
     @Test
     void testCountUnreadMessages_NoUnreadMessages() {
-        // Set all existing messages as read
         List<Message> messages = messageRepository.findByChatroomId(chatroom.getId());
         for (Message message : messages) {
             message.setRead(true);
@@ -188,7 +177,6 @@ class MessageRepositoryTest {
 
     @Test
     void testCountUnreadMessages_OnlyFromOtherUsers() {
-        // Create a fresh chatroom for this test
         Chatroom testChatroom = new Chatroom();
         testChatroom.setRenterId(senderId);
         testChatroom.setOwnerId(otherUserId);
@@ -196,7 +184,6 @@ class MessageRepositoryTest {
         testChatroom.setCreatedAt(LocalDateTime.now());
         testChatroom = entityManager.persistAndFlush(testChatroom);
 
-        // Add unread message from other user - should count
         Message unreadFromOther = new Message();
         unreadFromOther.setSenderId(otherUserId);
         unreadFromOther.setContent("Unread from other");
@@ -205,7 +192,6 @@ class MessageRepositoryTest {
         testChatroom.addMessage(unreadFromOther);
         entityManager.persistAndFlush(unreadFromOther);
 
-        // Add unread message from current user - should NOT count
         Message unreadFromSelf = new Message();
         unreadFromSelf.setSenderId(senderId);
         unreadFromSelf.setContent("Unread from self");
@@ -219,12 +205,11 @@ class MessageRepositoryTest {
         int unreadCount = messageRepository.countUnreadMessagesByChatroomIdAndUserId(
                 testChatroom.getId(), senderId);
 
-        assertEquals(1, unreadCount); // Only the message from other user
+        assertEquals(1, unreadCount);
     }
 
     @Test
     void testCountUnreadMessages_OnlyUnreadMessages() {
-        // Create a fresh chatroom for this test
         Chatroom testChatroom = new Chatroom();
         testChatroom.setRenterId(senderId);
         testChatroom.setOwnerId(otherUserId);
@@ -232,7 +217,6 @@ class MessageRepositoryTest {
         testChatroom.setCreatedAt(LocalDateTime.now());
         testChatroom = entityManager.persistAndFlush(testChatroom);
 
-        // Add read message from other user - should NOT count
         Message readFromOther = new Message();
         readFromOther.setSenderId(otherUserId);
         readFromOther.setContent("Read from other");
@@ -241,7 +225,6 @@ class MessageRepositoryTest {
         testChatroom.addMessage(readFromOther);
         entityManager.persistAndFlush(readFromOther);
 
-        // Add unread message from other user - should count
         Message unreadFromOther = new Message();
         unreadFromOther.setSenderId(otherUserId);
         unreadFromOther.setContent("Unread from other");
@@ -255,12 +238,11 @@ class MessageRepositoryTest {
         int unreadCount = messageRepository.countUnreadMessagesByChatroomIdAndUserId(
                 testChatroom.getId(), senderId);
 
-        assertEquals(1, unreadCount); // Only the unread message from other user
+        assertEquals(1, unreadCount);
     }
 
     @Test
     void testFindByChatroomIdOrderByTimestampDesc_WithMultipleMessages() {
-        // Add more messages with different timestamps
         Message message3 = new Message();
         message3.setSenderId(senderId);
         message3.setContent("Latest message");
@@ -274,7 +256,6 @@ class MessageRepositoryTest {
         List<Message> result = messageRepository.findByChatroomIdOrderByTimestampDesc(chatroom.getId());
 
         assertEquals(3, result.size());
-        // Should be ordered by timestamp DESC (latest first)
         assertEquals("Latest message", result.get(0).getContent());
         assertEquals("Hi there!", result.get(1).getContent());
         assertEquals("Hello!", result.get(2).getContent());

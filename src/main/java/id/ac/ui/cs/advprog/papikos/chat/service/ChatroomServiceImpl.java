@@ -28,7 +28,6 @@ public class ChatroomServiceImpl implements ChatroomService {
         logger.info("Input - renterId: {}, ownerId: {}, propertyId: {}",
                 renterId, ownerId, propertyId);
 
-        // Debug: Cek semua chatroom yang ada
         List<Chatroom> allChatrooms = chatroomRepository.findAll();
         logger.info("Total chatrooms in database: {}", allChatrooms.size());
 

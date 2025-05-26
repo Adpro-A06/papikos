@@ -51,7 +51,6 @@ class WalletTest {
 
     @Test
     void testSubtractBalance() {
-        // First add some balance
         BigDecimal amountToAdd = new BigDecimal("200");
         wallet.addBalance(amountToAdd);
 
@@ -87,7 +86,6 @@ class WalletTest {
             wallet.subtractBalance(new BigDecimal("150"));
         });
 
-        // Confirm balance remains unchanged
         assertEquals(new BigDecimal("100"), wallet.getBalance());
     }
 

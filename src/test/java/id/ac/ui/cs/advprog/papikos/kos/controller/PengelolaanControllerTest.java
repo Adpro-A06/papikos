@@ -714,8 +714,8 @@ public class PengelolaanControllerTest {
                                 .param("deskripsi", editedKos.getDeskripsi())
                                 .param("jumlah", String.valueOf(editedKos.getJumlah()))
                                 .param("harga", String.valueOf(editedKos.getHarga()))
-                                .param("status", editedKos.getStatus()) // Tambahkan parameter status
-                                .param("urlFoto", "https://example.com/image.jpg")) // Tambahkan URL foto yang valid
+                                .param("status", editedKos.getStatus())
+                                .param("urlFoto", "https://example.com/image.jpg"))
                                 .andExpect(status().isOk())
                                 .andExpect(request().asyncStarted())
                                 .andReturn();

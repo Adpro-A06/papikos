@@ -117,28 +117,24 @@ public class ChatroomTest {
         UUID currentUserId = UUID.randomUUID();
         UUID otherUserId = UUID.randomUUID();
 
-        // Message from current user (should not count as unread)
         Message ownMessage = new Message();
         ownMessage.setId(UUID.randomUUID());
         ownMessage.setSenderId(currentUserId);
         ownMessage.setRead(false);
         chatroom.addMessage(ownMessage);
 
-        // Unread message from other user
         Message unreadMessage1 = new Message();
         unreadMessage1.setId(UUID.randomUUID());
         unreadMessage1.setSenderId(otherUserId);
         unreadMessage1.setRead(false);
         chatroom.addMessage(unreadMessage1);
 
-        // Another unread message from other user
         Message unreadMessage2 = new Message();
         unreadMessage2.setId(UUID.randomUUID());
         unreadMessage2.setSenderId(otherUserId);
         unreadMessage2.setRead(false);
         chatroom.addMessage(unreadMessage2);
 
-        // Read message from other user
         Message readMessage = new Message();
         readMessage.setId(UUID.randomUUID());
         readMessage.setSenderId(otherUserId);
@@ -153,8 +149,6 @@ public class ChatroomTest {
     void testPrePersist() {
         Chatroom newChatroom = new Chatroom();
         assertNull(newChatroom.getCreatedAt());
-
-        // Call the PrePersist method manually for testing
         newChatroom.onCreate();
 
         assertNotNull(newChatroom.getCreatedAt());
