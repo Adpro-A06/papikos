@@ -11,10 +11,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -187,5 +190,55 @@ class WishlistServiceTest {
         List<Long> result = wishlistService.getUserWishlistKosIdsAsLong(userId);
         
         assertTrue(result.isEmpty());
+    }
+
+
+    @Test
+    void testCreateWishlist_WithNullName() {
+        Wishlist wishlist = new Wishlist();
+        wishlist.setName(null);
+        
+        Wishlist result = wishlistService.createWishlist(wishlist);
+        
+        assertNull(result); // Should return null for invalid wishlist
+    }
+
+    @Test
+    void testCreateWishlist_WithEmptyName() {
+        Wishlist wishlist = new Wishlist();
+        wishlist.setName("   "); // Just whitespace
+        
+        Wishlist result = wishlistService.createWishlist(wishlist);
+        
+        assertNull(result);
+    }
+
+    @Test
+    void testFilterDuplicateKos() {
+        Wishlist wishlist = new Wishlist("Test", "user1");
+        
+        Kos kos1 = new Kos();
+        kos1.setId(UUID.randomUUID());
+        Kos kos2 = new Kos();
+        kos2.setId(UUID.randomUUID());
+        
+        // Add duplicate
+        wishlist.setKosList(Arrays.asList(kos1, kos2, kos1));
+        
+        Wishlist result = wishlistService.createWishlist(wishlist);
+        
+        assertEquals(2, result.getKosList().size()); // Should filter duplicates
+    }
+
+    
+
+    @Test
+    void testRemoveFromWishlist_NotFound() {
+        UUID userId = UUID.randomUUID();
+        Long kosId = 999L;
+        
+        boolean result = wishlistService.removeFromWishlist(userId, kosId);
+        
+        assertFalse(result);
     }
 }
