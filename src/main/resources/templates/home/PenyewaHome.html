@@ -2,458 +2,543 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Penyewa Dashboard - PapiKos</title>
-    <style>
-        :root {
-            --primary-blue: #1a73e8;
-            --secondary-blue: #4285f4;
-            --light-blue: #e8f0fe;
-            --hover-blue: #0d47a1;
-            --border-color: #e0e0e0;
-            --text-color: #333;
-            --light-gray: #f5f5f5;
-            --dark-gray: #757575;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Penyewa Dashboard - PapiKos</title>
+   <style>
+       :root {
+           --primary-blue: #1a73e8;
+           --secondary-blue: #4285f4;
+           --light-blue: #e8f0fe;
+           --hover-blue: #0d47a1;
+           --border-color: #e0e0e0;
+           --text-color: #333;
+           --light-gray: #f5f5f5;
+           --dark-gray: #757575;
+           --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+           --heart-color: #ff4757;
+       }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+       * {
+           box-sizing: border-box;
+           margin: 0;
+           padding: 0;
+       }
 
-        body {
-            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-            color: var(--text-color);
-            background-color: #f9fafb;
-            line-height: 1.6;
-        }
+       body {
+           font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+           color: var(--text-color);
+           background-color: #f9fafb;
+           line-height: 1.6;
+       }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+       .container {
+           max-width: 1200px;
+           margin: 0 auto;
+           padding: 0 20px;
+       }
 
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary-blue);
-            text-decoration: none;
-        }
+       .logo {
+           font-size: 24px;
+           font-weight: bold;
+           color: var(--primary-blue);
+           text-decoration: none;
+       }
 
-        .header {
-            background-color: white;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+       .header {
+           background-color: white;
+           box-shadow: var(--shadow);
+           position: sticky;
+           top: 0;
+           z-index: 100;
+       }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+       .header-container {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           padding: 15px 20px;
+           max-width: 1200px;
+           margin: 0 auto;
+       }
 
-        .header-title {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
+       .header-title {
+           font-size: 18px;
+           font-weight: 500;
+           color: var(--text-color);
+       }
 
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+       .user-menu {
+           display: flex;
+           align-items: center;
+           gap: 20px;
+       }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+       .user-info {
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
 
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: var(--light-blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-blue);
-            font-weight: bold;
-        }
+       .user-avatar {
+           width: 32px;
+           height: 32px;
+           border-radius: 50%;
+           background-color: var(--light-blue);
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           color: var(--primary-blue);
+           font-weight: bold;
+       }
 
-        .user-name {
-            font-weight: 500;
-        }
+       .user-name {
+           font-weight: 500;
+       }
 
-        .btn-logout {
-            background: none;
-            border: none;
-            color: var(--dark-gray);
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+       .btn-logout {
+           background: none;
+           border: none;
+           color: var(--dark-gray);
+           cursor: pointer;
+           font-size: 14px;
+           display: flex;
+           align-items: center;
+           gap: 5px;
+       }
 
-        .btn-logout:hover {
-            color: var(--primary-blue);
-        }
+       .btn-logout:hover {
+           color: var(--primary-blue);
+       }
 
-        .logout-icon {
-            width: 16px;
-            height: 16px;
-        }
+       .logout-icon {
+           width: 16px;
+           height: 16px;
+       }
 
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
+       .main-content {
+           max-width: 1200px;
+           margin: 0 auto;
+           padding: 30px 20px;
+       }
 
-        .page-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-color);
-        }
+       .page-title {
+           font-size: 24px;
+           font-weight: 600;
+           margin-bottom: 20px;
+           color: var(--text-color);
+       }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--primary-blue);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: background-color 0.3s;
-            margin-right: 10px;
-        }
+       .btn {
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           background-color: var(--primary-blue);
+           color: white;
+           padding: 8px 16px;
+           border: none;
+           border-radius: 4px;
+           cursor: pointer;
+           font-size: 14px;
+           font-weight: 500;
+           text-decoration: none;
+           transition: background-color 0.3s;
+           margin-right: 10px;
+       }
 
-        .btn:hover {
-            background-color: var(--hover-blue);
-        }
+       .btn:hover {
+           background-color: var(--hover-blue);
+       }
 
-        .btn-icon {
-            margin-right: 8px;
-        }
+       .btn-icon {
+           margin-right: 8px;
+       }
 
-        .welcome-banner {
-            background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
-            border-radius: 8px;
-            color: white;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
+       .welcome-banner {
+           background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
+           border-radius: 8px;
+           color: white;
+           padding: 24px;
+           margin-bottom: 24px;
+       }
 
-        .welcome-banner h2 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+       .welcome-banner h2 {
+           font-size: 22px;
+           font-weight: 600;
+           margin-bottom: 10px;
+       }
 
-        .welcome-banner p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
+       .welcome-banner p {
+           font-size: 16px;
+           opacity: 0.9;
+       }
 
-        .search-container {
-            margin-bottom: 24px;
-        }
+       .search-container {
+           margin-bottom: 24px;
+       }
 
-        .search-form {
-            display: flex;
-            gap: 10px;
-        }
+       .search-form {
+           display: flex;
+           gap: 10px;
+       }
 
-        .search-input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 16px;
-        }
+       .search-input {
+           flex: 1;
+           padding: 10px 15px;
+           border: 1px solid var(--border-color);
+           border-radius: 4px;
+           font-size: 16px;
+       }
 
-        .search-btn {
-            background-color: var(--primary-blue);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 0 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 16px;
-        }
+       .search-btn {
+           background-color: var(--primary-blue);
+           color: white;
+           border: none;
+           border-radius: 4px;
+           padding: 0 20px;
+           cursor: pointer;
+           display: flex;
+           align-items: center;
+           gap: 5px;
+           font-size: 16px;
+       }
 
-        .search-btn:hover {
-            background-color: var(--hover-blue);
-        }
+       .search-btn:hover {
+           background-color: var(--hover-blue);
+       }
 
-        .kos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
+       .kos-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+           gap: 20px;
+       }
 
-        .kos-card {
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s;
-        }
+       .kos-card {
+           background-color: white;
+           border-radius: 8px;
+           overflow: hidden;
+           box-shadow: var(--shadow);
+           transition: transform 0.2s;
+           position: relative;
+       }
 
-        .kos-card:hover {
-            transform: translateY(-5px);
-        }
+       .kos-card:hover {
+           transform: translateY(-5px);
+       }
 
-        .kos-image {
-            height: 180px;
-            background-color: var(--light-gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+       .kos-image {
+           height: 180px;
+           background-color: var(--light-gray);
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           position: relative;
+       }
 
-        .placeholder-image {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--dark-gray);
-        }
+       .placeholder-image {
+           width: 100%;
+           height: 100%;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           color: var(--dark-gray);
+       }
 
-        .kos-details {
-            padding: 15px;
-        }
+       .wishlist-btn {
+           position: absolute;
+           top: 10px;
+           right: 10px;
+           background: rgba(255, 255, 255, 0.9);
+           border: none;
+           border-radius: 50%;
+           width: 36px;
+           height: 36px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           cursor: pointer;
+           transition: all 0.2s ease;
+           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+           text-decoration: none;
+       }
 
-        .kos-details h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
-            color: var(--text-color);
-        }
+       .wishlist-btn:hover {
+           background: white;
+           transform: scale(1.1);
+       }
 
-        .kos-address {
-            color: var(--dark-gray);
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
+       .wishlist-btn.active {
+           background: var(--heart-color);
+           color: white;
+       }
 
-        .kos-price {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--primary-blue);
-            margin-bottom: 5px;
-        }
+       .wishlist-btn.active:hover {
+           background: #ff3838;
+       }
 
-        .kos-availability {
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
+       .heart-icon {
+           width: 18px;
+           height: 18px;
+           transition: all 0.2s ease;
+       }
 
-        .kos-actions {
-            display: flex;
-            gap: 10px;
-        }
+       .kos-details {
+           padding: 15px;
+       }
 
-        .btn-detail {
-            background-color: white;
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-        }
+       .kos-details h3 {
+           font-size: 18px;
+           margin-bottom: 5px;
+           color: var(--text-color);
+       }
 
-        .btn-detail:hover {
-            background-color: var(--light-blue);
-        }
+       .kos-address {
+           color: var(--dark-gray);
+           font-size: 14px;
+           margin-bottom: 10px;
+       }
 
-        .no-kos {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
+       .kos-price {
+           font-size: 16px;
+           font-weight: 600;
+           color: var(--primary-blue);
+           margin-bottom: 5px;
+       }
 
-        .btn-nav {
-            background: none;
-            border: none;
-            color: var(--dark-gray);
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
+       .kos-availability {
+           font-size: 14px;
+           margin-bottom: 15px;
+       }
 
-        .btn-nav:hover {
-            color: var(--primary-blue);
-            background-color: var(--light-blue);
-        }
+       .kos-actions {
+           display: flex;
+           gap: 10px;
+       }
 
-        .nav-icon {
-            width: 16px;
-            height: 16px;
-        }
+       .btn-detail {
+           background-color: white;
+           color: var(--primary-blue);
+           border: 1px solid var(--primary-blue);
+       }
 
-        @media (max-width: 768px) {
-            .search-form {
-                flex-direction: column;
-            }
+       .btn-detail:hover {
+           background-color: var(--light-blue);
+       }
 
-            .kos-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+       .no-kos {
+           grid-column: 1 / -1;
+           text-align: center;
+           padding: 40px;
+           background-color: white;
+           border-radius: 8px;
+           box-shadow: var(--shadow);
+       }
 
+       .btn-nav {
+           background: none;
+           border: none;
+           color: var(--dark-gray);
+           cursor: pointer;
+           font-size: 14px;
+           display: flex;
+           align-items: center;
+           gap: 5px;
+           text-decoration: none;
+           padding: 5px 10px;
+           border-radius: 4px;
+           transition: all 0.2s ease;
+       }
 
-        @media (max-width: 992px) {
-            .main-content {
-                padding: 20px;
-            }
-        }
+       .btn-nav:hover {
+           color: var(--primary-blue);
+           background-color: var(--light-blue);
+       }
 
-        @media (max-width: 768px) {
-            .header-title {
-                font-size: 16px;
-            }
-        }
-    </style>
+       .nav-icon {
+           width: 16px;
+           height: 16px;
+       }
+
+       .wishlist-badge {
+           position: relative;
+       }
+
+       .wishlist-count {
+           position: absolute;
+           top: -8px;
+           right: -8px;
+           background: var(--heart-color);
+           color: white;
+           border-radius: 50%;
+           width: 18px;
+           height: 18px;
+           font-size: 10px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           font-weight: bold;
+       }
+
+       @media (max-width: 768px) {
+           .search-form {
+               flex-direction: column;
+           }
+
+           .kos-grid {
+               grid-template-columns: 1fr;
+           }
+
+           .user-menu {
+               gap: 10px;
+           }
+
+           .btn-nav span {
+               display: none;
+           }
+       }
+
+       @media (max-width: 992px) {
+           .main-content {
+               padding: 20px;
+           }
+       }
+
+       @media (max-width: 768px) {
+           .header-title {
+               font-size: 16px;
+           }
+       }
+   </style>
 </head>
 
 <body>
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">PapiKos</div>
-            <div class="header-title">Dashboard Penyewa</div>
-            <div class="user-menu">
-                <a th:href="@{/penyewaan/}" class="btn-nav">
-                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+   <header class="header">
+       <div class="header-container">
+           <div class="logo">PapiKos</div>
+           <div class="header-title">Dashboard Penyewa</div>
+           <div class="user-menu">
+               <a th:href="@{/penyewaan/}" class="btn-nav">
+                   <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                       stroke-linejoin="round">
+                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                       <polyline points="14 2 14 8 20 8"></polyline>
+                       <line x1="16" y1="13" x2="8" y2="13"></line>
+                       <line x1="16" y1="17" x2="8" y2="17"></line>
+                       <polyline points="10 9 9 9 8 9"></polyline>
+                   </svg>
+                   <span>Penyewaan Saya</span>
+               </a>
+               <a th:href="@{/chatrooms/renter/{renterId}(renterId=${user.id})}" class="btn-nav">
+                   <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <span>Penyewaan Saya</span>
-                </a>
-                <a th:href="@{/chatrooms/renter/{renterId}(renterId=${user.id})}" class="btn-nav">
-                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                         stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10z"></path>
-                        <path d="M8 12h8"></path>
-                        <path d="M8 8h8"></path>
-                    </svg>
-                    <span>Daftar Chat</span>
-                </a>
-                <a th:href="@{/payment/wallet}" class="btn-nav">
-                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                        <line x1="2" y1="10" x2="22" y2="10"></line>
-                    </svg>
-                    <span>Wallet</span>
-                </a>
-                <div class="user-info">
-                    <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
-                        P</div>
-                    <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
-                </div>
-                <form th:action="@{/api/auth/logout}" method="post">
-                    <button type="submit" class="btn-logout">
-                        <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        <span>Logout</span>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </header>
+                       <path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10z"></path>
+                       <path d="M8 12h8"></path>
+                       <path d="M8 8h8"></path>
+                   </svg>
+                   <span>Daftar Chat</span>
+               </a>
+               <a th:href="@{/wishlist}" class="btn-nav wishlist-badge">
+                   <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                   </svg>
+                   <span>Wishlist</span>
+                   <span class="wishlist-count" th:if="${wishlistCount != null && wishlistCount > 0}" th:text="${wishlistCount}">0</span>
+               </a>
+               <a th:href="@{/payment/wallet}" class="btn-nav">
+                   <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                       <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                       <line x1="2" y1="10" x2="22" y2="10"></line>
+                   </svg>
+                   <span>Wallet</span>
+               </a>
+               <div class="user-info">
+                   <div class="user-avatar" th:text="${user != null ? user.email.substring(0, 1).toUpperCase() : 'P'}">
+                       P</div>
+                   <span class="user-name" th:text="${user != null ? user.email : 'Penyewa'}">Penyewa</span>
+               </div>
+               <form th:action="@{/api/auth/logout}" method="post">
+                   <button type="submit" class="btn-logout">
+                       <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                           <polyline points="16 17 21 12 16 7"></polyline>
+                           <line x1="21" y1="12" x2="9" y2="12"></line>
+                       </svg>
+                       <span>Logout</span>
+                   </button>
+               </form>
+           </div>
+       </div>
+   </header>
 
-<main class="main-content">
-    <div class="welcome-banner">
-        <h2>Selamat Datang di PapiKos!</h2>
-        <p>Temukan kos yang sesuai dengan kebutuhan Anda dengan mudah.</p>
-    </div>
+   <main class="main-content">
+       <div class="welcome-banner">
+           <h2>Selamat Datang di PapiKos!</h2>
+           <p>Temukan kos yang sesuai dengan kebutuhan Anda dengan mudah.</p>
+       </div>
 
-    <div class="search-container">
-        <form th:action="@{/kos/search}" method="get" class="search-form">
-            <input type="text" name="keyword" th:value="${keyword}"
+       <div class="search-container">
+           <form th:action="@{/kos/search}" method="get" class="search-form">
+               <input type="text" name="keyword" th:value="${keyword}"
                    placeholder="Cari kos berdasarkan nama, alamat, atau deskripsi..." class="search-input">
-            <button type="submit" class="search-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     viewBox="0 0 16 16">
-                    <path
-                            d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                </svg>
-                Cari
-            </button>
-        </form>
-    </div>
+               <button type="submit" class="search-btn">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                       viewBox="0 0 16 16">
+                       <path
+                           d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                   </svg>
+                   Cari
+               </button>
+           </form>
+       </div>
 
-    <h2 class="section-title">Kos Tersedia</h2>
-    <div class="kos-grid">
-        <div th:if="${kosList == null || kosList.empty}" class="no-kos">
-            <p>Tidak ada kos yang tersedia saat ini.</p>
-        </div>
+       <h2 class="section-title">Kos Tersedia</h2>
+       <div class="kos-grid">
+           <div th:if="${kosList == null || kosList.empty}" class="no-kos">
+               <p>Tidak ada kos yang tersedia saat ini.</p>
+           </div>
 
-        <div th:if="${kosList != null && !kosList.empty}">
-            <div th:each="kos : ${kosList}" class="kos-card" th:if="${kos != null}">
-                <div class="kos-image">
-                    <div class="placeholder-image">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
-                             viewBox="0 0 16 16">
-                            <path
-                                    d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
-                            <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="kos-details">
-                    <h3 th:text="${kos.nama}">Nama Kos</h3>
-                    <p class="kos-address" th:text="${kos.alamat}">Alamat Kos</p>
-                    <p class="kos-price">Rp <span
-                            th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
-                        /
-                        bulan</p>
-                    <p class="kos-availability">Tersedia: <span th:text="${kos.jumlah}">5</span> kamar</p>
-                    <div class="kos-actions">
-                        <a th:href="@{/kos/{id}(id=${kos.id})}" class="btn btn-detail">Lihat Detail</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</main>
+           <div th:if="${kosList != null && !kosList.empty}">
+               <div th:each="kos : ${kosList}" class="kos-card" th:if="${kos != null}">
+                   <div class="kos-image">
+                       <div class="placeholder-image">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                               viewBox="0 0 16 16">
+                               <path
+                                   d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
+                               <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
+                           </svg>
+                       </div>
+                       
+                       <a th:href="@{/wishlist/toggle/{kosId}(kosId=${kos.id})}" 
+                          class="wishlist-btn" 
+                          th:classappend="${#lists.contains(userWishlist, kos.id) ? 'active' : ''}">
+                           <svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
+                                fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                           </svg>
+                       </a>
+                   </div>
+
+                   <div class="kos-details">
+                       <h3 th:text="${kos.nama}">Nama Kos</h3>
+                       <p class="kos-address" th:text="${kos.alamat}">Alamat Kos</p>
+                       <p class="kos-price">Rp <span
+                               th:text="${#numbers.formatDecimal(kos.harga, 0, 'POINT', 0, 'COMMA')}">1,500,000</span>
+                           / bulan</p>
+                       <p class="kos-availability">Tersedia: <span th:text="${kos.jumlah}">5</span> kamar</p>
+                       <div class="kos-actions">
+                           <a th:href="@{/kos/{id}(id=${kos.id})}" class="btn btn-detail">Lihat Detail</a>
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </main>
 </body>
-
 </html>
