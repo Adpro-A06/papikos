@@ -76,7 +76,7 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal menambahkan ke wishlist"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal menambahkan ke wishlist: " + e.getMessage()));
        }
    }
 
@@ -124,7 +124,7 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal menghapus dari wishlist"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal menghapus dari wishlist: " + e.getMessage()));
        }
    }
 
@@ -178,7 +178,7 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal mengupdate wishlist"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal mengupdate wishlist: " + e.getMessage()));
        }
    }
 
@@ -206,7 +206,7 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal mengosongkan wishlist"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal mengosongkan wishlist: " + e.getMessage()));
        }
    }
 
@@ -230,7 +230,7 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal mengambil wishlist"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal mengambil wishlist: " + e.getMessage()));
        }
    }
 
@@ -253,12 +253,19 @@ public class WishlistRestController {
 
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new AuthDto.ApiResponse(false, "Gagal mengambil wishlist IDs"));
+                   .body(new AuthDto.ApiResponse(false, "Gagal mengambil wishlist IDs: " + e.getMessage()));
        }
    }
 
-   // Helper method to create Wishlist with Kos object
+   // Helper method to create Wishlist with Kos object - IMPROVED NULL SAFETY
    private Wishlist createWishlistWithKos(String userId, Long kosId) {
+       if (userId == null || userId.trim().isEmpty()) {
+           throw new IllegalArgumentException("UserId cannot be null or empty");
+       }
+       if (kosId == null || kosId <= 0) {
+           throw new IllegalArgumentException("KosId must be a positive number");
+       }
+       
        // Create Kos object with converted UUID
        Kos kos = new Kos();
        // Convert Long kosId to UUID (simple conversion for compatibility)
@@ -279,11 +286,15 @@ public class WishlistRestController {
    private User getCurrentUser(String authHeader) {
        try {
            String token = extractTokenFromHeader(authHeader);
-           if (token == null) {
+           if (token == null || token.trim().isEmpty()) {
                return null;
            }
 
            String idStr = authService.decodeToken(token);
+           if (idStr == null || idStr.trim().isEmpty()) {
+               return null;
+           }
+           
            return authService.findById(UUID.fromString(idStr));
        } catch (Exception e) {
            return null;
@@ -291,20 +302,30 @@ public class WishlistRestController {
    }
 
    private String extractTokenFromHeader(String authHeader) {
-       if (authHeader != null && authHeader.startsWith("Bearer ")) {
-           return authHeader.substring(7);
+       if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+           return null;
        }
-       return null;
+       
+       String token = authHeader.substring(7);
+       return token.trim().isEmpty() ? null : token;
    }
 
    private Long parseKosId(Object kosIdObj) {
+       if (kosIdObj == null) {
+           return null;
+       }
+       
        try {
            if (kosIdObj instanceof Integer) {
                return ((Integer) kosIdObj).longValue();
            } else if (kosIdObj instanceof Long) {
                return (Long) kosIdObj;
            } else if (kosIdObj instanceof String) {
-               return Long.parseLong((String) kosIdObj);
+               String str = ((String) kosIdObj).trim();
+               if (str.isEmpty()) {
+                   return null;
+               }
+               return Long.parseLong(str);
            }
        } catch (NumberFormatException e) {
            return null;

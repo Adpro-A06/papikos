@@ -316,5 +316,81 @@ public class WishlistControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Gagal menambahkan ke wishlist"));
+
+    
+
+    @Test
+    public void testCreateWishlistWithKos_Valid() throws Exception {
+        // Test helper method createWishlistWithKos
+        String userId = UUID.randomUUID().toString();
+        Long kosId = 123L;
+        
+        // This will test the createWishlistWithKos method
+        Wishlist result = createWishlistWithKos(userId, kosId);
+        
+        assertNotNull(result);
+        assertEquals(userId, result.getUserId());
+        assertNotNull(result.getKosList());
+        assertEquals(1, result.getKosList().size());
+    }
+
+    @Test
+    public void testParseKosId_ValidInteger() throws Exception {
+        // Test parseKosId method with Integer
+        Object kosIdObj = 123;
+        Long result = parseKosId(kosIdObj);
+        assertEquals(Long.valueOf(123L), result);
+    }
+
+    @Test
+    public void testParseKosId_ValidString() throws Exception {
+        // Test parseKosId method with String
+        Object kosIdObj = "456";
+        Long result = parseKosId(kosIdObj);
+        assertEquals(Long.valueOf(456L), result);
+    }
+
+    @Test
+    public void testParseKosId_InvalidString() throws Exception {
+        // Test parseKosId method with invalid String
+        Object kosIdObj = "invalid";
+        Long result = parseKosId(kosIdObj);
+        assertNull(result);
+    }
+
+    @Test
+    public void testConvertUUIDToLong_ValidUUID() throws Exception {
+        UUID testUuid = UUID.randomUUID();
+        Long result = convertUUIDToLong(testUuid);
+        assertNotNull(result);
+        assertTrue(result > 0);
+    }
+
+    @Test
+    public void testConvertUUIDToLong_NullUUID() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> {
+            convertUUIDToLong(null);
+        });
+    }
+
+    @Test
+    public void testExtractTokenFromHeader_ValidHeader() throws Exception {
+        String authHeader = "Bearer valid-token-here";
+        String result = extractTokenFromHeader(authHeader);
+        assertEquals("valid-token-here", result);
+    }
+
+    @Test
+    public void testExtractTokenFromHeader_InvalidHeader() throws Exception {
+        String authHeader = "Invalid header";
+        String result = extractTokenFromHeader(authHeader);
+        assertNull(result);
+    }
+
+    @Test
+    public void testExtractTokenFromHeader_NullHeader() throws Exception {
+        String result = extractTokenFromHeader(null);
+        assertNull(result);
+}
     }
 }
