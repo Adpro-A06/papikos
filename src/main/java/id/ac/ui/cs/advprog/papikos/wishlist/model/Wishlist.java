@@ -81,9 +81,4 @@ public class Wishlist {
     public void setKosId(String kosId) {
         this.kosId = kosId;
     }
-
-    
-
-   
-    
 }
