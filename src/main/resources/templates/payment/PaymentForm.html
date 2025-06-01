@@ -185,11 +185,11 @@
                 </div>
                 <span class="user-name" th:text="${user.email}">Pengguna</span>
             </div>
-            </a><form th:action="@{/api/auth/logout}" method="post" class="m-0">
-            <button type="submit" class="btn-logout">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-        </form>
+            <form th:action="@{/api/auth/logout}" method="post" class="m-0">
+                <button type="submit" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </div>
     </div>
 </header>
@@ -497,9 +497,21 @@
         });
 
         // Handle confirmed payment
-        btnKonfirmasiPembayaran.addEventListener('click', function() {
-            // Submit form
-            paymentForm.submit();
+        btnKonfirmasiPembayaran.addEventListener('click', function(e) {
+            // Prevent default behavior
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Get the payment form specifically by its action
+            const paymentForm = document.querySelector('form[action="/payment/pay"]');
+
+            // Check if we found the correct form
+            if (paymentForm) {
+                // Submit the payment form
+                paymentForm.submit();
+            } else {
+                console.error("Payment form not found!");
+            }
         });
     });
 </script>
