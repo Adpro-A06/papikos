@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.Comparator;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Controller
@@ -52,51 +52,61 @@ public class WishlistController {
         try {
             List<Kos> allWishlistItems = wishlistService.getUserWishlistItems(user.getId());
 
+            // Filter pencarian (search) jika ada
             List<Kos> filteredItems = allWishlistItems;
             if (search != null && !search.trim().isEmpty()) {
                 filteredItems = allWishlistItems.stream()
-                        .filter(kos -> kos.getNama().toLowerCase().contains(search.toLowerCase()) ||
-                                kos.getAlamat().toLowerCase().contains(search.toLowerCase()))
+                        .filter(kos ->
+                                kos.getNama().toLowerCase().contains(search.toLowerCase()) ||
+                                kos.getAlamat().toLowerCase().contains(search.toLowerCase())
+                        )
                         .collect(Collectors.toList());
             }
 
+            // Sort sesuai parameter
             sortWishlistItems(filteredItems, sort);
 
+            // Pagination
             int totalItems = filteredItems.size();
             int totalPages = (int) Math.ceil((double) totalItems / size);
             int start = page * size;
             int end = Math.min(start + size, totalItems);
 
-            List<Kos> wishlistItems = start < totalItems ?
-                    filteredItems.subList(start, end) :
-                    Collections.emptyList();
+            List<Kos> wishlistItems = start < totalItems
+                    ? filteredItems.subList(start, end)
+                    : Collections.emptyList();
 
             int wishlistCount = allWishlistItems.size();
             long availableCount = allWishlistItems.stream()
                     .filter(kos -> kos.getJumlah() > 0)
                     .count();
-
             double averagePrice = allWishlistItems.stream()
                     .filter(kos -> kos.getHarga() > 0)
                     .mapToInt(Kos::getHarga)
                     .average()
                     .orElse(0.0);
 
+            // Tambahkan atribut‐atribut ke model untuk Thymeleaf
             model.addAttribute("user", user);
             model.addAttribute("wishlistItems", wishlistItems);
             model.addAttribute("wishlistCount", wishlistCount);
             model.addAttribute("availableCount", availableCount);
             model.addAttribute("averagePrice", averagePrice);
             model.addAttribute("hasWishlists", !allWishlistItems.isEmpty());
+
+            // Atribut pagination
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", totalPages);
             model.addAttribute("totalItems", totalItems);
+
+            // Atribut filter/search
             model.addAttribute("sort", sort);
             model.addAttribute("search", search);
 
             return "wishlist/wishlistpage";
 
         } catch (Exception e) {
+            log.error("Error loading wishlist page: {}", e.getMessage(), e);
             model.addAttribute("error", "Error loading wishlist: " + e.getMessage());
             model.addAttribute("wishlistItems", Collections.emptyList());
             model.addAttribute("wishlistCount", 0);
@@ -109,6 +119,7 @@ public class WishlistController {
     private void sortWishlistItems(List<Kos> items, String sort) {
         switch (sort) {
             case "oldest":
+                // urutan asli (tidak di‐reverse)
                 break;
             case "price-low":
                 items.sort(Comparator.comparing(Kos::getHarga));
@@ -117,16 +128,20 @@ public class WishlistController {
                 items.sort(Comparator.comparing(Kos::getHarga).reversed());
                 break;
             case "name":
-                items.sort(Comparator.comparing(Kos::getNama,
-                        Comparator.nullsLast(Comparator.naturalOrder())));
+                items.sort(Comparator.comparing(
+                        Kos::getNama, Comparator.nullsLast(Comparator.naturalOrder())
+                ));
                 break;
-            default:
+            default: // newest: munculkan yang terakhir ditambahkan paling atas
                 Collections.reverse(items);
                 break;
         }
     }
 
-    @PostMapping("/toggle/{kosId}")
+    /**
+     * Sekarang memakai GET supaya tombol <a href="/wishlist/toggle/{kosId}"> bisa langsung men‐trigger.
+     */
+    @GetMapping("/toggle/{kosId}")
     public String toggleWishlist(@PathVariable String kosId, HttpSession session, RedirectAttributes ra) {
         User user = getCurrentUser(session);
         if (user == null) {
@@ -137,6 +152,7 @@ public class WishlistController {
         try {
             UUID kosUuid = UUID.fromString(kosId);
             wishlistService.toggleWishlist(user.getId(), kosUuid);
+
             boolean isNowInWishlist = wishlistService.isInWishlist(user.getId(), kosUuid);
             if (isNowInWishlist) {
                 ra.addFlashAttribute("success", "Kos berhasil ditambahkan ke wishlist.");
@@ -182,6 +198,7 @@ public class WishlistController {
             String idStr = authService.decodeToken(token);
             return authService.findById(UUID.fromString(idStr));
         } catch (Exception e) {
+            log.warn("Failed to decode JWT token: {}", e.getMessage());
             return null;
         }
     }
